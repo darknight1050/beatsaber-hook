@@ -10,18 +10,17 @@ namespace CustomUI::UnityEngine {
             
             static GameObject* Find(std::string type);
             
-            Component* AddComponent(Il2CppObject* type);
-            Component* GetComponent(Il2CppObject* type);
-            Component* GetComponentInChildren(Il2CppObject* type, bool includeInactive = false);
-            Component* GetComponentInParent(Il2CppObject* type);
-            Array<Component*>* GetComponents();
-            Array<Component*>* GetComponents(Il2CppObject* type);
-            Array<Component*>* GetComponentsInChildren(Il2CppObject* type, bool includeInactive = false);
-            Array<Component*>* GetComponentsInParent(Il2CppObject* type, bool includeInactive = false);
+            inline Component* AddComponent(Il2CppObject* type){ return MethodWrapper::RunSimpleMethod<Component*>(this, "AddComponent", type); }
+            inline Component* GetComponent(Il2CppObject* type){ return MethodWrapper::RunSimpleMethod<Component*>(this, "GetComponent", type); }
+            inline Component* GetComponentInChildren(Il2CppObject* type, bool includeInactive = false){ return MethodWrapper::RunSimpleMethod<Component*>(this, "GetComponentInChildren", type, includeInactive); }
+            inline Component* GetComponentInParent(Il2CppObject* type){ return MethodWrapper::RunSimpleMethod<Component*>(this, "GetComponentInParent", type); }
+            inline Array<Component*>* GetComponents(){ return MethodWrapper::RunSimpleMethod<Array<Component*>*>(this, "GetComponents"); }
+            inline Array<Component*>* GetComponents(Il2CppObject* type){ return MethodWrapper::RunSimpleMethod<Array<Component*>*>(this, "GetComponents", type); }
+            inline Array<Component*>* GetComponentsInChildren(Il2CppObject* type, bool includeInactive = false){ return MethodWrapper::RunSimpleMethod<Array<Component*>*>(this, "GetComponentsInChildren", type, includeInactive); }
+            inline Array<Component*>* GetComponentsInParent(Il2CppObject* type, bool includeInactive = false){ return MethodWrapper::RunSimpleMethod<Array<Component*>*>(this, "GetComponentsInParent", type, includeInactive); }
 
-            void SetActive(bool active);
-            void SetActiveRecursively(bool active);
-            
+            inline void SetActive(bool active){ MethodWrapper::RunSimpleMethod(this, "SetActive", active); }
+            inline void SetActiveRecursively(bool active){ MethodWrapper::RunSimpleMethod(this, "SetActiveRecursively", active); }
     };
 
 }

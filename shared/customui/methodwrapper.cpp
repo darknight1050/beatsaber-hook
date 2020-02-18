@@ -15,5 +15,5 @@ namespace MethodWrapper {
         std::string methodName = std::string("set_") + name;
         il2cpp_utils::RunMethod(instance, methodName, il2cpp_utils::createcsstr(value));
     }
-
+    
 }
