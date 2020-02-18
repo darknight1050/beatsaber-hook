@@ -4,173 +4,76 @@
 #include "../utils/utils.h"
 #include "customui.hpp"
 using namespace il2cpp_utils;
+using namespace CustomUI::UnityEngine;
+using namespace CustomUI::UnityEngine::UI;
+using namespace CustomUI::TMPro;
 
-int CustomUI::TextObject::counter = 0;
 namespace CustomUI
-{
-    bool TextObject::create()
-    {
-        // gameobj = new GameObject("CustomTextUI");
-        log(DEBUG, "TextObject::create: Creating gameObject: %s (object number: %i)", name.data(), counter);
-        gameObj = New(GetClassFromName("UnityEngine", "GameObject"), createcsstr(name.data()));
-
-        // gameObj.SetActive(false);
-        log(DEBUG, "TextObject::create: Setting gameObject.active to false");
-        if (!RunMethod(gameObj, "SetActive", false))
-        {
-            log(ERROR, "TextObject::create: Failed to set active to false");
-            return false;
-        }
-
-        // gameObj.AddComponent<TextMeshProUGUI>();
-        log(DEBUG, "TextObject::create: Getting type of TMPro.TextMeshProUGUI");
-        Il2CppObject *type_tmpugui = GetSystemType("TMPro", "TextMeshProUGUI");
-    
-        log(DEBUG, "TextObject::create: Adding component TMPro.TextMeshProUGUI");
-        if (!RunMethod(&textMesh, gameObj, "AddComponent", type_tmpugui))
-        {
-            log(ERROR, "TextObject::create: Failed to add Component TMPro.TextMeshProUGUI");
-            return false;
-        }
-        // textMesh.font = GameObject.Instantiate(Resources.FindObjectsOfTypeAll<TMP_FontAsset>().First(t => t.name == "Teko-Medium SDF No Glow"));
-        log(DEBUG, "TextObject::create: Getting type of TMPro.TMP_FontAsset");
-        Il2CppObject *type_fontasset = GetSystemType("TMPro", "TMP_FontAsset");
-        log(DEBUG, "TextObject::create: Gotten the type!");
-        Array<Il2CppObject *> *allObjects;
-
-        // Find Objects of type TMP_fontAsset
-        if (!RunMethod(&allObjects, nullptr, FindMethod("UnityEngine", "Resources", "FindObjectsOfTypeAll", 1), type_fontasset))
-        {
-            // EXCEPTION
-            log(ERROR, "TextObject::create: Failed to Find Objects of type TMP_fontAsset");
-            return false;
-        }
+{   
+    Button* CreateButton(){
+        GameObject* gameObj = (GameObject*)NewUnsafe(GetClassFromName("UnityEngine", "GameObject"), createcsstr("CustomUICanvas"));
+        gameObj->SetActive(false);
+        gameObj->AddComponent(GetSystemType("UnityEngine", "CanvasRenderer"));
+        Button* buttonComponent = (Button*)gameObj->AddComponent(GetSystemType("UnityEngine.UI", "Button"));
+        Image* imageComponent = (Image*)gameObj->AddComponent(GetSystemType("UnityEngine.UI", "Image"));
+        Array<Sprite*> *allSpriteObjects = (Array<Sprite*>*)Resources::FindObjectsOfTypeAll("UnityEngine", "Sprite");
         int match = -1;
-        for (int i = 0; i < allObjects->Length(); i++)
+        for (int i = 0; i < allSpriteObjects->Length(); i++)
         {
-            // Treat it as a UnityEngine.Object (which it is) and call the name getter
-            Il2CppString *assetName;
-            if (!RunMethod(&assetName, allObjects->values[i], "get_name"))
+            if (strcmp(allSpriteObjects->values[i]->get_name().c_str(), "RoundRectNormal") == 0)
             {
-                // EXCEPTION
-                log(ERROR, "TextObject::create: Failed to run get_name of assetName");
-                return false;
-            }
-            if (strcmp(to_utf8(csstrtostr(assetName)).c_str(), "Teko-Medium SDF No Glow") == 0)
-            {
-                // Found matching asset
                 match = i;
                 break;
             }
         }
         if (match == -1)
         {
-            log(ERROR, "TextObject::create: Could not find matching TMP_FontAsset!");
-            return false;
+            log(DEBUG, "CreateButton: Could not find matching Sprite!");
+            return nullptr;
         }
+        imageComponent->set_sprite(allSpriteObjects->values[match]);
+        imageComponent->set_type(Image::Type::Sliced);
+        buttonComponent->set_image(imageComponent);
+        gameObj->SetActive(true);
+        return buttonComponent;
+    }
 
-        // Instantiating the font
-        log(DEBUG, "TextObject::create: Instantiating the font");
-        Il2CppObject *font;
-        if (!RunMethod(&font, nullptr, FindMethod("UnityEngine", "Object", "Instantiate", 1), allObjects->values[match]))
+    TextMeshProUGUI* CreateTextMeshProUGUI(std::string text, UnityEngine::Transform* parentTransform, float fontSize, Color color){
+        GameObject* gameObj = (GameObject*)NewUnsafe(GetClassFromName("UnityEngine", "GameObject"), createcsstr("CustomUITextMeshProUGUI"));
+        gameObj->SetActive(false);
+        Array<TMP_FontAsset*>* allFontObjects = (Array<TMP_FontAsset*>*)Resources::FindObjectsOfTypeAll("TMPro", "TMP_FontAsset");
+        int fontMatch = -1;
+        for (int i = 0; i < allFontObjects->Length(); i++)
         {
-            log(ERROR, "TextObject::create: Failed to Instantiate font!");
-            return false;
-        }
-
-        // Setting the font
-        log(DEBUG, "TextObject::create: Setting the font");
-        if (!RunMethod(textMesh, "set_font", font))
-        {
-            log(ERROR, "TextObject::create: Failed to set font!");
-            return false;
-        }
-
-        // textMesh.rectTransform.SetParent(parent, false);
-        log(DEBUG, "TextObject::create: Getting rectTransform");
-        Il2CppObject *rectTransform;
-        if (!RunMethod(&rectTransform, textMesh, "get_rectTransform"))
-        {
-            log(ERROR, "TextObject::create: Failed to get rectTransform");
-            return false;
-        }
-    
-        log(DEBUG, "TextObject::create: Setting Parent");
-        if (!RunMethod(rectTransform, "SetParent", parentTransform, false))
-        {
-            log(ERROR, "TextObject::create: Failed to set parent!");
-            if (parentTransform == nullptr)
+            if (strcmp(allFontObjects->values[i]->get_name().c_str(), "Teko-Medium SDF No Glow") == 0)
             {
-                log(ERROR, "TextObject::create: parentTransform is null! Fix it!");
+                fontMatch = i;
+                break;
             }
-            return false;
         }
-        // textMesh.text = text;
-        log(DEBUG, "TextObject::create: Setting Text");
-        if (!RunMethod(textMesh, "set_text", createcsstr(text.data())))
+        if (fontMatch == -1)
         {
-            log(ERROR, "TextObject::create: Failed to set text!");
-            return false;
+            log(DEBUG, "CreateTextMeshProUGUI: Could not find matching TMP_FontAsset!");
+            return nullptr;
         }
-
-        // textmesh.fontSize = fontSize;
-        log(DEBUG, "TextObject::create: Setting fontSize");
-        if (!RunMethod(textMesh, "set_fontSize", fontSize))
-        {
-            log(ERROR, "TextObject::create: Failed to set fontSize!");
-            return false;
+        TMP_FontAsset* font = (TMP_FontAsset*)Object::Instantiate(allFontObjects->values[fontMatch]);
+        TextMeshProUGUI* textMeshComponent = (TextMeshProUGUI*)gameObj->AddComponent(GetSystemType("TMPro", "TextMeshProUGUI"));
+        RectTransform* rectTransform = textMeshComponent->get_rectTransform();
+        if(parentTransform != nullptr){
+            textMeshComponent->get_rectTransform()->SetParent(parentTransform, false);
         }
-
-        // textMesh.color = Color.white;
-        log(DEBUG, "TextObject::create: Setting color");
-        if (!RunMethod(textMesh, "set_color", color))
-        {
-            log(ERROR, "TextObject::create: Failed to set color!");
-            return false;
-        }
-
-        // textMesh.rectTransform.anchorMin = anchorMin
-        log(DEBUG, "TextObject::create: Setting anchorMin");
-        if (!RunMethod(rectTransform, "set_anchorMin", anchorMin))
-        {
-            log(ERROR, "TextObject::create: Failed to set anchorMin");
-            return false;
-        }
-
-        // textMesh.rectTransform.anchorMax = anchorMax
-        log(DEBUG, "TextObject::create: Setting anchorMax");
-        if (!RunMethod(rectTransform, "set_anchorMax", anchorMax))
-        {
-            log(ERROR, "TextObject::create: Failed to set anchorMax");
-            return false;
-        }
-    
-        // textMesh.rectTransform.sizeDelta = sizeDelta
-        log(DEBUG, "TextObject::create: Setting sizeDelta");
-        if (!RunMethod(rectTransform, "set_sizeDelta", sizeDelta))
-        {
-            log(ERROR, "TextObject::create: Failed to set sizeDelta");
-            return false;
-        }
-
-        // textMesh.rectTransform.anchoredPosition = anchoredPosition
-        log(DEBUG, "TextObject::create: Setting anchoredPosition");
-        if (!RunMethod(rectTransform, "set_anchoredPosition", anchoredPosition))
-        {
-            log(ERROR, "TextObject::create: failed to set anchoredPosition");
-            return false;
-        }
-
-        // gameObj.SetActive(true);
-        log(DEBUG, "TextObject::create: Setting gameObject active to true");
-        if (!RunMethod(gameObj, "SetActive", true))
-        {
-            log(ERROR, "TextObject::create: Failed to set active to true");
-            return false;
-        }
-        log(DEBUG, "TextObject::create: Succesfully created gameObj: %s", name.c_str());
-        counter++;
-        return true;
+        textMeshComponent->set_text(text);
+        textMeshComponent->set_font(font);
+        textMeshComponent->set_fontSize(fontSize);
+        textMeshComponent->set_color(color);
+        rectTransform->set_anchorMin({0.5f, 0.5f});
+        rectTransform->set_anchorMax({0.5f, 0.5f});
+        rectTransform->set_pivot({0.5f, 0.5f});
+        rectTransform->set_sizeDelta({0.0f, 0.0f});
+        rectTransform->set_anchoredPosition({0.0f, 0.0f});
+        rectTransform->set_localScale({1.0f, 1.0f, 1.0f});
+        gameObj->SetActive(true);
+        return textMeshComponent;
     }
 
     static auto findDataSize(Il2CppObject* downloadHandler) {
@@ -250,7 +153,7 @@ namespace CustomUI
             }
             else if (!RunMethod(obj->rawImage, "set_texture", obj->recievedTexture2D))
             {
-                log(ERROR, "Failed to set recievedTexture2D");
+                log(DEBUG, "Failed to set receivedTexture2D");
             }
             if (!RunMethod(&rawImageRectTransform, obj->rawImage, "get_rectTransform"))
             {

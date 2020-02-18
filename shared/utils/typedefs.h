@@ -161,6 +161,14 @@ typedef struct Quaternion {
     float w;
 } Quaternion;
 
+// UnityEngine.Rect
+typedef struct Rect {
+    float x;
+    float y;
+    float width;;
+    float height;
+} Rect;
+
 #ifdef __cplusplus
 }  /* extern "C" */
 #endif /* __cplusplus */
