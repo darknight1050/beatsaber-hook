@@ -86,7 +86,7 @@ namespace CustomUI
     }
 
     void RawImageObject::monitorProgress(RawImageObject* obj) {
-        log(ERROR, "MonitorProgress start");
+        log(INFO, "monitorProgress start");
         Il2CppObject* downloadHandler = il2cpp_utils::GetFieldValue(obj->WWW, "m_DownloadHandler");
         if (!downloadHandler) return;
 
@@ -139,71 +139,74 @@ namespace CustomUI
         log(DEBUG, "Entering textureWebRequestComplete!");
 
         Il2CppObject *rawImageRectTransform;
-        bool valueBool = false;
 
         if (RunMethod(&obj->recievedTexture2D, il2cpp_utils::GetClassFromName("UnityEngine.Networking", "DownloadHandlerTexture"), "GetContent", obj->WWW))
         {
-            obj->gameObj = NewUnsafe(GetClassFromName("UnityEngine", "GameObject"), createcsstr("RandomImage"));
-            if (!RunMethod(obj->gameObj, "SetActive", &valueBool))
+            obj->gameObj = New(GetClassFromName("UnityEngine", "GameObject"), createcsstr("RandomImage"));
+            if (!RunMethod(obj->gameObj, "SetActive", false))
             {
-                log(DEBUG, "Failed to set gameObj active to false");
+                log(ERROR, "Failed to set gameObj active to false");
             }
             if (!RunMethod(&obj->rawImage, obj->gameObj, "AddComponent", GetSystemType("UnityEngine.UI", "RawImage")))
             {
-                log(DEBUG, "Failed to AddComponent rawImage");
+                log(ERROR, "Failed to AddComponent rawImage");
             }
-            if (!RunMethod(obj->rawImage, "set_texture", obj->recievedTexture2D))
+            else if (!RunMethod(obj->rawImage, "set_texture", obj->recievedTexture2D))
             {
                 log(DEBUG, "Failed to set receivedTexture2D");
             }
             if (!RunMethod(&rawImageRectTransform, obj->rawImage, "get_rectTransform"))
             {
-                log(DEBUG, "Failed to get rectTransform");
+                log(ERROR, "Failed to get rectTransform");
             }
-            if (!RunMethod(rawImageRectTransform, "SetParent", obj->parentTransform, &valueBool))
+
+            if (obj->parentTransform == nullptr)
             {
-                log(DEBUG, "Failed to set Parent");
+                log(ERROR, "RawImageObject::textureWebRequestComplete: obj->parentTransform is null! Fix it!");
+            }
+            else if (!RunMethod(rawImageRectTransform, "SetParent", obj->parentTransform, false))
+            {
+                log(ERROR, "Failed to set Parent");
             }
 
             // textMesh.rectTransform.anchorMin = anchorMin
             log(DEBUG, "RawImageObject::textureWebRequestComplete: Setting anchorMin");
-            if (!RunMethod(rawImageRectTransform, "set_anchorMin", &obj->anchorMin))
+            if (!RunMethod(rawImageRectTransform, "set_anchorMin", obj->anchorMin))
             {
-                log(DEBUG, "RawImageObject::textureWebRequestComplete: Failed to set anchorMin");
+                log(ERROR, "RawImageObject::textureWebRequestComplete: Failed to set anchorMin");
                 return false;
             }
 
             // textMesh.rectTransform.anchorMax = anchorMax
             log(DEBUG, "RawImageObject::textureWebRequestComplete: Setting anchorMax");
-            if (!RunMethod(rawImageRectTransform, "set_anchorMax", &obj->anchorMax))
+            if (!RunMethod(rawImageRectTransform, "set_anchorMax", obj->anchorMax))
             {
-                log(DEBUG, "RawImageObject::textureWebRequestComplete: Failed to set anchorMax");
+                log(ERROR, "RawImageObject::textureWebRequestComplete: Failed to set anchorMax");
                 return false;
             }
 
             // textMesh.rectTransform.sizeDelta = sizeDelta
             log(DEBUG, "RawImageObject::textureWebRequestComplete: Setting sizeDelta");
-            if (!RunMethod(rawImageRectTransform, "set_sizeDelta", &obj->sizeDelta))
+            if (!RunMethod(rawImageRectTransform, "set_sizeDelta", obj->sizeDelta))
             {
-                log(DEBUG, "RawImageObject::textureWebRequestComplete: Failed to set sizeDelta");
+                log(ERROR, "RawImageObject::textureWebRequestComplete: Failed to set sizeDelta");
                 return false;
             }
 
             // textMesh.rectTransform.anchoredPosition = anchoredPosition
             log(DEBUG, "RawImageObject::textureWebRequestComplete: Setting anchoredPosition");
-            if (!RunMethod(rawImageRectTransform, "set_anchoredPosition", &obj->anchoredPosition))
+            if (!RunMethod(rawImageRectTransform, "set_anchoredPosition", obj->anchoredPosition))
             {
-                log(DEBUG, "RawImageObject::textureWebRequestComplete: failed to set anchoredPosition");
+                log(ERROR, "RawImageObject::textureWebRequestComplete: failed to set anchoredPosition");
                 return false;
             }
-            valueBool = true;
-            if (!RunMethod(obj->gameObj, "SetActive", &valueBool))
+            if (!RunMethod(obj->gameObj, "SetActive", true))
             {
-                log(DEBUG, "Failed to set gameObj active to true");
+                log(ERROR, "Failed to set gameObj active to true");
                 return false;
             }
         } else {
-            log(DEBUG, "Failed to get recievedTexture2D from DownloadHandler!");
+            log(ERROR, "Failed to get recievedTexture2D from DownloadHandler!");
             return false;
         }
         log(INFO, "Callback success!");
