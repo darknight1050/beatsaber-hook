@@ -2,40 +2,39 @@
 #define CUSTOMUI_DEFINED
 
 #include <string.h>
-#include "../utils/typedefs.h"
+#include "../utils/utils.h"
+#include "methodwrapper.hpp"
+#include "unityengine/object.hpp"
+#include "unityengine/scriptableobject.hpp"
+#include "unityengine/component.hpp"
+#include "unityengine/transform.hpp"
+#include "unityengine/recttransform.hpp"
+#include "unityengine/gameobject.hpp"
+#include "unityengine/behaviour.hpp"
+#include "unityengine/monobehaviour.hpp"
+#include "unityengine/canvas.hpp"
+#include "unityengine/sprite.hpp"
+#include "unityengine/resources.hpp"
 
-namespace CustomUI { 
-    class TextObject {
-        private:
-            // This counter increments every time a CustomUIText object is created by the same mod.
-            static int counter;
-            // This is the name prefix of the CustomUIText object. It has the counter appended to it.
-            std::string name = "CustomUIText";
-        public:
-            // The TextMeshProUGUI Il2CppObject* of the created object.
-            Il2CppObject *textMesh = nullptr;
-            // The GameObject Il2CppObject* of the created object.
-            Il2CppObject *gameObj = nullptr;
-            // The desired Color of the text object.
-            Color color = {1.0, 1.0, 1.0, 1.0};
-            // The desired text of the text object.
-            std::string text = "Default";
-            // The desired font size of the text object.
-            float fontSize = 40.0f;
-            // The desired parent transform of the text object.
-            Il2CppObject *parentTransform = nullptr;
-            // The desired anchorMin position of the text object.
-            Vector2 anchorMin = {0.0, 1.0};
-            // The desired anchorMax position of the text object.
-            Vector2 anchorMax = {0.0, 1.0};
-            // The desired sizeDelta position of the text object.
-            Vector2 sizeDelta = {0.0, 1.0};
-            // The desired anchoredPosition of the text object.
-            Vector2 anchoredPosition = {0.0, 0.0};
-            // Creates the text object in game.
-            // Returns true on success, false otherwise.
-            bool create();
-    };
+#include "unityengine/eventsystems/uibehaviour.hpp"
+
+#include "unityengine/ui/selectable.hpp"
+#include "unityengine/ui/button.hpp"
+#include "unityengine/ui/canvasscaler.hpp"
+#include "unityengine/ui/graphic.hpp"
+#include "unityengine/ui/maskablegraphic.hpp"
+#include "unityengine/ui/image.hpp"
+
+#include "tmpro/tmp_asset.hpp"
+#include "tmpro/tmp_fontasset.hpp"
+#include "tmpro/tmp_text.hpp"
+#include "tmpro/textmeshprougui.hpp"
+
+namespace CustomUI {
+
+    UnityEngine::UI::Button* CreateButton();
+    TMPro::TextMeshProUGUI* CreateTextMeshProUGUI(std::string text, UnityEngine::Transform* parentTransform = nullptr, float fontSize = 12.0f, Color color = {1.0, 1.0, 1.0, 1.0});
+
     // Except where mentioned, original code by Rugtveit and only slight modifications by zoller27osu.
     class RawImageObject : public Il2CppObject {
         private:
