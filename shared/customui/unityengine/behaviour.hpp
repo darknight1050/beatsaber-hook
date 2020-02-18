@@ -6,3 +6,5 @@ namespace CustomUI::UnityEngine {
     };
 
 }
+
+DEFINE_IL2CPP_ARG_TYPE(CustomUI::UnityEngine::Behaviour*, "UnityEngine", "Behaviour");

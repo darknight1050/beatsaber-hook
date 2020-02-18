@@ -23,7 +23,7 @@ namespace CustomUI::UnityEngine {
 
     Component* GameObject::GetComponentInChildren(Il2CppObject* type, bool includeInactive){
         Component* component;
-        il2cpp_utils::RunMethod(&component, this, "GetComponentInChildren", type, &includeInactive);
+        il2cpp_utils::RunMethod(&component, this, "GetComponentInChildren", type, includeInactive);
         return component;
     }
 
@@ -47,22 +47,22 @@ namespace CustomUI::UnityEngine {
 
     Array<Component*>* GameObject::GetComponentsInChildren(Il2CppObject* type, bool includeInactive){
         Array<Component*>* component;
-        il2cpp_utils::RunMethod(&component, this, "GetComponentsInChildren", type, &includeInactive);
+        il2cpp_utils::RunMethod(&component, this, "GetComponentsInChildren", type, includeInactive);
         return component;
     }
 
     Array<Component*>* GameObject::GetComponentsInParent(Il2CppObject* type, bool includeInactive){
         Array<Component*>* component;
-        il2cpp_utils::RunMethod(&component, this, "GetComponentsInParent", type, &includeInactive);
+        il2cpp_utils::RunMethod(&component, this, "GetComponentsInParent", type, includeInactive);
         return component;
     }
 
     void GameObject::SetActive(bool active){
-        il2cpp_utils::RunMethod(this, "SetActive", &active);
+        il2cpp_utils::RunMethod(this, "SetActive", active);
     }
 
     void GameObject::SetActiveRecursively(bool active){
-        il2cpp_utils::RunMethod(this, "SetActiveRecursively", &active);
+        il2cpp_utils::RunMethod(this, "SetActiveRecursively", active);
     }
 
 }

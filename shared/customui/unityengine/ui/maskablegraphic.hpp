@@ -6,3 +6,5 @@ namespace CustomUI::UnityEngine::UI {
     };
 
 }
+
+DEFINE_IL2CPP_ARG_TYPE(CustomUI::UnityEngine::UI::MaskableGraphic*, "UnityEngine.UI", "MaskableGraphic");

@@ -4,3 +4,5 @@ namespace CustomUI::UnityEngine::EventSystems {
     };
 
 }
+
+DEFINE_IL2CPP_ARG_TYPE(CustomUI::UnityEngine::EventSystems::UIBehaviour*, "UnityEngine.EventSystems", "UIBehaviour");

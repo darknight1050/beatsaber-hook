@@ -24,3 +24,7 @@ namespace CustomUI::UnityEngine::UI {
     };
 
 }
+
+DEFINE_IL2CPP_ARG_TYPE(CustomUI::UnityEngine::UI::Image*, "UnityEngine.UI", "Image");
+DEFINE_IL2CPP_ARG_TYPE(CustomUI::UnityEngine::UI::Image::Type, "System", "Int32");
+DEFINE_IL2CPP_ARG_TYPE(CustomUI::UnityEngine::UI::Image::FillMethod, "System", "Int32");

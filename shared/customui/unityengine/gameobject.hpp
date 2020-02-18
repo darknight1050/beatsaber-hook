@@ -25,3 +25,5 @@ namespace CustomUI::UnityEngine {
     };
 
 }
+
+DEFINE_IL2CPP_ARG_TYPE(CustomUI::UnityEngine::GameObject*, "UnityEngine", "GameObject");

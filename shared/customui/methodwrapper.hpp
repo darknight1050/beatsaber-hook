@@ -14,11 +14,7 @@ namespace MethodWrapper {
     template<class T>
     void SetProperty(Il2CppObject* instance, std::string name, T value) {
         std::string methodName = std::string("set_") + name;
-        if constexpr (std::is_pointer<T>::value) {
-            il2cpp_utils::RunMethod(instance, methodName, value);
-        }else{
-            il2cpp_utils::RunMethod(instance, methodName, &value);
-        }
+        il2cpp_utils::RunMethod(instance, methodName, value);
     }
 
     template<>

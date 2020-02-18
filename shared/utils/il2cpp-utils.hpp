@@ -106,7 +106,7 @@ namespace il2cpp_utils {
         DEFINE_IL2CPP_ARG_TYPE(Vector2, "UnityEngine", "Vector2");
         DEFINE_IL2CPP_ARG_TYPE(Vector3, "UnityEngine", "Vector3");
         DEFINE_IL2CPP_ARG_TYPE(Quaternion, "UnityEngine", "Quaternion");
-
+        
         template<>
         struct il2cpp_arg_type_<Il2CppType*> {
             static inline Il2CppType const* get(Il2CppType* arg) {
@@ -568,8 +568,6 @@ namespace il2cpp_utils {
 
     // Function made by zoller27osu, modified by Sc2ad
     Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args);
-
-
 
     // Function made by zoller27osu, modified by Sc2ad
     // Logs information about the given MethodInfo* as log(DEBUG)
