@@ -5,6 +5,7 @@
 #include "../utils/utils.h"
 #include "methodwrapper.hpp"
 #include "unityengine/object.hpp"
+#include "unityengine/material.hpp"
 #include "unityengine/scriptableobject.hpp"
 #include "unityengine/component.hpp"
 #include "unityengine/transform.hpp"
@@ -32,6 +33,7 @@
 
 namespace CustomUI {
 
+    UnityEngine::Canvas* CreateCanvas();
     UnityEngine::UI::Button* CreateButton();
     TMPro::TextMeshProUGUI* CreateTextMeshProUGUI(std::string text, UnityEngine::Transform* parentTransform = nullptr, float fontSize = 12.0f, Color color = {1.0, 1.0, 1.0, 1.0});
 

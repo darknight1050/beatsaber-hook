@@ -10,28 +10,46 @@ using namespace CustomUI::TMPro;
 
 namespace CustomUI
 {   
+    Canvas* CreateCanvas(){
+        GameObject* gameObj = (GameObject*)NewUnsafe(GetClassFromName("UnityEngine", "GameObject"), createcsstr("CustomUICanvas"));
+        gameObj->SetActive(false);
+        gameObj->set_layer(5);
+        Canvas* canvasComponent = (Canvas*)gameObj->AddComponent(GetSystemType("UnityEngine", "Canvas"));
+        canvasComponent->set_renderMode(Canvas::RenderMode::WorldSpace);
+        CanvasScaler* canvasScalerComponent = (CanvasScaler*)gameObj->AddComponent(GetSystemType("UnityEngine.UI", "CanvasScaler"));
+        canvasScalerComponent->set_scaleFactor(1.0f);
+        canvasScalerComponent->set_dynamicPixelsPerUnit(3.44f);
+        canvasScalerComponent->set_referencePixelsPerUnit(10.0f);
+        gameObj->AddComponent(GetSystemType("VRUIControls", "VRGraphicRaycaster"));
+        gameObj->AddComponent(GetSystemType("UnityEngine", "CanvasRenderer"));
+        RectTransform* rectTransform = (RectTransform*)gameObj->GetComponent(GetSystemType("UnityEngine", "RectTransform"));
+        rectTransform->set_localScale({0.02f, 0.02f, 0.02f});
+        gameObj->SetActive(true);
+        return canvasComponent;
+    }
+
     Button* CreateButton(){
         GameObject* gameObj = (GameObject*)NewUnsafe(GetClassFromName("UnityEngine", "GameObject"), createcsstr("CustomUICanvas"));
         gameObj->SetActive(false);
         gameObj->AddComponent(GetSystemType("UnityEngine", "CanvasRenderer"));
         Button* buttonComponent = (Button*)gameObj->AddComponent(GetSystemType("UnityEngine.UI", "Button"));
         Image* imageComponent = (Image*)gameObj->AddComponent(GetSystemType("UnityEngine.UI", "Image"));
-        Array<Sprite*> *allSpriteObjects = (Array<Sprite*>*)Resources::FindObjectsOfTypeAll("UnityEngine", "Sprite");
-        int match = -1;
+        Array<Sprite*>* allSpriteObjects = (Array<Sprite*>*)Resources::FindObjectsOfTypeAll("UnityEngine", "Sprite");
+        Sprite* spriteMatch = nullptr;
         for (int i = 0; i < allSpriteObjects->Length(); i++)
         {
             if (strcmp(allSpriteObjects->values[i]->get_name().c_str(), "RoundRectNormal") == 0)
             {
-                match = i;
+                spriteMatch = allSpriteObjects->values[i];
                 break;
             }
         }
-        if (match == -1)
+        if (spriteMatch == nullptr)
         {
             log(DEBUG, "CreateButton: Could not find matching Sprite!");
             return nullptr;
         }
-        imageComponent->set_sprite(allSpriteObjects->values[match]);
+        imageComponent->set_sprite(spriteMatch);
         imageComponent->set_type(Image::Type::Sliced);
         buttonComponent->set_image(imageComponent);
         gameObj->SetActive(true);
@@ -42,21 +60,21 @@ namespace CustomUI
         GameObject* gameObj = (GameObject*)NewUnsafe(GetClassFromName("UnityEngine", "GameObject"), createcsstr("CustomUITextMeshProUGUI"));
         gameObj->SetActive(false);
         Array<TMP_FontAsset*>* allFontObjects = (Array<TMP_FontAsset*>*)Resources::FindObjectsOfTypeAll("TMPro", "TMP_FontAsset");
-        int fontMatch = -1;
+        TMP_FontAsset* fontMatch = nullptr;
         for (int i = 0; i < allFontObjects->Length(); i++)
         {
             if (strcmp(allFontObjects->values[i]->get_name().c_str(), "Teko-Medium SDF No Glow") == 0)
             {
-                fontMatch = i;
+                fontMatch = allFontObjects->values[i];
                 break;
             }
         }
-        if (fontMatch == -1)
+        if (fontMatch == nullptr)
         {
             log(DEBUG, "CreateTextMeshProUGUI: Could not find matching TMP_FontAsset!");
             return nullptr;
         }
-        TMP_FontAsset* font = (TMP_FontAsset*)Object::Instantiate(allFontObjects->values[fontMatch]);
+        TMP_FontAsset* font = (TMP_FontAsset*)Object::Instantiate(fontMatch);
         TextMeshProUGUI* textMeshComponent = (TextMeshProUGUI*)gameObj->AddComponent(GetSystemType("TMPro", "TextMeshProUGUI"));
         RectTransform* rectTransform = textMeshComponent->get_rectTransform();
         if(parentTransform != nullptr){
@@ -71,7 +89,6 @@ namespace CustomUI
         rectTransform->set_pivot({0.5f, 0.5f});
         rectTransform->set_sizeDelta({0.0f, 0.0f});
         rectTransform->set_anchoredPosition({0.0f, 0.0f});
-        rectTransform->set_localScale({1.0f, 1.0f, 1.0f});
         gameObj->SetActive(true);
         return textMeshComponent;
     }

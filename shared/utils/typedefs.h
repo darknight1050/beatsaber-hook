@@ -141,17 +141,8 @@ typedef struct Color {
 } Color;
 
 // UnityEngine.Vector2
-typedef struct Vector2 {
-    float x;
-    float y;
-} Vector2;
-
 // UnityEngine.Vector3
-typedef struct Vector3 {
-    float x;
-    float y;
-    float z;
-} Vector3;
+#include "vectors.h"
 
 // UnityEngine.Quaternion
 typedef struct Quaternion {
@@ -167,6 +158,9 @@ typedef struct Rect {
     float y;
     float width;;
     float height;
+    inline Vector2 GetSize(){
+        return { width, height };
+    }
 } Rect;
 
 #ifdef __cplusplus

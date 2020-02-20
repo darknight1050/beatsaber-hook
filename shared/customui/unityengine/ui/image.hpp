@@ -20,6 +20,7 @@ namespace CustomUI::UnityEngine::UI {
             };
             PROPERTY_GET_SET(fillMethod, FillMethod);
             PROPERTY_GET_SET(type, Type);
+            PROPERTY_GET_SET(material, Material*);
             PROPERTY_GET_SET(sprite, Sprite*);
     };
 
