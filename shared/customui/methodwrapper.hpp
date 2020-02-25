@@ -1,23 +1,33 @@
 namespace MethodWrapper {
 
+    
+    template<class... TArgs>
+    void RunSimpleMethod(Il2CppObject* instance, std::string methodName, TArgs&& ...params){
+        if(instance == nullptr){
+            log(ERROR, "MethodWrapper: RunSimpleMethod: Null instance parameter! (%s)", methodName.c_str());
+            return;
+        }
+        if(!il2cpp_utils::RunMethod(instance, methodName, params...)){
+            log(ERROR, "MethodWrapper: RunSimpleMethod: failed! (%s)", methodName.c_str());
+        }
+    }
+
     template<class TOut, class... TArgs>
     TOut RunSimpleMethod(Il2CppObject* instance, std::string methodName, TArgs&& ...params) {
         TOut value;
-        il2cpp_utils::RunMethod(&value, instance, methodName, params...);
+        if(instance == nullptr){
+            log(ERROR, "MethodWrapper: RunSimpleMethod: Null instance parameter! (%s)", methodName.c_str());
+            return value;
+        }
+        if(!il2cpp_utils::RunMethod(&value, instance, methodName, params...)){
+            log(ERROR, "MethodWrapper: RunSimpleMethod: Running %s failed!", methodName.c_str());
+        }
         return value;
-    }
-
-    template<class... TArgs>
-    void RunSimpleMethod(Il2CppObject* instance, std::string methodName, TArgs&& ...params){
-        il2cpp_utils::RunMethod(instance, methodName, params...);
     }
 
     template<class TOut>
     TOut GetProperty(Il2CppObject* instance, std::string name) {
-        std::string methodName = std::string("get_") + name;
-        TOut value;
-        il2cpp_utils::RunMethod(&value, instance, methodName);
-        return value;
+        return RunSimpleMethod<TOut>(instance, std::string("get_") + name);;
     }
 
     template<>
@@ -25,8 +35,7 @@ namespace MethodWrapper {
 
     template<class TOut>
     void SetProperty(Il2CppObject* instance, std::string name, TOut value) {
-        std::string methodName = std::string("set_") + name;
-        il2cpp_utils::RunMethod(instance, methodName, value);
+        RunSimpleMethod(instance, std::string("set_") + name, value);
     }
 
     template<>

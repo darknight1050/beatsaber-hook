@@ -5,17 +5,16 @@
 #include "../utils/utils.h"
 #include "methodwrapper.hpp"
 #include "unityengine/object.hpp"
-#include "unityengine/material.hpp"
-#include "unityengine/scriptableobject.hpp"
+#include "unityengine/gameobject.hpp"
 #include "unityengine/component.hpp"
 #include "unityengine/transform.hpp"
 #include "unityengine/recttransform.hpp"
-#include "unityengine/gameobject.hpp"
+#include "unityengine/material.hpp"
+#include "unityengine/sprite.hpp"
+#include "unityengine/scriptableobject.hpp"
 #include "unityengine/behaviour.hpp"
 #include "unityengine/monobehaviour.hpp"
 #include "unityengine/canvas.hpp"
-#include "unityengine/sprite.hpp"
-#include "unityengine/resources.hpp"
 
 #include "unityengine/eventsystems/uibehaviour.hpp"
 
@@ -31,10 +30,13 @@
 #include "tmpro/tmp_text.hpp"
 #include "tmpro/textmeshprougui.hpp"
 
+#include "unityengine/resources.hpp"
+
 namespace CustomUI {
 
     UnityEngine::Canvas* CreateCanvas();
-    UnityEngine::UI::Button* CreateButton();
+    UnityEngine::UI::Button* CreateButton(Vector2 size, UnityEngine::Transform* parentTransform);
+    UnityEngine::UI::Button* CreateUIButton(UnityEngine::Transform* parentTransform, std::string buttonTemplate, Vector2 anchoredPosition, Vector2 size, std::string buttonText = "BUTTON");
     TMPro::TextMeshProUGUI* CreateTextMeshProUGUI(std::string text, UnityEngine::Transform* parentTransform = nullptr, float fontSize = 12.0f, Color color = {1.0, 1.0, 1.0, 1.0});
 
     // Except where mentioned, original code by Rugtveit and only slight modifications by zoller27osu.

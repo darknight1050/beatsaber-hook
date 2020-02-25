@@ -22,13 +22,13 @@ namespace CustomUI
         canvasScalerComponent->set_referencePixelsPerUnit(10.0f);
         gameObj->AddComponent(GetSystemType("VRUIControls", "VRGraphicRaycaster"));
         gameObj->AddComponent(GetSystemType("UnityEngine", "CanvasRenderer"));
-        RectTransform* rectTransform = (RectTransform*)gameObj->GetComponent(GetSystemType("UnityEngine", "RectTransform"));
+        RectTransform* rectTransform = (RectTransform*)gameObj->get_transform();
         rectTransform->set_localScale({0.02f, 0.02f, 0.02f});
         gameObj->SetActive(true);
         return canvasComponent;
     }
 
-    Button* CreateButton(){
+    Button* CreateButton(Vector2 size, UnityEngine::Transform* parentTransform){
         GameObject* gameObj = (GameObject*)NewUnsafe(GetClassFromName("UnityEngine", "GameObject"), createcsstr("CustomUICanvas"));
         gameObj->SetActive(false);
         gameObj->AddComponent(GetSystemType("UnityEngine", "CanvasRenderer"));
@@ -38,7 +38,7 @@ namespace CustomUI
         Sprite* spriteMatch = nullptr;
         for (int i = 0; i < allSpriteObjects->Length(); i++)
         {
-            if (strcmp(allSpriteObjects->values[i]->get_name().c_str(), "RoundRectNormal") == 0)
+            if (strcmp(allSpriteObjects->values[i]->get_name().c_str(), "RoundRectBigStroke") == 0)
             {
                 spriteMatch = allSpriteObjects->values[i];
                 break;
@@ -49,13 +49,67 @@ namespace CustomUI
             log(DEBUG, "CreateButton: Could not find matching Sprite!");
             return nullptr;
         }
+        Array<Material*>* allMaterialObjects = (Array<Material*>*)Resources::FindObjectsOfTypeAll("UnityEngine", "Material");
+        Material* materialMatch = nullptr;
+        for (int i = 0; i < allMaterialObjects->Length(); i++)
+        {
+            if (strcmp(allMaterialObjects->values[i]->get_name().c_str(), "UINoGlow") == 0)
+            {
+                materialMatch = allMaterialObjects->values[i];
+                break;
+            }
+        }
+        if (materialMatch == nullptr)
+        {
+            log(DEBUG, "CreateButton: Could not find matching Material!");
+            return nullptr;
+        }
         imageComponent->set_sprite(spriteMatch);
+        imageComponent->set_material(materialMatch);
         imageComponent->set_type(Image::Type::Sliced);
         buttonComponent->set_image(imageComponent);
+        RectTransform* rectTransform = (RectTransform*)gameObj->get_transform();
+        rectTransform->SetParent(parentTransform, false);
+        rectTransform->SetSize(size);
+        TextMeshProUGUI* text = CreateTextMeshProUGUI("Test", rectTransform, 6.0f);
+        RectTransform* textRectTransform = text->get_rectTransform();
+        Vector2 sizeDelta = textRectTransform->get_sizeDelta();
+        textRectTransform->set_localPosition({-size.x/4.0f, size.y/2.0f, 0.0f});
+        
         gameObj->SetActive(true);
         return buttonComponent;
     }
+    
+    Button* CreateUIButton(UnityEngine::Transform* parentTransform, std::string buttonTemplate, Vector2 anchoredPosition, Vector2 sizeDelta, std::string buttonText){
+        Button* buttonMatch = nullptr;
+        Array<Button*>* allButtonObjects = (Array<Button*>*)Resources::FindObjectsOfTypeAll("UnityEngine.UI", "Button");
+        for (int i = 0; i < allButtonObjects->Length(); i++)
+        {
+            Button* currentButton = allButtonObjects->values[i];
+            if(currentButton->get_name().compare(buttonTemplate) == 0){
+                buttonMatch = currentButton;
+            }
+        }
+        if(buttonMatch == nullptr){
+            log(ERROR, "CreateUIButton: Could not find button: %s!", buttonTemplate.c_str());
+            return nullptr;
+        }
+        Button* button = (Button*)Object::Instantiate(buttonMatch, parentTransform, false);
+        //button.onClick = new Button.ButtonClickedEvent();
+        //if (onClick != null)
+            //button.onClick.AddListener(onClick);
+        button->set_name("CustomUIButton");
 
+        RectTransform* rectTransform = (RectTransform*)button->get_transform();
+        rectTransform->set_anchorMin({0.5f, 0.5f});
+        rectTransform->set_anchorMax({0.5f, 0.5f});
+        rectTransform->set_anchoredPosition(anchoredPosition);
+        rectTransform->set_sizeDelta(sizeDelta);
+
+        button->SetButtonText(buttonText);
+        return button;
+    }
+    
     TextMeshProUGUI* CreateTextMeshProUGUI(std::string text, UnityEngine::Transform* parentTransform, float fontSize, Color color){
         GameObject* gameObj = (GameObject*)NewUnsafe(GetClassFromName("UnityEngine", "GameObject"), createcsstr("CustomUITextMeshProUGUI"));
         gameObj->SetActive(false);
@@ -84,8 +138,8 @@ namespace CustomUI
         textMeshComponent->set_font(font);
         textMeshComponent->set_fontSize(fontSize);
         textMeshComponent->set_color(color);
-        rectTransform->set_anchorMin({0.5f, 0.5f});
-        rectTransform->set_anchorMax({0.5f, 0.5f});
+        rectTransform->set_anchorMin({0.0f, 1.0f});
+        rectTransform->set_anchorMax({0.0f, 1.0f});
         rectTransform->set_pivot({0.5f, 0.5f});
         rectTransform->set_sizeDelta({0.0f, 0.0f});
         rectTransform->set_anchoredPosition({0.0f, 0.0f});

@@ -1,5 +1,8 @@
 namespace CustomUI::UnityEngine {
 
+    class Component;
+    class Transform;
+
     class GameObject : public Object {
         public:
             PROPERTY_GET(active, bool);
@@ -19,7 +22,6 @@ namespace CustomUI::UnityEngine {
             inline Array<Component*>* GetComponentsInParent(Il2CppObject* type, bool includeInactive = false){ return MethodWrapper::RunSimpleMethod<Array<Component*>*>(this, "GetComponentsInParent", type, includeInactive); }
 
             inline void SetActive(bool active){ MethodWrapper::RunSimpleMethod(this, "SetActive", active); }
-            inline void SetActiveRecursively(bool active){ MethodWrapper::RunSimpleMethod(this, "SetActiveRecursively", active); }
     };
 
 }
