@@ -330,6 +330,33 @@ namespace il2cpp_utils {
         /// @tparam val The value to specialize this particular metadata getter on.
         template<auto val>
         struct MetadataGetter;
+
+        template<class T>
+        struct MethodDecomposer;
+
+        template<typename R, typename... TArgs>
+        struct MethodDecomposer<R (*)(TArgs...)> {
+            using mPtr = R (*)(TArgs...);
+        };
+
+        template<typename R, typename T, typename... TArgs>
+        struct MethodDecomposer<R (T::*)(TArgs...)> {
+            using mPtr = R (*)(T*, TArgs...);
+        };
+
+        template<auto val>
+        concept is_valid_il2cpp_method = requires (decltype(val) v) {
+            typename MethodDecomposer<decltype(val)>::mPtr;
+            { il2cpp_utils::il2cpp_type_check::MetadataGetter<val>::get() } -> std::same_as<const MethodInfo *>;
+        };
+
+        template<auto val>
+        requires (is_valid_il2cpp_method<val>)
+        struct FPtrWrapper {
+            static auto get() {
+                return reinterpret_cast<typename MethodDecomposer<decltype(val)>::mPtr>(il2cpp_utils::il2cpp_type_check::MetadataGetter<val>::get()->methodPointer);
+            }
+        };
     }
 }
 
