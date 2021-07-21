@@ -184,6 +184,9 @@ class Logger {
         const LoggerOptions getOptions() const {
             return options;
         }
+        /// @brief Writes a backtrace for the provided number of frames.
+        /// @param frameCount The number of frames to backtrace
+        void Backtrace(uint16_t frameCount);
         /// @brief Enters a logging context. Should be used for more specific logging information.
         /// Avoid entering contexts with names that contain % characters.
         /// @param context The context name to enter
@@ -376,6 +379,9 @@ class LoggerContextObject {
             log_v(Logging::DEBUG, fmt, lst);
         }
     }
+    /// @brief Writes a backtrace for the provided number of frames.
+    /// @param frameCount The number of frames to backtrace
+    void Backtrace(uint16_t frameCount);
     /// @brief Enter a new context. This call forwards to logger.WithContext(this, ctx).
     /// Avoid entering contexts with names that contain % characters.
     /// @param ctx The context name to enter
