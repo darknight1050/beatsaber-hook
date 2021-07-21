@@ -19,7 +19,20 @@ namespace il2cpp_utils {
         // nullptr (which runtime_invoke returns for "void" return type!) is different from nullopt (a runtime_invoke error!)
         if (obj && il2cpp_functions::class_is_valuetype(il2cpp_functions::object_get_class(obj))) {
             static auto& logger = getLogger();
+            // So, because il2cpp finds it necessary to box returned value types (and also not deallocate them), we need to free them ourselves.
+            // What we need to do is first extract the value, which we can do by casting and dereferencing
+            // Then we need to PROPERLY free the allocating object at obj
+            // Then we can return our result.
             val = RET_NULLOPT_UNLESS(logger, il2cpp_functions::object_unbox(obj));
+            if constexpr (::std::is_pointer_v<TOut>) {
+                // No cleanup necessary for pointer value types
+                return static_cast<TOut>(val);
+            } else {
+                // Cleanup required here.
+                auto ret = *static_cast<TOut*>(val);
+                il2cpp_functions::GC_free(obj);
+                return ret;
+            }
         }
         if constexpr (::std::is_pointer_v<TOut>) {
             return static_cast<TOut>(val);
