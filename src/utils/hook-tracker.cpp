@@ -1,5 +1,6 @@
 #include "../../shared/utils/hook-tracker.hpp"
 #include "shared/utils/instruction-parsing.hpp"
+#include "modloader/shared/modloader.hpp"
 
 std::unordered_map<const void*, std::list<HookInfo>> HookTracker::hooks;
 
@@ -69,14 +70,12 @@ const void* HookTracker::GetOrigInternal(const void* const location) noexcept {
 #define LIBS_FILE_PATH "/sdcard/Android/data/%s/files/libs"
 #endif
 
-#define MOD_TEMP_PATH_FMT "/data/data/%s/"
-
 #include <dirent.h>
 
 void HookTracker::CombineHooks() noexcept {
     static auto logger = Logger::get().WithContext("HookTracker");
     auto libsFolder = string_format(LIBS_FILE_PATH, Modloader::getApplicationId().c_str());
-    auto tmpPath = string_format(MOD_TEMP_PATH_FMT, Modloader::getApplicationId().c_str());
+    auto tmpPath = Modloader::getDestinationPath();
     DIR* dir = opendir(libsFolder.c_str());
     if (dir == nullptr) {
         logger.warning("Failed to open libs folder! At path: %s", libsFolder.c_str());
