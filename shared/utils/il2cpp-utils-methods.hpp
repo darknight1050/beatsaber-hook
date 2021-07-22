@@ -9,6 +9,7 @@
 #include "il2cpp-utils-exceptions.hpp"
 #include "il2cpp-utils-classes.hpp"
 #include "utils.h"
+#include <array>
 
 #if __has_include(<concepts>)
 #include <concepts>
@@ -64,6 +65,14 @@ namespace il2cpp_utils {
                 else
                     argTypes = TypesFrom({paramTypes...});
             }
+        }
+
+        template<typename T, size_t sz>
+        FindMethodInfo(T&& classOrInstance, ::std::string_view methodName, std::array<const Il2CppType*, sz>& params) {
+            klass = ExtractClass(classOrInstance);
+            name = methodName;
+
+            argTypes = std::vector<const Il2CppType*>(params.begin(), params.end());
         }
 
         #ifndef BS_HOOK_USE_CONCEPTS
@@ -191,6 +200,48 @@ namespace il2cpp_utils {
     // Returns if a given MethodInfo's parameters match the Il2CppType vector and generic types vector
     bool ParameterMatch(const MethodInfo* method, ::std::vector<Il2CppClass*> genTypes, ::std::vector<const Il2CppType*> argTypes);
 
+    template<size_t genSz, size_t argSz>
+    bool ParameterMatch(const MethodInfo* method, std::array<Il2CppClass*, genSz> const& genTypes, std::array<const Il2CppType*, argSz> const& argTypes) {
+        static auto logger = getLogger().WithContext("ParameterMatch");
+        il2cpp_functions::Init();
+        if (method->parameters_count != argSz) {
+            return false;
+        }
+        auto genCount = (method->is_generic && !method->is_inflated) ? method->genericContainer->type_argc : 0;
+        if (genCount != genSz) {
+            logger.warning("Potential method match had wrong number of generics %i (expected %lu)",
+                genCount, genSz);
+            return false;
+        }
+        // TODO: supply boolStrictMatch and use type_equals instead of IsConvertible if supplied?
+        for (decltype(method->parameters_count) i = 0; i < argSz; i++) {
+            auto* paramType = method->parameters[i].parameter_type;
+            if (paramType->type == IL2CPP_TYPE_MVAR) {
+                auto genIdx = paramType->data.genericParameterIndex - method->genericContainer->genericParameterStart;
+                if (genIdx < 0) {
+                    logger.warning("Extracted invalid genIdx %i from parameter %i", genIdx, i);
+                } else if (genIdx >= genCount) {
+                    logger.warning("ParameterMatch was not supplied enough genTypes to determine type of parameter %i "
+                        "(had %i, needed %i)!", i, genCount, genIdx);
+                } else {
+                    auto* klass = genTypes.at(genIdx);
+                    paramType = (paramType->byref) ? &klass->this_arg : &klass->byval_arg;
+                }
+            }
+            // TODO: just because two parameter lists match doesn't necessarily mean this is the best match...
+            if (!(IsConvertible(paramType, argTypes.at(i)))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    template<size_t sz>
+    bool ParameterMatch(const MethodInfo* method, std::array<const Il2CppType*, sz> const& argTypes) {
+        std::array<Il2CppClass*, 0> gens;
+        return ParameterMatch(method, gens, argTypes);
+    }
+
     /// @brief Calls RunMethod, but throws a RunMethodException on failure.
     /// If checkTypes is false, does not perform type checking and instead is an unsafe wrapper around runtime_invoke.
     /// @tparam TOut The output to return. Defaults to Il2CppObject*.
@@ -208,17 +259,17 @@ namespace il2cpp_utils {
         }
 
         if constexpr (checkTypes && sizeof...(TArgs) > 0) {
-            auto typeVec = ExtractTypes(params...);
-            if (!ParameterMatch(method, typeVec)) {
+            std::array<const Il2CppType*, sizeof...(TArgs)> types{ExtractType(params)...};
+            if (!ParameterMatch(method, types)) {
                 throw RunMethodException("Parameters do not match!", method);
             }
         }
 
         void* inst = ExtractValue(instance);
         Il2CppException* exp = nullptr;
-        auto invokeParamsVec = ExtractValues(params...);
+        std::array<void*, sizeof...(params)> invokeParams{ExtractValue(params)...};
         il2cpp_functions::Init();
-        auto* ret = il2cpp_functions::runtime_invoke(method, inst, invokeParamsVec.data(), &exp);
+        auto* ret = il2cpp_functions::runtime_invoke(method, inst, invokeParams.data(), &exp);
         if (exp) {
             logger.error("%s: Failed with exception: %s", il2cpp_functions::method_get_name(method),
                 il2cpp_utils::ExceptionToString(exp).c_str());
@@ -289,16 +340,15 @@ namespace il2cpp_utils {
         RET_NULLOPT_UNLESS(logger, method);
 
         if constexpr (checkTypes && sizeof...(TArgs) > 0) {
-            auto typeVec = ExtractTypes(params...);
-            RET_NULLOPT_UNLESS(logger, typeVec.size() == sizeof...(TArgs));
-            RET_NULLOPT_UNLESS(logger, ParameterMatch(method, typeVec));
+            std::array<const Il2CppType*, sizeof...(TArgs)> types{ExtractType(params)...};
+            RET_NULLOPT_UNLESS(logger, ParameterMatch(method, types));
         }
 
         void* inst = ExtractValue(instance);  // null is allowed (for T = Il2CppType* or Il2CppClass*)
         Il2CppException* exp = nullptr;
-        auto invokeParamsVec = ExtractValues(params...);
+        std::array<void*, sizeof...(params)> invokeParams{ExtractValue(params)...};
         il2cpp_functions::Init();
-        auto* ret = il2cpp_functions::runtime_invoke(method, inst, invokeParamsVec.data(), &exp);
+        auto* ret = il2cpp_functions::runtime_invoke(method, inst, invokeParams.data(), &exp);
 
         // Check if the TOut that the user requested makes sense given the Il2CppObject* we actually got
         if constexpr (checkTypes) {
@@ -354,11 +404,7 @@ namespace il2cpp_utils {
     RunMethod(T&& classOrInstance, ::std::string_view methodName, TArgs&& ...params) {
         static auto& logger = getLogger();
         if constexpr (checkTypes) {
-            auto types = ExtractTypes(params...);
-            if (types.size() != sizeof...(TArgs)) {
-                logger.warning("ExtractTypes for method %s failed!", methodName.data());
-                return ::std::nullopt;
-            }
+            std::array<const Il2CppType*, sizeof...(TArgs)> types{ExtractType(params)...};
             auto* method = RET_NULLOPT_UNLESS(logger, FindMethod(classOrInstance, NoArgClass<TOut>(), methodName, types));
             return RunMethod<TOut, true>(classOrInstance, method, params...);
         }
@@ -405,11 +451,7 @@ namespace il2cpp_utils {
     template<class TOut = Il2CppObject*, class T, class... TArgs>
     ::std::optional<TOut> RunGenericMethod(T&& classOrInstance, ::std::string_view methodName, ::std::vector<Il2CppClass*> genTypes, TArgs&& ...params) noexcept {
         static auto& logger = getLogger();
-        auto types = ExtractTypes(params...);
-        if (types.size() != sizeof...(TArgs)) {
-            logger.warning("ExtractTypes for method %s failed!", methodName.data());
-            return ::std::nullopt;
-        }
+        std::array<const Il2CppType*, sizeof...(TArgs)> types{ExtractType(params)...};
 
         auto* info = RET_NULLOPT_UNLESS(logger, FindMethod(classOrInstance, NoArgClass<TOut>(), methodName, genTypes, types));
         return RunGenericMethod<TOut>(classOrInstance, info, genTypes, params...);
