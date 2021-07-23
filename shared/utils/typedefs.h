@@ -40,15 +40,9 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 #include "il2cpp-windowsruntime-types.h"
-
-struct Il2CppException;
-typedef struct Il2CppExceptionWrapper {
-    Il2CppException* ex;
-    Il2CppExceptionWrapper(Il2CppException* ex_) : ex(ex_) {}
-} Il2CppExceptionWrapper;
 #else
 // TODO: find a way to include this without putting the types in the global namespace?
-#include "il2cpp-object-internals.h"
+#include "manual-il2cpp-typedefs.h"
 #endif
 
 #include "il2cpp-functions.hpp"
