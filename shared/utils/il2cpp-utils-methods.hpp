@@ -131,10 +131,10 @@ namespace il2cpp_utils {
         } else if constexpr (::std::is_pointer_v<Dt>) {
             if constexpr (::std::is_base_of_v<Il2CppObject, ::std::remove_pointer_t<Dt>>) {
                 if (arg) {
-                    auto* klass = il2cpp_functions::object_get_class(arg);
+                    auto* klass = il2cpp_functions::object_get_class(reinterpret_cast<Il2CppObject*>(arg));
                     if (klass && klass->valuetype) {
                         // Arg is an Il2CppObject* of a value type. It needs to be unboxed.
-                        return il2cpp_functions::object_unbox(arg);
+                        return il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(arg));
                     }
                 }
             }
