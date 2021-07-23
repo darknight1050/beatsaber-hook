@@ -323,6 +323,7 @@ namespace il2cpp_utils {
                         }
                     }
                 }
+                return res;
             }
         } catch (Il2CppExceptionWrapper& wrapper) {
             logger.error("%s: Failed with exception: %s", il2cpp_functions::method_get_name(method),
