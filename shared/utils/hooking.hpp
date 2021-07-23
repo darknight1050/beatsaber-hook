@@ -368,7 +368,7 @@ void InstallOrigHook(L& logger) {
             itr->second.front().orig = (void*) *T::trampoline();
         }
     }
-    __InstallHook<T, L, false>(logger, addr);
+    __InstallHook<T, L, false>(logger, origAddr);
 }
 template<typename T, typename L>
 requires (is_hook<T> && is_logger<L>)
