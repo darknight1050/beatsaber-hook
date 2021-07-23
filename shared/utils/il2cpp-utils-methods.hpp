@@ -12,7 +12,6 @@
 #include "utils.h"
 #include "il2cpp-tabledefs.h"
 #include <array>
-#include <utility>
 
 #if __has_include(<concepts>)
 #include <concepts>
@@ -290,7 +289,7 @@ namespace il2cpp_utils {
                     // Static method
                     reinterpret_cast<void (*)(TArgs...)>(method->methodPointer)(params...);
                 } else {
-                    reinterpret_cast<void (*)(T, TArgs...)>(method->methodPointer)(std::forward(instance), params...);
+                    reinterpret_cast<void (*)(T, TArgs...)>(method->methodPointer)(instance, params...);
                 }
             } else {
                 // Method has non-void return
@@ -310,7 +309,7 @@ namespace il2cpp_utils {
                     // Static method
                     res = reinterpret_cast<TOut (*)(TArgs...)>(method->methodPointer)(params...);
                 } else {
-                    res = reinterpret_cast<TOut (*)(T, TArgs...)>(method->methodPointer)(std::forward(instance), params...);
+                    res = reinterpret_cast<TOut (*)(T, TArgs...)>(method->methodPointer)(instance, params...);
                 }
                 if constexpr (checkTypes) {
                     auto* outType = ExtractIndependentType<TOut>();
