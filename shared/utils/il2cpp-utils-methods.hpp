@@ -8,7 +8,9 @@
 #include <vector>
 #include "il2cpp-utils-exceptions.hpp"
 #include "il2cpp-utils-classes.hpp"
+#include "il2cpp-type-check.hpp"
 #include "utils.h"
+#include "il2cpp-tabledefs.h"
 #include <array>
 
 #if __has_include(<concepts>)
@@ -242,20 +244,25 @@ namespace il2cpp_utils {
         return ParameterMatch(method, gens, argTypes);
     }
 
-    /// @brief Calls RunMethod, but throws a RunMethodException on failure.
-    /// If checkTypes is false, does not perform type checking and instead is an unsafe wrapper around runtime_invoke.
-    /// @tparam TOut The output to return. Defaults to Il2CppObject*.
+    /// @brief Calls the methodPointer on the provided const MethodInfo*, but throws a RunMethodException on failure.
+    /// If checkTypes is false, does not perform type checking and instead is a partially unsafe wrapper around invoking the methodPointer directly.
+    /// This function still performs simple checks (such as void vs. non-void returns and instance vs. static method invokes) even with checkTypes as false.
+    /// @tparam TOut The output to return. Defaults to void.
     /// @tparam checkTypes Whether to check types or not. Defaults to true.
     /// @tparam T The instance type (either an actual instance or an Il2CppClass*/Il2CppType*).
     /// @tparam TArgs The argument types.
     /// @param instance The instance or Il2CppClass*/Il2CppType* to invoke with.
     /// @param method The MethodInfo* to invoke.
     /// @param params The arguments to pass into the function.
-    template<class TOut = Il2CppObject*, bool checkTypes = true, class T, class... TArgs>
+    template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
     TOut RunMethodThrow(T&& instance, const MethodInfo* method, TArgs&& ...params) {
         static auto& logger = getLogger();
         if (!method) {
             throw RunMethodException("Method cannot be null!", nullptr);
+        }
+        if (!method->methodPointer) {
+            // TODO: Eventually make this do a virtual invoke instead?
+            throw RunMethodException("Method pointer cannot be null (don't call an abstract method directly!)", method);
         }
 
         if constexpr (checkTypes && sizeof...(TArgs) > 0) {
@@ -265,36 +272,61 @@ namespace il2cpp_utils {
             }
         }
 
-        void* inst = ExtractValue(instance);
-        Il2CppException* exp = nullptr;
-        std::array<void*, sizeof...(params)> invokeParams{ExtractValue(params)...};
-        il2cpp_functions::Init();
-        auto* ret = il2cpp_functions::runtime_invoke(method, inst, invokeParams.data(), &exp);
-        if (exp) {
-            logger.error("%s: Failed with exception: %s", il2cpp_functions::method_get_name(method),
-                il2cpp_utils::ExceptionToString(exp).c_str());
-            throw RunMethodException(exp, method);
+        // Need to potentially call Class::Init here as well
+        // This snippet is almost identical to what libil2cpp does
+        if ((method->flags | METHOD_ATTRIBUTE_STATIC) > 0 && method->klass && method->klass->has_cctor && !method->klass->cctor_finished) {
+            il2cpp_functions::Class_Init(method->klass);
         }
-        if constexpr (checkTypes) {
-            if (ret) {
-                // By using this instead of ExtractType, we avoid unboxing because the ultimate type in that case would depend on the
-                // method in the first place
-                auto* outType = ExtractIndependentType<TOut>();
-                if (outType) {
-                    auto* retType = ExtractType(ret);
-                    if (!IsConvertible(outType, retType, false)) {
-                        logger.warning("User requested TOut %s does not match the method's return object of type %s!",
-                            TypeGetSimpleName(outType), TypeGetSimpleName(retType));
+        try {
+            if constexpr (std::is_same_v<TOut, void>) {
+                // Method has void return
+                if (!il2cpp_functions::type_equals(method->return_type, &il2cpp_functions::defaults->void_class->byval_arg)) {
+                    // If the method does NOT have a void return, yet we asked for one, this fails.
+                    // This should ALWAYS fail because it's very wrong, regardless of checkTypes.
+                    throw RunMethodException("Return type of method is not void, yet was requested as void!", method);
+                }
+                if ((method->flags | METHOD_ATTRIBUTE_STATIC) > 0) {
+                    // Static method
+                    reinterpret_cast<void (*)(TArgs...)>(method->methodPointer)(params...);
+                } else {
+                    reinterpret_cast<void (*)(T, TArgs...)>(method->methodPointer)(std::forward(instance), params...);
+                }
+            } else {
+                // Method has non-void return
+                // if (il2cpp_functions::class_from_type(method->return_type)->instance_size != sizeof(TOut)) {
+                    // TODO:
+                    // The return value's size must always match. We know TOut is not void, but we do not know of anything else
+                    // If the return value of the method is of a different size than TOut we should throw.
+                    // Note that we cannot simply check sizeof(TOut) and compare it to instance size, since a TOut pointer would not match.
+                    // We would need to properly ensure that the type is either byval or this_arg before comparing and/or ensuring size match
+                // }
+                // As a simple check, we can make sure the method we are attempting to call is not a void method:
+                if (il2cpp_functions::type_equals(method->return_type, &il2cpp_functions::defaults->void_class->byval_arg)) {
+                    throw RunMethodException("Return type of method is void, yet was requested as non-void!", method);
+                }
+                TOut res;
+                if ((method->flags | METHOD_ATTRIBUTE_STATIC) > 0) {
+                    // Static method
+                    res = reinterpret_cast<TOut (*)(TArgs...)>(method->methodPointer)(params...);
+                } else {
+                    res = reinterpret_cast<TOut (*)(T, TArgs...)>(method->methodPointer)(std::forward(instance), params...);
+                }
+                if constexpr (checkTypes) {
+                    auto* outType = ExtractIndependentType<TOut>();
+                    if (outType) {
+                        auto* retType = ExtractType(res);
+                        if (!IsConvertible(outType, retType, false)) {
+                            logger.warning("User requested TOut %s does not match the method's return object of type %s!",
+                                TypeGetSimpleName(outType), TypeGetSimpleName(retType));
+                            throw RunMethodException("Return type of method is not convertible!", method);
+                        }
                     }
                 }
             }
-        }
-        if constexpr (!std::is_same_v<TOut, void>) {
-            auto res = FromIl2CppObject<TOut>(ret);
-            if (!res) {
-                throw RunMethodException("Return type could not be extracted from ret!", method);
-            }
-            return *res;
+        } catch (Il2CppExceptionWrapper& wrapper) {
+            logger.error("%s: Failed with exception: %s", il2cpp_functions::method_get_name(method),
+                il2cpp_utils::ExceptionToString(wrapper.ex).c_str());
+            throw RunMethodException(wrapper.ex, method);
         }
     }
     #else

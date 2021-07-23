@@ -1,8 +1,8 @@
+#include "../../shared/utils/typedefs.h"
 #include "../../shared/utils/il2cpp-utils-fields.hpp"
 #include "../../shared/utils/hashing.hpp"
 #include "../../shared/utils/utils.h"
 #include <unordered_map>
-#include "../../shared/utils/typedefs.h"
 
 namespace il2cpp_utils {
     static std::unordered_map<std::pair<const Il2CppClass*, std::string>, FieldInfo*, hash_pair> classesNamesToFieldsCache;

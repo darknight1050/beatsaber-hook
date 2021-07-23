@@ -35,19 +35,25 @@ extern "C" {
 }  /* extern "C" */
 #endif /* __cplusplus */
 
-#include "il2cpp-functions.hpp"
-#include "il2cpp-utils-methods.hpp"
-#include "il2cpp-type-check.hpp"
-
 #if __has_include("System/Array.hpp") && !defined(NO_CODEGEN_USE)
 #define HAS_CODEGEN
 #include <stdint.h>
 #include <stddef.h>
 #include "il2cpp-windowsruntime-types.h"
+
+struct Il2CppException;
+typedef struct Il2CppExceptionWrapper {
+    Il2CppException* ex;
+    Il2CppExceptionWrapper(Il2CppException* ex_) : ex(ex_) {}
+} Il2CppExceptionWrapper;
 #else
 // TODO: find a way to include this without putting the types in the global namespace?
 #include "il2cpp-object-internals.h"
 #endif
+
+#include "il2cpp-functions.hpp"
+#include "il2cpp-utils-methods.hpp"
+#include "il2cpp-type-check.hpp"
 
 #include "typedefs-object.hpp"
 #include "typedefs-delegate.hpp"
@@ -139,8 +145,6 @@ typedef enum Il2CppDecimalCompareResult
 #include "System/Exception.hpp"
 // self-typedef'd in il2cpp-api-types.h
 struct Il2CppException : public System::Exception {};
-
-// TODO: Il2CppExceptionWrapper?
 
 #include "System/IOAsyncResult.hpp"
 typedef System::IOAsyncResult Il2CppIOAsyncResult;

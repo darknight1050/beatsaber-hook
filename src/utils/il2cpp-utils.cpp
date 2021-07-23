@@ -1,10 +1,10 @@
+#include "../../shared/utils/typedefs.h"
 #include <utility>  // for std::pair
 #include "shared/utils/gc-alloc.hpp"
 #include "../../shared/utils/hashing.hpp"
 #include "../../shared/utils/il2cpp-utils.hpp"
 #include "../../shared/utils/utils.h"
 #include "../../shared/utils/il2cpp-functions.hpp"
-#include "../../shared/utils/typedefs.h"
 #include <algorithm>
 #include <map>
 #include <unordered_map>

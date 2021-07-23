@@ -1,3 +1,4 @@
+#include "../../shared/utils/typedefs.h"
 #include "../../shared/utils/il2cpp-utils-classes.hpp"
 #include "../../shared/utils/il2cpp-utils-methods.hpp"
 #include "../../shared/utils/il2cpp-utils-properties.hpp"
@@ -5,7 +6,6 @@
 #include <map>
 #include <unordered_map>
 #include "../../shared/utils/alphanum.hpp"
-#include "../../shared/utils/typedefs.h"
 #include "shared/utils/gc-alloc.hpp"
 
 namespace il2cpp_utils {

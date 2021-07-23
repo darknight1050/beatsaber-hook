@@ -15,6 +15,7 @@
 #include "logging.hpp"
 #include "utils.h"
 #include "il2cpp-type-check.hpp"
+#include "typedefs.h"
 #include "il2cpp-utils-methods.hpp"
 #include "il2cpp-utils-classes.hpp"
 #include "il2cpp-utils-exceptions.hpp"
@@ -23,7 +24,6 @@
 #include <string>
 #include <string_view>
 #include <optional>
-#include "typedefs.h"
 #include <functional>
 
 namespace il2cpp_utils {

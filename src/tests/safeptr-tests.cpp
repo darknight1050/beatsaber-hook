@@ -58,8 +58,7 @@ static void test() {
     // Instead, consider using -> explicitly, or passing SafePtr<T> instances either by reference (strongly suggested) or by value/move.
 }
 
-#include "../../shared/utils/il2cpp-utils-classes.hpp"
-#include "il2cpp-object-internals.h"
+#include "../../shared/utils/il2cpp-utils.hpp"
 static void test_cast() {
     int x = 3;
     {
