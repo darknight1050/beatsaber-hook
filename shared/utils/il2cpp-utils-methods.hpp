@@ -12,6 +12,7 @@
 #include "utils.h"
 #include "il2cpp-tabledefs.h"
 #include <array>
+#include <utility>
 
 #if __has_include(<concepts>)
 #include <concepts>
