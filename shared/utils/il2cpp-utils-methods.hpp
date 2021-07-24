@@ -304,9 +304,9 @@ namespace il2cpp_utils {
                 }
                 if ((method->flags & METHOD_ATTRIBUTE_STATIC) > 0) {
                     // Static method
-                    reinterpret_cast<void (*)(TArgs...)>(method->methodPointer)(params...);
+                    reinterpret_cast<void (*)(TArgs..., const MethodInfo*)>(method->methodPointer)(params..., method);
                 } else {
-                    reinterpret_cast<void (*)(T, TArgs...)>(method->methodPointer)(instance, params...);
+                    reinterpret_cast<void (*)(T, TArgs..., const MethodInfo*)>(method->methodPointer)(instance, params..., method);
                 }
             } else {
                 // Method has non-void return
@@ -324,9 +324,9 @@ namespace il2cpp_utils {
                 TOut res;
                 if ((method->flags & METHOD_ATTRIBUTE_STATIC) > 0) {
                     // Static method
-                    res = reinterpret_cast<TOut (*)(TArgs...)>(method->methodPointer)(params...);
+                    res = reinterpret_cast<TOut (*)(TArgs..., const MethodInfo*)>(method->methodPointer)(params..., method);
                 } else {
-                    res = reinterpret_cast<TOut (*)(T, TArgs...)>(method->methodPointer)(instance, params...);
+                    res = reinterpret_cast<TOut (*)(T, TArgs..., const MethodInfo*)>(method->methodPointer)(instance, params..., method);
                 }
                 if constexpr (checkTypes) {
                     auto* outType = ExtractIndependentType<TOut>();
