@@ -291,7 +291,7 @@ namespace il2cpp_utils {
 
         // Need to potentially call Class::Init here as well
         // This snippet is almost identical to what libil2cpp does
-        if ((method->flags | METHOD_ATTRIBUTE_STATIC) > 0 && method->klass && method->klass->has_cctor && !method->klass->cctor_finished) {
+        if ((method->flags & METHOD_ATTRIBUTE_STATIC) > 0 && method->klass && method->klass->has_cctor && !method->klass->cctor_finished) {
             il2cpp_functions::Class_Init(method->klass);
         }
         try {
@@ -302,7 +302,7 @@ namespace il2cpp_utils {
                     // This should ALWAYS fail because it's very wrong, regardless of checkTypes.
                     throw RunMethodException("Return type of method is not void, yet was requested as void!", method);
                 }
-                if ((method->flags | METHOD_ATTRIBUTE_STATIC) > 0) {
+                if ((method->flags & METHOD_ATTRIBUTE_STATIC) > 0) {
                     // Static method
                     reinterpret_cast<void (*)(TArgs...)>(method->methodPointer)(params...);
                 } else {
@@ -322,7 +322,7 @@ namespace il2cpp_utils {
                     throw RunMethodException("Return type of method is void, yet was requested as non-void!", method);
                 }
                 TOut res;
-                if ((method->flags | METHOD_ATTRIBUTE_STATIC) > 0) {
+                if ((method->flags & METHOD_ATTRIBUTE_STATIC) > 0) {
                     // Static method
                     res = reinterpret_cast<TOut (*)(TArgs...)>(method->methodPointer)(params...);
                 } else {
