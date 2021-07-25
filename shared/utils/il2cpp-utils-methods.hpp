@@ -288,6 +288,11 @@ namespace il2cpp_utils {
                 throw RunMethodException("Parameters do not match!", method);
             }
         }
+        // NOTE: We need to remove references from our method pointers and copy in our parameters
+        // This works great for all cases EXCEPT for byref types
+        // For byref types, because we copy in our parameters, we need to provide a wrapper type that wraps a reference
+        // That type then is provided and copied in.
+        // That type is in byref.hpp as ByRef(T&&)
 
         // Need to potentially call Class::Init here as well
         // This snippet is almost identical to what libil2cpp does
@@ -304,9 +309,9 @@ namespace il2cpp_utils {
                 }
                 if ((method->flags & METHOD_ATTRIBUTE_STATIC) > 0) {
                     // Static method
-                    reinterpret_cast<void (*)(TArgs..., const MethodInfo*)>(method->methodPointer)(params..., method);
+                    reinterpret_cast<void (*)(std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(params..., method);
                 } else {
-                    reinterpret_cast<void (*)(T, TArgs..., const MethodInfo*)>(method->methodPointer)(instance, params..., method);
+                    reinterpret_cast<void (*)(std::remove_reference_t<T>, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(instance, params..., method);
                 }
             } else {
                 // Method has non-void return
@@ -324,9 +329,9 @@ namespace il2cpp_utils {
                 TOut res;
                 if ((method->flags & METHOD_ATTRIBUTE_STATIC) > 0) {
                     // Static method
-                    res = reinterpret_cast<TOut (*)(TArgs..., const MethodInfo*)>(method->methodPointer)(params..., method);
+                    res = reinterpret_cast<TOut (*)(std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(params..., method);
                 } else {
-                    res = reinterpret_cast<TOut (*)(T, TArgs..., const MethodInfo*)>(method->methodPointer)(instance, params..., method);
+                    res = reinterpret_cast<TOut (*)(std::remove_reference_t<T>, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(instance, params..., method);
                 }
                 if constexpr (checkTypes) {
                     auto* outType = ExtractIndependentType<TOut>();

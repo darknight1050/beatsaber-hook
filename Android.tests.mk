@@ -42,6 +42,7 @@ LOCAL_LDLIBS += -llog
 LOCAL_CFLAGS += -DVERSION='"0.0.0"' -isystem 'extern/libil2cpp/il2cpp/libil2cpp' -D'UNITY_2019' -Wall -Wextra -Werror -Wno-unused-function -DID='"beatsaber-hook"' -I'./shared' -isystem 'extern'
 LOCAL_CFLAGS += -DTEST_CALLBACKS
 LOCAL_CFLAGS += -DTEST_SAFEPTR
+LOCAL_CFLAGS += -DTEST_BYREF
 LOCAL_C_INCLUDES += ./shared
 LOCAL_CPP_FEATURES += exceptions
 include $(BUILD_SHARED_LIBRARY)

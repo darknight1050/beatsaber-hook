@@ -271,9 +271,39 @@ namespace il2cpp_utils {
         template<> \
         struct ::il2cpp_utils::il2cpp_type_check::il2cpp_gen_class_no_arg_class<templateType> { \
             static inline Il2CppClass* get() { \
-                return il2cpp_utils::GetClassFromName(nameSpace, className); \
+                static auto klass = ::il2cpp_utils::GetClassFromName(nameSpace, className); \
+                return klass; \
             } \
         }
+
+        template<typename T>
+        struct il2cpp_no_arg_type {
+            static inline const Il2CppType* get() {
+                static auto klass = il2cpp_no_arg_class<T>::get();
+                if (klass) {
+                    return &klass->byval_arg;
+                }
+                return nullptr;
+            }
+        };
+
+        template<typename T>
+        struct il2cpp_no_arg_type<T&> {
+            static inline const Il2CppType* get() {
+                static auto klass = il2cpp_no_arg_class<T>::get();
+                if (klass) {
+                    return &klass->this_arg;
+                }
+                return nullptr;
+            }
+        };
+
+        template<typename T>
+        struct il2cpp_no_arg_type<T const&> {
+            static inline const Il2CppType* get() {
+                return il2cpp_no_arg_type<T>::get();
+            }
+        };
 
         template<typename T>
         struct il2cpp_arg_type { };

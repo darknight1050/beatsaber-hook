@@ -129,14 +129,8 @@ namespace il2cpp_utils {
     template<class T>
     const Il2CppType* ExtractIndependentType() {
         static auto& logger = getLogger();
-        if constexpr (std::is_reference_v<T>) {
-            auto* klass = RET_0_UNLESS(logger, NoArgClass<std::remove_reference_t<T>>());
-            return &klass->this_arg;
-        } else {
-            auto* klass = RET_0_UNLESS(logger, NoArgClass<T>());
-            il2cpp_functions::Init();
-            return il2cpp_functions::class_get_type(klass);
-        }
+        static auto* typ = RET_0_UNLESS(logger, il2cpp_type_check::il2cpp_no_arg_type<T>::get());
+        return typ;
     }
 
     inline auto ExtractTypes() {
