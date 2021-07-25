@@ -2,6 +2,7 @@
 #include "../../shared/utils/byref.hpp"
 #include "../../shared/utils/il2cpp-utils.hpp"
 #include "../../shared/utils/typedefs.h"
+#include <cassert>
 
 static void test() {
     MethodInfo inf;
@@ -11,6 +12,6 @@ static void test() {
     il2cpp_utils::RunStaticMethod(&inf, byref(x));
     il2cpp_utils::ExtractIndependentType<ByRef<int>>();
     il2cpp_utils::ExtractIndependentType<int>();
-    il2cpp_utils::ExtractIndependentType<int&>() == il2cpp_utils::ExtractIndependentType<ByRef<int&>>();
+    assert(il2cpp_utils::ExtractIndependentType<int&>() == il2cpp_utils::ExtractIndependentType<ByRef<int>>());
 }
 #endif
