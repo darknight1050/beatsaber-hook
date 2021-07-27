@@ -272,7 +272,7 @@ namespace il2cpp_utils {
     /// @param method The MethodInfo* to invoke.
     /// @param params The arguments to pass into the function.
     template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
-    TOut RunMethodThrow(T&& instance, const MethodInfo* method, TArgs&& ...params) {
+    TOut RunMethodThrow(T& instance, const MethodInfo* method, TArgs&& ...params) {
         static auto& logger = getLogger();
         if (!method) {
             throw RunMethodException("Method cannot be null!", nullptr);
@@ -315,7 +315,10 @@ namespace il2cpp_utils {
                     if constexpr (il2cpp_type_check::need_box<instanceT>) {
                         // TODO: Eventually remove this dependence on il2cpp_functions::Init
                         il2cpp_functions::Init();
-                        reinterpret_cast<void (*)(Il2CppObject*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(il2cpp_functions::value_box(classof(instanceT), &instance), params..., method);
+                        auto boxedRepr = il2cpp_functions::value_box(classof(instanceT), &instance);
+                        reinterpret_cast<void (*)(Il2CppObject*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(boxedRepr, params..., method);
+                        // If we boxed a value, we need to copy back out from the value in order to ensure our struct has the value as well.
+                        instance = *reinterpret_cast<T*>(il2cpp_functions::object_unbox(boxedRepr));
                     } else {
                         reinterpret_cast<void (*)(instanceT, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(instance, params..., method);
                     }
@@ -342,7 +345,10 @@ namespace il2cpp_utils {
                     if constexpr (il2cpp_type_check::need_box<instanceT>) {
                         // TODO: Eventually remove this dependence on il2cpp_functions::Init
                         il2cpp_functions::Init();
-                        res = reinterpret_cast<TOut (*)(Il2CppObject*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(il2cpp_functions::value_box(classof(instanceT), &instance), params..., method);
+                        auto boxedRepr = il2cpp_functions::value_box(classof(instanceT), &instance);
+                        res = reinterpret_cast<TOut (*)(Il2CppObject*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(boxedRepr, params..., method);
+                        // If we boxed a value, we need to copy back out from the value in order to ensure our struct has the value as well.
+                        instance = *reinterpret_cast<T*>(il2cpp_functions::object_unbox(boxedRepr));
                     } else {
                         res = reinterpret_cast<TOut (*)(instanceT, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(instance, params..., method);
                     }
@@ -365,6 +371,11 @@ namespace il2cpp_utils {
                 il2cpp_utils::ExceptionToString(wrapper.ex).c_str());
             throw RunMethodException(wrapper.ex, method);
         }
+    }
+    template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
+    requires (std::is_same_v<T, Il2CppClass*> || std::is_same_v<T, Il2CppType*> || std::is_same_v<T, std::nullptr_t>)
+    TOut RunMethodThrow(T instance, const MethodInfo* method, TArgs&& ...params) {
+        return RunMethodThrow<TOut, checkTypes, T, TArgs...>(instance, method, std::forward<TArgs>(params)...);
     }
     #else
     /// @brief Instantiates a generic MethodInfo* from the provided Il2CppClasses.
