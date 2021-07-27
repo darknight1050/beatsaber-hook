@@ -409,6 +409,19 @@ namespace il2cpp_utils {
                 return reinterpret_cast<typename MethodDecomposer<decltype(val)>::mPtr>(il2cpp_utils::il2cpp_type_check::MetadataGetter<val>::get()->methodPointer);
             }
         };
+
+        
+        template<typename T>
+        /// @brief Describes whether the type T needs to be boxed or not (for instance method invokes).
+        /// This is true for all non-pointer types by default.
+        /// @tparam T The type to be boxed or not.
+        constexpr bool need_box = true;
+
+        template<typename T>
+        /// @brief Describes whether the type T needs to be boxed or not (for instance method invokes).
+        /// This is false for T*s by default.
+        /// @tparam T The type to be boxed or not.
+        constexpr bool need_box<T*> = false;
     }
 }
 

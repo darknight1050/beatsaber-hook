@@ -311,7 +311,14 @@ namespace il2cpp_utils {
                     // Static method
                     reinterpret_cast<void (*)(std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(params..., method);
                 } else {
-                    reinterpret_cast<void (*)(std::remove_reference_t<T>, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(instance, params..., method);
+                    using instanceT = std::remove_reference_t<T>;
+                    if constexpr (il2cpp_type_check::need_box<instanceT>) {
+                        // TODO: Eventually remove this dependence on il2cpp_functions::Init
+                        il2cpp_functions::Init();
+                        reinterpret_cast<void (*)(Il2CppObject*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(il2cpp_functions::value_box(classof(instanceT), &instance), params..., method);
+                    } else {
+                        reinterpret_cast<void (*)(instanceT, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(instance, params..., method);
+                    }
                 }
             } else {
                 // Method has non-void return
@@ -331,7 +338,14 @@ namespace il2cpp_utils {
                     // Static method
                     res = reinterpret_cast<TOut (*)(std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(params..., method);
                 } else {
-                    res = reinterpret_cast<TOut (*)(std::remove_reference_t<T>, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(instance, params..., method);
+                    using instanceT = std::remove_reference_t<T>;
+                    if constexpr (il2cpp_type_check::need_box<instanceT>) {
+                        // TODO: Eventually remove this dependence on il2cpp_functions::Init
+                        il2cpp_functions::Init();
+                        res = reinterpret_cast<TOut (*)(Il2CppObject*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(il2cpp_functions::value_box(classof(instanceT), &instance), params..., method);
+                    } else {
+                        res = reinterpret_cast<TOut (*)(instanceT, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(instance, params..., method);
+                    }
                 }
                 if constexpr (checkTypes) {
                     auto* outType = ExtractIndependentType<TOut>();
