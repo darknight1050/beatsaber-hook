@@ -87,10 +87,55 @@ namespace il2cpp_utils {
 
         template<typename T>
         #ifndef BS_HOOK_USE_CONCEPTS
-        struct il2cpp_no_arg_class<T, typename std::enable_if_t<std::is_base_of_v<NestedType, T>>> {
+        struct il2cpp_no_arg_class<T, typename std::enable_if_t<std::is_base_of_v<NestedType, T> && T::IS_VALUE_TYPE>> {
         #else
-        requires std::is_base_of_v<NestedType, T>
+        requires (std::is_base_of_v<NestedType, T> && T::IS_VALUE_TYPE)
         struct il2cpp_no_arg_class<T> {
+        #endif
+            // TODO: make this work on any class with a `using declaring_type`, then remove NestedType
+            static inline Il2CppClass* get() {
+                il2cpp_functions::Init();
+                Il2CppClass* declaring = il2cpp_no_arg_class<typename T::declaring_type>::get();
+                Il2CppClass* classWithNested = declaring;
+                if (declaring->generic_class) {
+                    // Class::GetNestedTypes refuses to work on generic instances, so get the generic template instead
+                    classWithNested = CRASH_UNLESS(il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex(declaring->generic_class->typeDefinitionIndex));
+                }
+                #if __has_feature(cxx_rtti)
+                std::string typeName = type_name<T>();
+                auto idx = typeName.find_last_of(':');
+                if (idx >= 0) typeName = typeName.substr(idx+1);
+                #else
+                std::string typeName(T::NESTED_NAME);
+                #endif
+
+                // log(INFO, "type_name: %s", typeName.c_str());
+                void* myIter = nullptr;
+                Il2CppClass* found = nullptr;
+                while (Il2CppClass* nested = il2cpp_functions::class_get_nested_types(classWithNested, &myIter)) {
+                    // log(INFO, "nested->name: %s", nested->name);
+                    if (typeName == nested->name) {
+                        found = nested;
+                        break;
+                    }
+                }
+                CRASH_UNLESS(found);
+                if (declaring->generic_class) {
+                    const Il2CppGenericInst* genInst = declaring->generic_class->context.class_inst;
+                    found = CRASH_UNLESS(il2cpp_utils::MakeGeneric(found, genInst->type_argv, genInst->type_argc));
+                }
+
+                return found;
+            }
+        };
+
+        // For non-value types, forward accordingly. Should only apply to T*s that have these properties.
+        template<typename T>
+        #ifndef BS_HOOK_USE_CONCEPTS
+        struct il2cpp_no_arg_class<T, typename std::enable_if_t<std::is_base_of_v<NestedType, T> && !T::IS_VALUE_TYPE>> {
+        #else
+        requires (std::is_base_of_v<NestedType, T> && !T::IS_VALUE_TYPE)
+        struct il2cpp_no_arg_class<T*> {
         #endif
             // TODO: make this work on any class with a `using declaring_type`, then remove NestedType
             static inline Il2CppClass* get() {
