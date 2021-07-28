@@ -375,7 +375,7 @@ namespace il2cpp_utils {
     template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
     requires ((std::is_same_v<T, Il2CppClass*> || std::is_same_v<T, Il2CppType*> || std::is_same_v<T, std::nullptr_t>) && !std::is_reference_v<T>)
     TOut RunMethodThrow(T instance, const MethodInfo* method, TArgs&& ...params) {
-        return RunMethodThrow<TOut, checkTypes, T, TArgs...>(instance, method, std::forward<TArgs>(params)...);
+        return RunMethodThrow<TOut, checkTypes, T&, TArgs...>(instance, method, std::forward<TArgs>(params)...);
     }
     #else
     /// @brief Instantiates a generic MethodInfo* from the provided Il2CppClasses.
