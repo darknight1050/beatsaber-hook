@@ -340,6 +340,14 @@ struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Array<TArg>*> {
     }
 };
 
+template<class T, class Ptr>
+struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<ArrayWrapper<T, Ptr>> {
+    static inline Il2CppClass* get() {
+        static auto klass = ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Array<T>*>::get();
+        return klass;
+    }
+};
+
 #include "utils/Il2CppHashMap.h"
 #include "utils/HashUtils.h"
 #include "utils/StringUtils.h"

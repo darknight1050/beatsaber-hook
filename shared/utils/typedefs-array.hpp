@@ -219,4 +219,120 @@ struct Array : public Il2CppArray
     }
 };
 
+template<typename T, class Ptr = Array<T>*>
+struct ArrayWrapper {
+    static_assert(sizeof(Ptr) == sizeof(void*), "Size of Ptr type must be the same as a void*!");
+
+    ArrayWrapper(std::initializer_list<T> vals) : val(Array<T>::New(vals)) {}
+    ArrayWrapper(il2cpp_array_size_t size) : val(Array<T>::NewLength(size)) {}
+
+    inline il2cpp_array_size_t Length() const {
+        return val->Length();
+    }
+    T& operator[](size_t i) {
+        return val->values[i];
+    }
+    const T& operator[](size_t i) const {
+        return val->values[i];
+    }
+
+    /// @brief Get a given index, performs bound checking and throws std::runtime_error on failure.
+    /// @param i The index to get.
+    /// @return The reference to the item.
+    T& get(size_t i) {
+        THROW_UNLESS(i < Length() && i >= 0);
+        return val->values[i];
+    }
+    /// @brief Get a given index, performs bound checking and throws std::runtime_error on failure.
+    /// @param i The index to get.
+    /// @return The const reference to the item.
+    const T& get(size_t i) const {
+        THROW_UNLESS(i < Length() && i >= 0);
+        return val->values[i];
+    }
+    /// @brief Tries to get a given index, performs bound checking and returns a std::nullopt on failure.
+    /// @param i The index to get.
+    /// @return The WrapperRef<T> to the item, mostly considered to be a T&.
+    std::optional<WrapperRef<T>> try_get(size_t i) {
+        if (i >= Length() || i < 0) {
+            return std::nullopt;
+        }
+        return WrapperRef(val->values[i]);
+    }
+    /// @brief Tries to get a given index, performs bound checking and returns a std::nullopt on failure.
+    /// @param i The index to get.
+    /// @return The WrapperRef<const T> to the item, mostly considered to be a const T&.
+    std::optional<WrapperRef<const T>> try_get(size_t i) const {
+        if (i >= Length() || i < 0) {
+            return std::nullopt;
+        }
+        return WrapperRef(val->values[i]);
+    }
+
+    #ifdef HAS_CODEGEN
+    System::Collections::Generic::IEnumerator_1<T>* GetEnumerator() {
+    #else
+    Il2CppObject* GetEnumerator() {
+    #endif
+        static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(
+            val, "System.Collections.Generic.IEnumerable`1.GetEnumerator", 0));
+        #ifdef HAS_CODEGEN
+        return CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe<System::Collections::Generic::IEnumerator_1<T>*>(
+        #else
+        return CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe(
+        #endif
+            val, method));
+    }
+    bool Contains(T item) {
+        // TODO: find a better way around the existence of 2 methods with this name (the 2nd not being generic at all)
+        static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(
+            val, "System.Collections.Generic.ICollection`1.Contains", 1));
+        return CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe<bool>(val, method, item));
+    }
+    void CopyTo(::Array<T>* array, int arrayIndex) {
+        static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(
+            val, "System.Collections.Generic.ICollection`1.CopyTo", 2));
+        CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe(val, method, array, arrayIndex));
+    }
+    int IndexOf(T item) {
+        static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(val, "System.Collections.Generic.IList`1.IndexOf", 1));
+        return CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe<int>(val, method, item));
+    }
+    /// @brief Copies the array to the provided vector reference of same type.
+    /// @param vec The vector to copy to.
+    void copy_to(std::vector<T>& vec) const {
+        vec.assign(val->values, val->values + Length());
+    }
+    /// @brief Provides a reference span of the held data within this array. The span should NOT outlive this instance.
+    /// @return The created span.
+    std::span<T> ref_to() {
+        return std::span(val->values, Length());
+    }
+    /// @brief Provides a reference span of the held data within this array. The span should NOT outlive this instance.
+    /// @return The created span.
+    const std::span<T> ref_to() const {
+        return std::span(const_cast<T*>(val->values), Length());
+    }
+
+    using iterator = T*;
+    using const_iterator = T const*;
+
+    iterator begin() {
+        return val->values;
+    }
+    iterator end() {
+        return &val->values[Length()];
+    }
+    const_iterator begin() const {
+        return val->values;
+    }
+    const_iterator end() const {
+        return &val->values[Length()];
+    }
+
+
+    private:
+    Ptr val;
+};
+
 #pragma pack(pop)
