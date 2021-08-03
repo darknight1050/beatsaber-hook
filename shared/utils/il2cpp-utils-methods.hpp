@@ -287,6 +287,14 @@ namespace il2cpp_utils {
             if (!ParameterMatch(method, types)) {
                 throw RunMethodException("Parameters do not match!", method);
             }
+            auto* outType = ExtractIndependentType<TOut>();
+            if (outType) {
+                if (!IsConvertible(outType, method->return_type, false)) {
+                    logger.warning("User requested TOut %s does not match the method's return object of type %s!",
+                        TypeGetSimpleName(outType), TypeGetSimpleName(method->return_type));
+                    throw RunMethodException("Return type of method is not convertible!", method);
+                }
+            }
         }
         // NOTE: We need to remove references from our method pointers and copy in our parameters
         // This works great for all cases EXCEPT for byref types
@@ -336,35 +344,23 @@ namespace il2cpp_utils {
                 if (il2cpp_functions::type_equals(method->return_type, &il2cpp_functions::defaults->void_class->byval_arg)) {
                     throw RunMethodException("Return type of method is void, yet was requested as non-void!", method);
                 }
-                TOut res;
                 if ((method->flags & METHOD_ATTRIBUTE_STATIC) > 0) {
                     // Static method
-                    res = reinterpret_cast<TOut (*)(std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(params..., method);
+                    return reinterpret_cast<TOut (*)(std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(params..., method);
                 } else {
                     using instanceT = std::remove_reference_t<T>;
                     if constexpr (il2cpp_type_check::need_box<instanceT>) {
                         // TODO: Eventually remove this dependence on il2cpp_functions::Init
                         il2cpp_functions::Init();
                         auto boxedRepr = il2cpp_functions::value_box(classof(instanceT), &instance);
-                        res = reinterpret_cast<TOut (*)(Il2CppObject*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(boxedRepr, params..., method);
+                        TOut res = reinterpret_cast<TOut (*)(Il2CppObject*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(boxedRepr, params..., method);
                         // If we boxed a value, we need to copy back out from the value in order to ensure our struct has the value as well.
                         instance = *reinterpret_cast<T*>(il2cpp_functions::object_unbox(boxedRepr));
+                        return res;
                     } else {
-                        res = reinterpret_cast<TOut (*)(instanceT, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(instance, params..., method);
+                        return reinterpret_cast<TOut (*)(instanceT, std::remove_reference_t<TArgs>..., const MethodInfo*)>(method->methodPointer)(instance, params..., method);
                     }
                 }
-                if constexpr (checkTypes) {
-                    auto* outType = ExtractIndependentType<TOut>();
-                    if (outType) {
-                        auto* retType = ExtractType(res);
-                        if (!IsConvertible(outType, retType, false)) {
-                            logger.warning("User requested TOut %s does not match the method's return object of type %s!",
-                                TypeGetSimpleName(outType), TypeGetSimpleName(retType));
-                            throw RunMethodException("Return type of method is not convertible!", method);
-                        }
-                    }
-                }
-                return res;
             }
         } catch (Il2CppExceptionWrapper& wrapper) {
             logger.error("%s: Failed with exception: %s", il2cpp_functions::method_get_name(method),
