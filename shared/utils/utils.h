@@ -213,7 +213,7 @@ typename identity<decltype(&Q::operator())>::type wrapLambda(Q const& f) {
 }
 
 // logs the function, file and line, sleeps to allow logs to flush, then terminates program
-void safeAbort(const char* func, const char* file, int line);
+__attribute__((noreturn)) void safeAbort(const char* func, const char* file, int line);
 // sets "file" and "line" to the file and line you call this macro from
 #ifndef SUPPRESS_MACRO_LOGS
 #define SAFE_ABORT() safeAbort(__PRETTY_FUNCTION__, __FILE__, __LINE__)

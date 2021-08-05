@@ -39,7 +39,7 @@ namespace il2cpp_utils {
     #ifndef BS_HOOK_USE_CONCEPTS
     ::std::enable_if_t<!::std::is_convertible_v<T, ::std::string_view>, FieldInfo*>
     #else
-    requires (!std::is_convertible_v<T, ::std::string_view>) FieldInfo*
+    requires (!std::is_convertible_v<T, Il2CppClass*> && !std::is_convertible_v<T, ::std::string_view>) FieldInfo*
     #endif
     FindField(T&& instance, TArgs&&... params) {
         static auto& logger = getLogger();
