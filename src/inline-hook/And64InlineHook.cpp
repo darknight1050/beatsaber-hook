@@ -520,53 +520,31 @@ extern "C" {
 
         static_assert(A64_MAX_INSTRUCTIONS >= 5, "please fix A64_MAX_INSTRUCTIONS!");
         auto pc_offset = static_cast<int64_t>(__intval(replace) - __intval(symbol)) >> 2;
-        if (llabs(pc_offset) >= (mask >>1)) {
-            int32_t count = (reinterpret_cast<uint64_t>(original + 2) & 7u) != 0u ? 5 : 4;
-            if (trampoline) {
-                if (rwx_size < count * 10u) {
-                  //  LOGW("rwx size is too small to hold %u bytes backup instructions!", count * 10u);
-                    return NULL;
-                } //if
-                __fix_instructions(original, count, trampoline);
+        int32_t count = (reinterpret_cast<uint64_t>(original + 2) & 7u) != 0u ? 5 : 4;
+        if (trampoline) {
+            if (rwx_size < count * 10u) {
+                //  LOGW("rwx size is too small to hold %u bytes backup instructions!", count * 10u);
+                return NULL;
             } //if
+            __fix_instructions(original, count, trampoline);
+        } //if
 
-            if (__make_rwx(original, 5 * sizeof(uint32_t)) == 0) {
-                if (count == 5) {
-                    original[0] = A64_NOP;
-                    ++original;
-                } //if
-                original[0] = 0x58000051u; // LDR X17, #0x8
-                original[1] = 0xd61f0220u; // BR X17
-                *reinterpret_cast<int64_t *>(original + 2) = __intval(replace);
-                __flush_cache(symbol, 5 * sizeof(uint32_t));
-
-                A64_LOGI("inline hook %p->%p successfully! %zu bytes overwritten",
-                         symbol, replace, 5 * sizeof(uint32_t));
-            } else {
-                A64_LOGE("mprotect failed with errno = %d, p = %p, size = %zu",
-                         errno, original, 5 * sizeof(uint32_t));
-                trampoline = NULL;
+        if (__make_rwx(original, 5 * sizeof(uint32_t)) == 0) {
+            if (count == 5) {
+                original[0] = A64_NOP;
+                ++original;
             } //if
+            original[0] = 0x58000051u; // LDR X17, #0x8
+            original[1] = 0xd61f0220u; // BR X17
+            *reinterpret_cast<int64_t *>(original + 2) = __intval(replace);
+            __flush_cache(symbol, 5 * sizeof(uint32_t));
+
+            A64_LOGI("inline hook %p->%p successfully! %zu bytes overwritten",
+                        symbol, replace, 5 * sizeof(uint32_t));
         } else {
-            if (trampoline) {
-                if (rwx_size < 1u * 10u) {
-                   // LOGW("rwx size is too small to hold %u bytes backup instructions!", 1u * 10u);
-                    return NULL;
-                } //if
-                __fix_instructions(original, 1, trampoline);
-            } //if
-
-            if (__make_rwx(original, 1 * sizeof(uint32_t)) == 0) {
-                __sync_cmpswap(original, *original, 0x14000000u | (pc_offset & mask)); // "B" ADDR_PCREL26
-                __flush_cache(symbol, 1 * sizeof(uint32_t));
-
-                A64_LOGI("inline hook %p->%p successfully! %zu bytes overwritten",
-                         symbol, replace, 1 * sizeof(uint32_t));
-            } else {
-                A64_LOGE("mprotect failed with errno = %d, p = %p, size = %zu",
-                         errno, original, 1 * sizeof(uint32_t));
-                trampoline = NULL;
-            } //if
+            A64_LOGE("mprotect failed with errno = %d, p = %p, size = %zu",
+                        errno, original, 5 * sizeof(uint32_t));
+            trampoline = NULL;
         } //if
 
         return trampoline;
