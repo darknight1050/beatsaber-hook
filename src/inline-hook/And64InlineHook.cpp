@@ -33,7 +33,6 @@
 #include <android/log.h>
 #include <errno.h>
 #include <string.h>
-#include "../../shared/utils/logging.hpp"
 #ifdef __aarch64__
 
 #include "../../shared/inline-hook/And64InlineHook.hpp"
