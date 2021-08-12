@@ -223,6 +223,7 @@ template<typename T, class Ptr = Array<T>*>
 struct ArrayWrapper {
     static_assert(sizeof(Ptr) == sizeof(void*), "Size of Ptr type must be the same as a void*!");
 
+    ArrayWrapper(Ptr initVal) : val(initVal) {}
     ArrayWrapper(std::initializer_list<T> vals) : val(Array<T>::New(vals)) {}
     ArrayWrapper(il2cpp_array_size_t size) : val(Array<T>::NewLength(size)) {}
 
