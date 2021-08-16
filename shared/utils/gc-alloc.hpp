@@ -1,5 +1,7 @@
 #pragma once
 #include <stddef.h>
+#include <new> // bad_alloc, bad_array_new_length
+#include <memory>
 
 // Okay, so because we know that GC isn't overwriting heap (since it just calls the same shared calloc/malloc impls)
 // we are confident that a new operator here isn't necessary or useful.
