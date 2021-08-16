@@ -31,7 +31,7 @@ void gc_free_specific(void *ptr) noexcept;
 
 struct gc_allocator
 {
-    constexpr bool operator==(const gc_allocator<U> &) const noexcept
+    constexpr bool operator==(const gc_allocator&) const noexcept
     {
         return true;
     }
