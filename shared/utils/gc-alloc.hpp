@@ -31,13 +31,10 @@ void gc_free_specific(void *ptr) noexcept;
 
 struct gc_allocator
 {
-    gc_allocator() noexcept {} //default ctor not required by C++ Standard Library
-
-    // TODO: Necessary?
-    // bool operator==(const gc_allocator<U> &) const noexcept
-    // {
-    //     return true;
-    // }
+    constexpr bool operator==(const gc_allocator<U> &) const noexcept
+    {
+        return true;
+    }
 
     void* allocate(const size_t n) const
     {
