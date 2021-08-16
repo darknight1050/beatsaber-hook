@@ -38,7 +38,7 @@ struct gc_allocator
 
     // A converting copy constructor:
     template <class U>
-    gc_allocator(const gc_allocator<U> &) noexcept = default;
+    gc_allocator(const gc_allocator<U> &) noexcept {};
 
     template <class U>
     constexpr bool operator==(const gc_allocator<U> &) const noexcept
