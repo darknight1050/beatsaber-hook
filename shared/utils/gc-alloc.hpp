@@ -11,17 +11,64 @@
 /// This function fallsback to calloc if no GC_Alloc or GC_Free implementations are found via xref/sigscan.
 /// @param sz The size to allocate an instance of.
 /// @return The allocated instance.
-[[nodiscard]] void* gc_alloc_specific(size_t sz);
+[[nodiscard]] void *gc_alloc_specific(size_t sz);
 
 /// @brief Deletes the provided allocated instance from the gc_alloc_specific function defined here.
 /// Other pointers will cause undefined behavior.
 /// This function will call GC_free if there is both a GC_Alloc and GC_Free implementation available, free otherwise.
 /// @param sz The pointer to free explicitly.
 /// @return The allocated instance.
-void gc_free_specific(void* ptr) noexcept;
+void gc_free_specific(void *ptr) noexcept;
 
 /// @brief Reallocation implementation is equivalent to: alloc + free
 /// @param ptr The pointer to resize.
 /// @param new_size The new size of the memory.
 /// @return The resized instance.
-[[nodiscard]] void* gc_realloc_specific(void* ptr, size_t new_size);
+[[nodiscard]] void *gc_realloc_specific(void *ptr, size_t new_size);
+
+template <class T>
+struct gc_allocator
+{
+    typedef T value_type;
+
+    gc_allocator() noexcept {} //default ctor not required by C++ Standard Library
+
+    // A converting copy constructor:
+    template <class U>
+    gc_allocator(const gc_allocator<U> &) noexcept {}
+
+    template <class U>
+    bool operator==(const gc_allocator<U> &) const noexcept
+    {
+        return true;
+    }
+
+    template <class U>
+    bool operator!=(const gc_allocator<U> &) const noexcept
+    {
+        return false;
+    }
+
+    T *allocate(const size_t n) const
+    {
+        if (n == 0)
+        {
+            return nullptr;
+        }
+        if (n > static_cast<size_t>(-1) / sizeof(T))
+        {
+            throw std::bad_array_new_length();
+        }
+        void *const pv = gc_alloc_specific(n * sizeof(T));
+        if (!pv)
+        {
+            throw std::bad_alloc();
+        }
+        return static_cast<T *>(pv);
+    }
+
+    void deallocate(T *const p, size_t) const noexcept
+    {
+        gc_free_specific(p);
+    }
+};
