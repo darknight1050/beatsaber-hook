@@ -109,7 +109,9 @@ struct List : Il2CppObject
     int version;
     Il2CppObject* syncRoot;
 };
+DEFINE_IL2CPP_ARG_TYPE_GENERIC_CLASS(List, "System.Collections.Generic", "List`1");
 #endif
+#include "typedefs-list.hpp"
 
 #ifdef HAS_CODEGEN
 // TODO: QiCache and Il2CppComObject ("System.__Il2CppComObject (dummy type that replaces System.__ComObject)")
@@ -344,6 +346,14 @@ template<class T, class Ptr>
 struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<ArrayWrapper<T, Ptr>> {
     static inline Il2CppClass* get() {
         static auto klass = ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Array<T>*>::get();
+        return klass;
+    }
+};
+
+template<class T, class Ptr>
+struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<ListWrapper<T, Ptr>> {
+    static inline Il2CppClass* get() {
+        static auto klass = ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<List<T>*>::get();
         return klass;
     }
 };

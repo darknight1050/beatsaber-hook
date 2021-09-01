@@ -223,7 +223,10 @@ template<typename T, class Ptr = Array<T>*>
 struct ArrayWrapper {
     static_assert(sizeof(Ptr) == sizeof(void*), "Size of Ptr type must be the same as a void*!");
 
-    ArrayWrapper(Ptr initVal) : val(initVal) {}
+    /// @brief Create an ArrayWrapper from a pointer
+    constexpr ArrayWrapper(Ptr initVal) : val(initVal) {}
+    /// @brief Default constructor creates an empty array that is wrapped
+    ArrayWrapper() : val(Array<T>::NewLength(0)) {}
     ArrayWrapper(std::initializer_list<T> vals) : val(Array<T>::New(vals)) {}
     ArrayWrapper(il2cpp_array_size_t size) : val(Array<T>::NewLength(size)) {}
 
@@ -315,8 +318,13 @@ struct ArrayWrapper {
         return std::span(const_cast<T*>(val->values), Length());
     }
 
-    using iterator = T*;
-    using const_iterator = T const*;
+    using value_type = T;
+    using pointer = T*;
+    using const_pointer = const T*;
+    using reference = T&;
+    using const_reference = T const&;
+    using iterator = pointer;
+    using const_iterator = const_pointer;
 
     iterator begin() {
         return val->values;
@@ -330,7 +338,6 @@ struct ArrayWrapper {
     const_iterator end() const {
         return &val->values[Length()];
     }
-
 
     private:
     Ptr val;
