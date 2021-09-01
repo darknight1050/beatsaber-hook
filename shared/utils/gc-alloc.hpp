@@ -28,26 +28,26 @@ void gc_free_specific(void *ptr) noexcept;
 /// @return The resized instance.
 [[nodiscard]] void *gc_realloc_specific(void *ptr, size_t new_size);
 
+/// @brief A C++ allocator that forwards to the il2cpp GC heap.
+/// Does NOT call any C# constructors on any types, only allocates space for them.
+/// @tparam T The type to specifically allocate.
 template <class T>
-struct gc_allocator
-{
+struct gc_allocator {
     using is_always_equal = std::true_type;
     typedef T value_type;
 
-    gc_allocator() noexcept {} //default ctor not required by C++ Standard Library
+    constexpr gc_allocator() noexcept {}
 
     // A converting copy constructor:
     template <class U>
-    gc_allocator(const gc_allocator<U> &) noexcept {};
+    constexpr gc_allocator(const gc_allocator<U> &) noexcept {}
 
     template <class U>
-    constexpr bool operator==(const gc_allocator<U> &) const noexcept
-    {
+    constexpr bool operator==(const gc_allocator<U> &) const noexcept {
         return true;
     }
 
-    T *allocate(const size_t n) const
-    {
+    T *allocate(const size_t n) const {
         if (n == 0)
         {
             return nullptr;
@@ -64,8 +64,7 @@ struct gc_allocator
         return static_cast<T *>(pv);
     }
 
-    void deallocate(T *const p, size_t) const noexcept
-    {
+    void deallocate(T *const p, size_t) const noexcept {
         gc_free_specific(p);
     }
 };
