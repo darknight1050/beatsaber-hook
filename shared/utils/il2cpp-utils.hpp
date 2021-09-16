@@ -411,19 +411,9 @@ namespace il2cpp_utils {
         return il2cpp_functions::runtime_invoke(method, reference, invokeParams, exc);
     }
 
-    template<typename T = void, typename... TArgs>
-    void ExtractClassesNoArgs(::std::vector<const Il2CppClass*>& vec) {
-        vec.push_back(classof(T));
-        if constexpr (sizeof...(TArgs) != 0) {
-            ExtractClassesNoArgs<TArgs...>(vec);
-        }
-    }
-
     template<typename... TArgs>
     ::std::vector<const Il2CppClass*> ExtractFromFunctionNoArgs() {
-        ::std::vector<const Il2CppClass*> vec(sizeof...(TArgs));
-        ExtractClassesNoArgs<TArgs...>(vec);
-        return vec;
+        return { classof(TArgs)... };
     }
 
     /// @brief Creates and returns a C# System.Func<TArgs..., Ret> from the provided function_ptr_t.
