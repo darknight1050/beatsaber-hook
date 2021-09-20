@@ -200,7 +200,7 @@ namespace il2cpp_utils {
     requires (std::is_pointer_v<T>)
     T MakeDelegate(const Il2CppClass* delegateClass, TObj obj, void* callback) {
         auto tmp = reinterpret_cast<function_ptr_t<void>>(callback);
-        return MakeDelegate(delegateClass, obj, tmp);
+        return MakeDelegate<T>(delegateClass, obj, tmp);
     }
 
     /// @brief Creates a delegate of return type T, with target TObj, using the provided Il2CppType*
@@ -216,7 +216,7 @@ namespace il2cpp_utils {
     T MakeDelegate(const Il2CppType* actionType, TObj obj, function_ptr_t<R, TArgs...> callback) {
         il2cpp_functions::Init();
         Il2CppClass* delegateClass = il2cpp_functions::class_from_il2cpp_type(actionType);
-        return MakeDelegate(delegateClass, obj, callback);
+        return MakeDelegate<T>(delegateClass, obj, callback);
     }
 
     /// @brief Creates a delegate of return type T, with target TObj, using the provided Il2CppType* and void* callback.
@@ -231,7 +231,7 @@ namespace il2cpp_utils {
     requires (std::is_pointer_v<T>)
     T MakeDelegate(const Il2CppType* delegateType, TObj obj, void* callback) {
         auto tmp = reinterpret_cast<function_ptr_t<void>>(callback);
-        return MakeDelegate(delegateType, obj, tmp);
+        return MakeDelegate<T>(delegateType, obj, tmp);
     }
 
     /// @brief Creates a delegate fit to be passed in the given parameter position to the given method.

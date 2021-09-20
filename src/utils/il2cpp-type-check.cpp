@@ -55,7 +55,7 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
         static auto logger = getLogger().WithContext("MakeGeneric");
 
-        auto typ = RET_0_UNLESS(logger, il2cpp_functions::defaults->systemtype_class);
+        static auto typ = RET_0_UNLESS(logger, il2cpp_functions::defaults->systemtype_class);
         auto klassType = RET_0_UNLESS(logger, GetSystemType(klass));
 
         // Call Type.MakeGenericType on it
@@ -86,7 +86,7 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
         static auto logger = getLogger().WithContext("GetClassFromName");
 
-        auto typ = RET_0_UNLESS(logger, il2cpp_functions::defaults->systemtype_class);
+        static auto typ = RET_0_UNLESS(logger, il2cpp_functions::defaults->systemtype_class);
         auto klassType = RET_0_UNLESS(logger, GetSystemType(klass));
 
         // Call Type.MakeGenericType on it
