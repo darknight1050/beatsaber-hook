@@ -258,7 +258,7 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
         std::string name = parentName + "/" + klass->name;
         char *pName = (char*)gc_alloc_specific(name.size() + 1 * sizeof(char));
-        strcpy(pName, name.c_str());
+        strlcpy(pName, name.c_str(), name.length() + 1);
 
         hashTable->insert(std::make_pair(std::make_pair(namespaze, (const char*)pName), il2cpp_functions::MetadataCache_GetIndexForTypeDefinition(klass)));
 

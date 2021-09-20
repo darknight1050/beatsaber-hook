@@ -111,6 +111,7 @@ class Logger {
             va_list lst;
             va_start(lst, fmt);
             log(lvl, string_vformat(fmt, lst));
+            va_end(lst);
         }
         __attribute__((format(printf, 2, 3))) void critical(const char* fmt, ...) {
             if (options.silent) {
@@ -119,6 +120,7 @@ class Logger {
             va_list lst;
             va_start(lst, fmt);
             log(Logging::CRITICAL, string_vformat(fmt, lst));
+            va_end(lst);
         }
         __attribute__((format(printf, 2, 3))) void error(const char* fmt, ...) {
             if (options.silent) {
@@ -127,6 +129,7 @@ class Logger {
             va_list lst;
             va_start(lst, fmt);
             log(Logging::ERROR, string_vformat(fmt, lst));
+            va_end(lst);
         }
         __attribute__((format(printf, 2, 3))) void warning(const char* fmt, ...) {
             if (options.silent) {
@@ -135,6 +138,7 @@ class Logger {
             va_list lst;
             va_start(lst, fmt);
             log(Logging::WARNING, string_vformat(fmt, lst));
+            va_end(lst);
         }
         __attribute__((format(printf, 2, 3))) void info(const char* fmt, ...) {
             if (options.silent) {
@@ -143,6 +147,7 @@ class Logger {
             va_list lst;
             va_start(lst, fmt);
             log(Logging::INFO, string_vformat(fmt, lst));
+            va_end(lst);
         }
         __attribute__((format(printf, 2, 3))) void debug(const char* fmt, ...) {
             if (options.silent) {
@@ -151,6 +156,7 @@ class Logger {
             va_list lst;
             va_start(lst, fmt);
             log(Logging::DEBUG, string_vformat(fmt, lst));
+            va_end(lst);
         }
         /// @brief Flushes the buffer for this logger instance.
         void flush();
@@ -342,6 +348,7 @@ class LoggerContextObject {
             va_list lst;
             va_start(lst, fmt);
             log_v(lvl, fmt, lst);
+            va_end(lst);
         }
     }
     __attribute__((format(printf, 2, 3))) void critical(const char* fmt, ...) const {
@@ -349,6 +356,7 @@ class LoggerContextObject {
             va_list lst;
             va_start(lst, fmt);
             log_v(Logging::CRITICAL, fmt, lst);
+            va_end(lst);
         }
     }
     __attribute__((format(printf, 2, 3))) void error(const char* fmt, ...) const {
@@ -356,6 +364,7 @@ class LoggerContextObject {
             va_list lst;
             va_start(lst, fmt);
             log_v(Logging::ERROR, fmt, lst);
+            va_end(lst);
         }
     }
     __attribute__((format(printf, 2, 3))) void warning(const char* fmt, ...) const {
@@ -363,6 +372,7 @@ class LoggerContextObject {
             va_list lst;
             va_start(lst, fmt);
             log_v(Logging::WARNING, fmt, lst);
+            va_end(lst);
         }
     }
     __attribute__((format(printf, 2, 3))) void info(const char* fmt, ...) const {
@@ -370,6 +380,7 @@ class LoggerContextObject {
             va_list lst;
             va_start(lst, fmt);
             log_v(Logging::INFO, fmt, lst);
+            va_end(lst);
         }
     }
     __attribute__((format(printf, 2, 3))) void debug(const char* fmt, ...) const {
@@ -377,6 +388,7 @@ class LoggerContextObject {
             va_list lst;
             va_start(lst, fmt);
             log_v(Logging::DEBUG, fmt, lst);
+            va_end(lst);
         }
     }
     /// @brief Writes a backtrace for the provided number of frames.

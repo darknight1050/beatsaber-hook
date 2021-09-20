@@ -286,25 +286,25 @@ namespace il2cpp_utils {
         return true;
     }
 
-    // Contains the set of created delegates
-    std::unordered_set<void*> delegates;
+    // Contains the map of created MethodInfo* instances
+    std::unordered_map<std::pair<Il2CppMethodPointer, bool>, MethodInfo*> delegateMethodInfoMap;
 
     void ClearDelegates() {
-        for (auto itr : delegates) {
-            free(reinterpret_cast<Delegate*>(itr)->original_method_info);
+        for (auto itr : delegateMethodInfoMap) {
+            free(itr.second);
         }
-        delegates.clear();
+        delegateMethodInfoMap.clear();
     }
 
-    void ClearDelegate(void* delegate) {
-        auto itr = delegates.find(delegate);
-        if (itr != delegates.end()) {
-            free(reinterpret_cast<Delegate*>(*itr)->original_method_info);
-            delegates.erase(itr);
+    void ClearDelegate(std::pair<Il2CppMethodPointer, bool> delegate) {
+        auto itr = delegateMethodInfoMap.find(delegate);
+        if (itr != delegateMethodInfoMap.end()) {
+            free(itr->second);
+            delegateMethodInfoMap.erase(itr);
         }
     }
 
-    void AddAllocatedDelegate(void* delegate) {
-        delegates.insert(delegate);
+    void AddAllocatedDelegate(std::pair<Il2CppMethodPointer, bool> delegate, MethodInfo* mptr) {
+        delegateMethodInfoMap.insert({delegate, mptr});
     }
 }

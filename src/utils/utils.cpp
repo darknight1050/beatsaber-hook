@@ -119,7 +119,9 @@ uintptr_t getLibil2cppSize() {
 std::string string_format(const char* format, ...) {
     va_list lst;
     va_start(lst, format);
-    return string_vformat(format, lst);
+    auto s = string_vformat(format, lst);
+    va_end(lst);
+    return s;
 }
 
 void analyzeBytes(const void* ptr) {
@@ -150,11 +152,11 @@ uintptr_t baseAddr(const char *soname)  // credits to https://github.com/ikoz/An
     {
         tok = strtok_r(line, "-", &state);
         baseAddr = tok;
-        tok = strtok_r(NULL, "\t ", &state);
-        tok = strtok_r(NULL, "\t ", &state); // "r-xp" field
-        tok = strtok_r(NULL, "\t ", &state); // "0000000" field
-        tok = strtok_r(NULL, "\t ", &state); // "01:02" field
-        tok = strtok_r(NULL, "\t ", &state); // "133224" field
+        strtok_r(NULL, "\t ", &state);
+        strtok_r(NULL, "\t ", &state); // "r-xp" field
+        strtok_r(NULL, "\t ", &state); // "0000000" field
+        strtok_r(NULL, "\t ", &state); // "01:02" field
+        strtok_r(NULL, "\t ", &state); // "133224" field
         tok = strtok_r(NULL, "\t ", &state); // path field
 
         if (tok != NULL) {

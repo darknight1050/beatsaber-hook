@@ -142,6 +142,7 @@ public:
         }
         Logger::get().error("Only found %i instructions matching this predicate!", matches);
         usleep(10000);
+        if (inst != this) delete inst;
         return nullptr;
     }
     // e.g. BL(R). Unless the jump is indirect, the address which the instruction jumps to will be at ->imm.
@@ -300,7 +301,7 @@ To Replicate(From bits, int M, int N = sizeof(To) * CHAR_BIT) {
 template<class T>
 int HighestSetBit(T x, int N) {
     for (int i = N - 1; i >= 0; i--) {
-        if (x & (1 << i)) return i;
+        if (x & (uint64_t(1) << i)) return i;
     }
     return -1;
 }

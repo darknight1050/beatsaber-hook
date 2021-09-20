@@ -25,7 +25,7 @@ namespace std {
 #if __has_include(<source_location>)
 #error please alert sc2ad/beatsaber-hook that "std::source_location is live" (sharing your Android NDK version) then comment this out!
 #elif __has_include(<experimental/source_location>)
-#error please alert sc2ad/beatsaber-hook that "std::experimental::source_location is live" (sharing your Android NDK version) then comment this out!
+#warning please alert sc2ad/beatsaber-hook that "std::experimental::source_location is live" (sharing your Android NDK version) then comment this out!
 #endif
 
 // For use in ClassOrInstance concept
