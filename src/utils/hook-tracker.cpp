@@ -1,6 +1,7 @@
 #include "../../shared/utils/hook-tracker.hpp"
-#include "shared/utils/instruction-parsing.hpp"
+#include "extern/capstone/shared/capstone/capstone.h"
 #include "modloader/shared/modloader.hpp"
+#include "../../shared/utils/logging.hpp"
 
 std::unordered_map<const void*, std::list<HookInfo>> HookTracker::hooks;
 
@@ -138,6 +139,7 @@ extern "C" const void* __HOOKTRACKER_GET_HOOKS() {
 // TODO: Implement and use this function
 const void* getOrigHelper(const void* const location, bool inTrampoline = false) noexcept {
     // If we are a hook, we can't find our orig here, we must travel to our hook implementation.
+    
     Instruction inst(reinterpret_cast<const int32_t*>(location));
     if (inst.isNOP()) {
         inst = Instruction(reinterpret_cast<const int32_t*>(location) + 1);

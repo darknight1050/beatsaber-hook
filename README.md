@@ -50,7 +50,9 @@ In order to build, you require the 64/32 bit version of the modloader that you n
 
 This can be done either by building/downloading a version of [my modloader](https://github.com/sc2ad/QuestLoader/tree/staticModloader) or by using [qpm](https://github.com/sc2ad/QuestPackageManager) and performing a `qpm restore`
 
-When building, you can use the `build.ps1` script, but you must first create an `ndkpath.txt` with your path to NDK. You should have at least NDK r21b, r22 is recommended for C++20 features.
+When building, you can use the `build.ps1` script, but you must first create an `ndkpath.txt` with your path to NDK. You should have at least NDK r23, as Clang 12 features are required.
+
+This library now also statically links against [capstone](https://github.com/aquynh/capstone) in order to perform _better_ instruction parsing. This CAN be removed, but note that many features will be broken or otherwise damaged.
 
 There are a bunch of defines that can control the built code a bit, TODO add them all here as a list. (for now just read the locations of `#ifdef` or `#ifndef`)
 

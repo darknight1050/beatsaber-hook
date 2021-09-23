@@ -63,7 +63,7 @@ namespace il2cpp_utils {
                 }
             }
             // TODO: just because two parameter lists match doesn't necessarily mean this is the best match...
-            if (!(IsConvertible(paramType, argTypes.at(i)))) {
+            if (!(IsConvertible(argTypes.at(i), paramType))) {
                 return false;
             }
         }

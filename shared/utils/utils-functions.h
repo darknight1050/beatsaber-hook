@@ -7,6 +7,15 @@
 #include <string_view>
 #include <vector>
 
+// logs the function, file and line, sleeps to allow logs to flush, then terminates program
+__attribute__((noreturn)) void safeAbort(const char* func, const char* file, int line);
+// sets "file" and "line" to the file and line you call this macro from
+#ifndef SUPPRESS_MACRO_LOGS
+#define SAFE_ABORT() safeAbort(__PRETTY_FUNCTION__, __FILE__, __LINE__)
+#else
+#define SAFE_ABORT() safeAbort("undefined_function", "undefined_file", -1)
+#endif
+
 struct Il2CppString;
 #ifndef __cplusplus
 bool = uchar8_t;

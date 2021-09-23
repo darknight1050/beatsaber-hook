@@ -2,297 +2,301 @@
 
 #include "../../shared/utils/hooking.hpp"
 #include "../../shared/utils/il2cpp-functions.hpp"
-#include "../../shared/utils/instruction-parsing.hpp"
+#include "extern/capstone/shared/capstone/capstone.h"
 #include "../../shared/utils/logging.hpp"
+#include "../../shared/utils/capstone-utils.hpp"
 #include "modloader/shared/modloader.hpp"
 
+
+#define API_INIT(rt, name, ...) rt (*il2cpp_functions::il2cpp_##name)__VA_ARGS__
 // All the fields...
 #ifdef UNITY_2019
-int (*il2cpp_functions::init)(const char* domain_name);
-int (*il2cpp_functions::init_utf16)(const Il2CppChar * domain_name);
+API_INIT(int, init, (const char* domain_name));
+API_INIT(int, init_utf16, (const Il2CppChar * domain_name));
 #else
-void (*il2cpp_functions::init)(const char* domain_name);
-void (*il2cpp_functions::init_utf16)(const Il2CppChar * domain_name);
+API_INIT(void, init, (const char* domain_name));
+API_INIT(void, init_utf16, (const Il2CppChar * domain_name));
 #endif
-void (*il2cpp_functions::shutdown)();
-void (*il2cpp_functions::set_config_dir)(const char *config_path);
-void (*il2cpp_functions::set_data_dir)(const char *data_path);
-void (*il2cpp_functions::set_temp_dir)(const char *temp_path);
-void (*il2cpp_functions::set_commandline_arguments)(int argc, const char* const argv[], const char* basedir);
-void (*il2cpp_functions::set_commandline_arguments_utf16)(int argc, const Il2CppChar * const argv[], const char* basedir);
-void (*il2cpp_functions::set_config_utf16)(const Il2CppChar * executablePath);
-void (*il2cpp_functions::set_config)(const char* executablePath);
-void (*il2cpp_functions::set_memory_callbacks)(Il2CppMemoryCallbacks * callbacks);
-const Il2CppImage* (*il2cpp_functions::get_corlib)();
-void (*il2cpp_functions::add_internal_call)(const char* name, Il2CppMethodPointer method);
-Il2CppMethodPointer (*il2cpp_functions::resolve_icall)(const char* name);
-void* (*il2cpp_functions::alloc)(size_t size);
-void (*il2cpp_functions::free)(void* ptr);
-Il2CppClass* (*il2cpp_functions::array_class_get)(Il2CppClass * element_class, uint32_t rank);
-uint32_t (*il2cpp_functions::array_length)(Il2CppArray * array);
-uint32_t (*il2cpp_functions::array_get_byte_length)(Il2CppArray * array);
-Il2CppArray* (*il2cpp_functions::array_new)(Il2CppClass * elementTypeInfo, il2cpp_array_size_t length);
-Il2CppArray* (*il2cpp_functions::array_new_specific)(Il2CppClass * arrayTypeInfo, il2cpp_array_size_t length);
-Il2CppArray* (*il2cpp_functions::array_new_full)(Il2CppClass * array_class, il2cpp_array_size_t * lengths, il2cpp_array_size_t * lower_bounds);
-Il2CppClass* (*il2cpp_functions::bounded_array_class_get)(Il2CppClass * element_class, uint32_t rank, bool bounded);
-int (*il2cpp_functions::array_element_size)(const Il2CppClass * array_class);
-const Il2CppImage* (*il2cpp_functions::assembly_get_image)(const Il2CppAssembly * assembly);
+API_INIT(void, shutdown, ());
+API_INIT(void, set_config_dir, (const char *config_path));
+API_INIT(void, set_data_dir, (const char *data_path));
+API_INIT(void, set_temp_dir, (const char *temp_path));
+API_INIT(void, set_commandline_arguments, (int argc, const char* const argv[], const char* basedir));
+API_INIT(void, set_commandline_arguments_utf16, (int argc, const Il2CppChar * const argv[], const char* basedir));
+API_INIT(void, set_config_utf16, (const Il2CppChar * executablePath));
+API_INIT(void, set_config, (const char* executablePath));
+API_INIT(void, set_memory_callbacks, (Il2CppMemoryCallbacks * callbacks));
+API_INIT(const Il2CppImage*, get_corlib, ());
+API_INIT(void, add_internal_call, (const char* name, Il2CppMethodPointer method));
+API_INIT(Il2CppMethodPointer, resolve_icall, (const char* name));
+API_INIT(void*, alloc, (size_t size));
+API_INIT(void, free, (void* ptr));
+API_INIT(Il2CppClass*, array_class_get, (Il2CppClass * element_class, uint32_t rank));
+API_INIT(uint32_t, array_length, (Il2CppArray * array));
+API_INIT(uint32_t, array_get_byte_length, (Il2CppArray * array));
+API_INIT(Il2CppArray*, array_new, (Il2CppClass * elementTypeInfo, il2cpp_array_size_t length));
+API_INIT(Il2CppArray*, array_new_specific, (Il2CppClass * arrayTypeInfo, il2cpp_array_size_t length));
+API_INIT(Il2CppArray*, array_new_full, (Il2CppClass * array_class, il2cpp_array_size_t * lengths, il2cpp_array_size_t * lower_bounds));
+API_INIT(Il2CppClass*, bounded_array_class_get, (Il2CppClass * element_class, uint32_t rank, bool bounded));
+API_INIT(int, array_element_size, (const Il2CppClass * array_class));
+API_INIT(const Il2CppImage*, assembly_get_image, (const Il2CppAssembly * assembly));
 #ifdef UNITY_2019
-void (*il2cpp_functions::class_for_each)(void(*klassReportFunc)(Il2CppClass* klass, void* userData), void* userData);
+API_INIT(void, class_for_each, (void(*klassReportFunc)(Il2CppClass* klass, void* userData), void* userData));
 #endif
-const Il2CppType* (*il2cpp_functions::class_enum_basetype)(Il2CppClass * klass);
-bool (*il2cpp_functions::class_is_generic)(const Il2CppClass * klass);
-bool (*il2cpp_functions::class_is_inflated)(const Il2CppClass * klass);
-bool (*il2cpp_functions::class_is_assignable_from)(Il2CppClass * klass, Il2CppClass * oklass);
-bool (*il2cpp_functions::class_is_subclass_of)(Il2CppClass * klass, Il2CppClass * klassc, bool check_interfaces);
-bool (*il2cpp_functions::class_has_parent)(Il2CppClass * klass, Il2CppClass * klassc);
-Il2CppClass* (*il2cpp_functions::class_from_il2cpp_type)(const Il2CppType * type);
-Il2CppClass* (*il2cpp_functions::class_from_name)(const Il2CppImage * image, const char* namespaze, const char *name);
-Il2CppClass* (*il2cpp_functions::class_from_system_type)(Il2CppReflectionType * type);
-Il2CppClass* (*il2cpp_functions::class_get_element_class)(Il2CppClass * klass);
-const EventInfo* (*il2cpp_functions::class_get_events)(Il2CppClass * klass, void* *iter);
-FieldInfo* (*il2cpp_functions::class_get_fields)(Il2CppClass * klass, void* *iter);
-Il2CppClass* (*il2cpp_functions::class_get_nested_types)(Il2CppClass * klass, void* *iter);
-Il2CppClass* (*il2cpp_functions::class_get_interfaces)(Il2CppClass * klass, void* *iter);
-const PropertyInfo* (*il2cpp_functions::class_get_properties)(Il2CppClass * klass, void* *iter);
-const PropertyInfo* (*il2cpp_functions::class_get_property_from_name)(Il2CppClass * klass, const char *name);
-FieldInfo* (*il2cpp_functions::class_get_field_from_name)(Il2CppClass * klass, const char *name);
-const MethodInfo* (*il2cpp_functions::class_get_methods)(Il2CppClass * klass, void* *iter);
-const MethodInfo* (*il2cpp_functions::class_get_method_from_name)(const Il2CppClass * klass, const char* name, int argsCount);
-const char* (*il2cpp_functions::class_get_name)(const Il2CppClass * klass);
+API_INIT(const Il2CppType*, class_enum_basetype, (Il2CppClass * klass));
+API_INIT(bool, class_is_generic, (const Il2CppClass * klass));
+API_INIT(bool, class_is_inflated, (const Il2CppClass * klass));
+API_INIT(bool, class_is_assignable_from, (Il2CppClass * klass, Il2CppClass * oklass));
+API_INIT(bool, class_is_subclass_of, (Il2CppClass * klass, Il2CppClass * klassc, bool check_interfaces));
+API_INIT(bool, class_has_parent, (Il2CppClass * klass, Il2CppClass * klassc));
+API_INIT(Il2CppClass*, class_from_il2cpp_type, (const Il2CppType * type));
+API_INIT(Il2CppClass*, class_from_name, (const Il2CppImage * image, const char* namespaze, const char *name));
+API_INIT(Il2CppClass*, class_from_system_type, (Il2CppReflectionType * type));
+API_INIT(Il2CppClass*, class_get_element_class, (Il2CppClass * klass));
+API_INIT(const EventInfo*, class_get_events, (Il2CppClass * klass, void* *iter));
+API_INIT(FieldInfo*, class_get_fields, (Il2CppClass * klass, void* *iter));
+API_INIT(Il2CppClass*, class_get_nested_types, (Il2CppClass * klass, void* *iter));
+API_INIT(Il2CppClass*, class_get_interfaces, (Il2CppClass * klass, void* *iter));
+API_INIT(const PropertyInfo*, class_get_properties, (Il2CppClass * klass, void* *iter));
+API_INIT(const PropertyInfo*, class_get_property_from_name, (Il2CppClass * klass, const char *name));
+API_INIT(FieldInfo*, class_get_field_from_name, (Il2CppClass * klass, const char *name));
+API_INIT(const MethodInfo*, class_get_methods, (Il2CppClass * klass, void* *iter));
+API_INIT(const MethodInfo*, class_get_method_from_name, (const Il2CppClass * klass, const char* name, int argsCount));
+API_INIT(const char*, class_get_name, (const Il2CppClass * klass));
 #ifdef UNITY_2019
-void (*il2cpp_functions::type_get_name_chunked)(const Il2CppType * type, void(*chunkReportFunc)(void* data, void* userData), void* userData);
+API_INIT(void, type_get_name_chunked, (const Il2CppType * type, void(*chunkReportFunc)(void* data, void* userData), void* userData));
 #endif
-const char* (*il2cpp_functions::class_get_namespace)(const Il2CppClass * klass);
-Il2CppClass* (*il2cpp_functions::class_get_parent)(Il2CppClass * klass);
-Il2CppClass* (*il2cpp_functions::class_get_declaring_type)(const Il2CppClass * klass);
-int32_t (*il2cpp_functions::class_instance_size)(Il2CppClass * klass);
-size_t (*il2cpp_functions::class_num_fields)(const Il2CppClass * enumKlass);
-bool (*il2cpp_functions::class_is_valuetype)(const Il2CppClass * klass);
-int32_t (*il2cpp_functions::class_value_size)(Il2CppClass * klass, uint32_t * align);
-bool (*il2cpp_functions::class_is_blittable)(const Il2CppClass * klass);
-int (*il2cpp_functions::class_get_flags)(const Il2CppClass * klass);
-bool (*il2cpp_functions::class_is_abstract)(const Il2CppClass * klass);
-bool (*il2cpp_functions::class_is_interface)(const Il2CppClass * klass);
-int (*il2cpp_functions::class_array_element_size)(const Il2CppClass * klass);
-Il2CppClass* (*il2cpp_functions::class_from_type)(const Il2CppType * type);
-const Il2CppType* (*il2cpp_functions::class_get_type)(Il2CppClass * klass);
-uint32_t (*il2cpp_functions::class_get_type_token)(Il2CppClass * klass);
-bool (*il2cpp_functions::class_has_attribute)(Il2CppClass * klass, Il2CppClass * attr_class);
-bool (*il2cpp_functions::class_has_references)(Il2CppClass * klass);
-bool (*il2cpp_functions::class_is_enum)(const Il2CppClass * klass);
-const Il2CppImage* (*il2cpp_functions::class_get_image)(Il2CppClass * klass);
-const char* (*il2cpp_functions::class_get_assemblyname)(const Il2CppClass * klass);
-int (*il2cpp_functions::class_get_rank)(const Il2CppClass * klass);
+API_INIT(const char*, class_get_namespace, (const Il2CppClass * klass));
+API_INIT(Il2CppClass*, class_get_parent, (Il2CppClass * klass));
+API_INIT(Il2CppClass*, class_get_declaring_type, (const Il2CppClass * klass));
+API_INIT(int32_t, class_instance_size, (Il2CppClass * klass));
+API_INIT(size_t, class_num_fields, (const Il2CppClass * enumKlass));
+API_INIT(bool, class_is_valuetype, (const Il2CppClass * klass));
+API_INIT(int32_t, class_value_size, (Il2CppClass * klass, uint32_t * align));
+API_INIT(bool, class_is_blittable, (const Il2CppClass * klass));
+API_INIT(int, class_get_flags, (const Il2CppClass * klass));
+API_INIT(bool, class_is_abstract, (const Il2CppClass * klass));
+API_INIT(bool, class_is_interface, (const Il2CppClass * klass));
+API_INIT(int, class_array_element_size, (const Il2CppClass * klass));
+API_INIT(Il2CppClass*, class_from_type, (const Il2CppType * type));
+API_INIT(const Il2CppType*, class_get_type, (Il2CppClass * klass));
+API_INIT(uint32_t, class_get_type_token, (Il2CppClass * klass));
+API_INIT(bool, class_has_attribute, (Il2CppClass * klass, Il2CppClass * attr_class));
+API_INIT(bool, class_has_references, (Il2CppClass * klass));
+API_INIT(bool, class_is_enum, (const Il2CppClass * klass));
+API_INIT(const Il2CppImage*, class_get_image, (Il2CppClass * klass));
+API_INIT(const char*, class_get_assemblyname, (const Il2CppClass * klass));
+API_INIT(int, class_get_rank, (const Il2CppClass * klass));
 #ifdef UNITY_2019
-uint32_t (*il2cpp_functions::class_get_data_size)(const Il2CppClass * klass);
-void* (*il2cpp_functions::class_get_static_field_data)(const Il2CppClass * klass);
+API_INIT(uint32_t, class_get_data_size, (const Il2CppClass * klass));
+API_INIT(void*, class_get_static_field_data, (const Il2CppClass * klass));
 #endif
-size_t (*il2cpp_functions::class_get_bitmap_size)(const Il2CppClass * klass);
-void (*il2cpp_functions::class_get_bitmap)(Il2CppClass * klass, size_t * bitmap);
-bool (*il2cpp_functions::stats_dump_to_file)(const char *path);
-uint64_t (*il2cpp_functions::stats_get_value)(Il2CppStat stat);
-Il2CppDomain* (*il2cpp_functions::domain_get)();
-const Il2CppAssembly* (*il2cpp_functions::domain_assembly_open)(Il2CppDomain * domain, const char* name);
-const Il2CppAssembly** (*il2cpp_functions::domain_get_assemblies)(const Il2CppDomain * domain, size_t * size);
+API_INIT(size_t, class_get_bitmap_size, (const Il2CppClass * klass));
+API_INIT(void, class_get_bitmap, (Il2CppClass * klass, size_t * bitmap));
+API_INIT(bool, stats_dump_to_file, (const char *path));
+API_INIT(uint64_t, stats_get_value, (Il2CppStat stat));
+API_INIT(Il2CppDomain*, domain_get, ());
+API_INIT(const Il2CppAssembly*, domain_assembly_open, (Il2CppDomain * domain, const char* name));
+API_INIT(const Il2CppAssembly**, domain_get_assemblies, (const Il2CppDomain * domain, size_t * size));
 #ifdef UNITY_2019
-void (*il2cpp_functions::raise_exception)(Il2CppException*);
+API_INIT(void, raise_exception, (Il2CppException*));
 #endif
-Il2CppException* (*il2cpp_functions::exception_from_name_msg)(const Il2CppImage * image, const char *name_space, const char *name, const char *msg);
-Il2CppException* (*il2cpp_functions::get_exception_argument_null)(const char *arg);
-void (*il2cpp_functions::format_exception)(const Il2CppException * ex, char* message, int message_size);
-void (*il2cpp_functions::format_stack_trace)(const Il2CppException * ex, char* output, int output_size);
-void (*il2cpp_functions::unhandled_exception)(Il2CppException*);
-int (*il2cpp_functions::field_get_flags)(FieldInfo * field);
-const char* (*il2cpp_functions::field_get_name)(FieldInfo * field);
-Il2CppClass* (*il2cpp_functions::field_get_parent)(FieldInfo * field);
-size_t (*il2cpp_functions::field_get_offset)(FieldInfo * field);
-const Il2CppType* (*il2cpp_functions::field_get_type)(FieldInfo * field);
-void (*il2cpp_functions::field_get_value)(Il2CppObject * obj, FieldInfo * field, void *value);
-Il2CppObject* (*il2cpp_functions::field_get_value_object)(FieldInfo * field, Il2CppObject * obj);
-bool (*il2cpp_functions::field_has_attribute)(FieldInfo * field, Il2CppClass * attr_class);
-void (*il2cpp_functions::field_set_value)(Il2CppObject * obj, FieldInfo * field, void *value);
-void (*il2cpp_functions::field_static_get_value)(FieldInfo * field, void *value);
-void (*il2cpp_functions::field_static_set_value)(FieldInfo * field, void *value);
-void (*il2cpp_functions::field_set_value_object)(Il2CppObject * instance, FieldInfo * field, Il2CppObject * value);
+API_INIT(Il2CppException*, exception_from_name_msg, (const Il2CppImage * image, const char *name_space, const char *name, const char *msg));
+API_INIT(Il2CppException*, get_exception_argument_null, (const char *arg));
+API_INIT(void, format_exception, (const Il2CppException * ex, char* message, int message_size));
+API_INIT(void, format_stack_trace, (const Il2CppException * ex, char* output, int output_size));
+API_INIT(void, unhandled_exception, (Il2CppException*));
+API_INIT(int, field_get_flags, (FieldInfo * field));
+API_INIT(const char*, field_get_name, (FieldInfo * field));
+API_INIT(Il2CppClass*, field_get_parent, (FieldInfo * field));
+API_INIT(size_t, field_get_offset, (FieldInfo * field));
+API_INIT(const Il2CppType*, field_get_type, (FieldInfo * field));
+API_INIT(void, field_get_value, (Il2CppObject * obj, FieldInfo * field, void *value));
+API_INIT(Il2CppObject*, field_get_value_object, (FieldInfo * field, Il2CppObject * obj));
+API_INIT(bool, field_has_attribute, (FieldInfo * field, Il2CppClass * attr_class));
+API_INIT(void, field_set_value, (Il2CppObject * obj, FieldInfo * field, void *value));
+API_INIT(void, field_static_get_value, (FieldInfo * field, void *value));
+API_INIT(void, field_static_set_value, (FieldInfo * field, void *value));
+API_INIT(void, field_set_value_object, (Il2CppObject * instance, FieldInfo * field, Il2CppObject * value));
 #ifdef UNITY_2019
-bool (*il2cpp_functions::field_is_literal)(FieldInfo * field);
+API_INIT(bool, field_is_literal, (FieldInfo * field));
 #endif
-void (*il2cpp_functions::gc_collect)(int maxGenerations);
-int32_t (*il2cpp_functions::gc_collect_a_little)();
-void (*il2cpp_functions::gc_disable)();
-void (*il2cpp_functions::gc_enable)();
-bool (*il2cpp_functions::gc_is_disabled)();
+API_INIT(void, gc_collect, (int maxGenerations));
+API_INIT(int32_t, gc_collect_a_little, ());
+API_INIT(void, gc_disable, ());
+API_INIT(void, gc_enable, ());
+API_INIT(bool, gc_is_disabled, ());
 #ifdef UNITY_2019
-int64_t (*il2cpp_functions::gc_get_max_time_slice_ns)();
-void (*il2cpp_functions::gc_set_max_time_slice_ns)(int64_t maxTimeSlice);
-bool (*il2cpp_functions::gc_is_incremental)();
+API_INIT(int64_t, gc_get_max_time_slice_ns, ());
+API_INIT(void, gc_set_max_time_slice_ns, (int64_t maxTimeSlice));
+API_INIT(bool, gc_is_incremental, ());
 #endif
-int64_t (*il2cpp_functions::gc_get_used_size)();
-int64_t (*il2cpp_functions::gc_get_heap_size)();
-void (*il2cpp_functions::gc_wbarrier_set_field)(Il2CppObject * obj, void **targetAddress, void *object);
+API_INIT(int64_t, gc_get_used_size, ());
+API_INIT(int64_t, gc_get_heap_size, ());
+API_INIT(void, gc_wbarrier_set_field, (Il2CppObject * obj, void **targetAddress, void *object));
 #ifdef UNITY_2019
-bool (*il2cpp_functions::gc_has_strict_wbarriers)();
-void (*il2cpp_functions::gc_set_external_allocation_tracker)(void(*func)(void*, size_t, int));
-void (*il2cpp_functions::gc_set_external_wbarrier_tracker)(void(*func)(void**));
-void (*il2cpp_functions::gc_foreach_heap)(void(*func)(void* data, void* userData), void* userData);
-void (*il2cpp_functions::stop_gc_world)();
-void (*il2cpp_functions::start_gc_world)();
+API_INIT(bool, gc_has_strict_wbarriers, ());
+API_INIT(void, gc_set_external_allocation_tracker, (void(*func)(void*, size_t, int)));
+API_INIT(void, gc_set_external_wbarrier_tracker, (void(*func)(void**)));
+API_INIT(void, gc_foreach_heap, (void(*func)(void* data, void* userData), void* userData));
+API_INIT(void, stop_gc_world, ());
+API_INIT(void, start_gc_world, ());
 #endif
-uint32_t (*il2cpp_functions::gchandle_new)(Il2CppObject * obj, bool pinned);
-uint32_t (*il2cpp_functions::gchandle_new_weakref)(Il2CppObject * obj, bool track_resurrection);
-Il2CppObject* (*il2cpp_functions::gchandle_get_target)(uint32_t gchandle);
-void (*il2cpp_functions::gchandle_free)(uint32_t gchandle);
+API_INIT(uint32_t, gchandle_new, (Il2CppObject * obj, bool pinned));
+API_INIT(uint32_t, gchandle_new_weakref, (Il2CppObject * obj, bool track_resurrection));
+API_INIT(Il2CppObject*, gchandle_get_target, (uint32_t gchandle));
+API_INIT(void, gchandle_free, (uint32_t gchandle));
 #ifdef UNITY_2019
-void (*il2cpp_functions::gchandle_foreach_get_target)(void(*func)(void* data, void* userData), void* userData);
-uint32_t (*il2cpp_functions::object_header_size)();
-uint32_t (*il2cpp_functions::array_object_header_size)();
-uint32_t (*il2cpp_functions::offset_of_array_length_in_array_object_header)();
-uint32_t (*il2cpp_functions::offset_of_array_bounds_in_array_object_header)();
-uint32_t (*il2cpp_functions::allocation_granularity)();
+API_INIT(void, gchandle_foreach_get_target, (void(*func)(void* data, void* userData), void* userData));
+API_INIT(uint32_t, object_header_size, ());
+API_INIT(uint32_t, array_object_header_size, ());
+API_INIT(uint32_t, offset_of_array_length_in_array_object_header, ());
+API_INIT(uint32_t, offset_of_array_bounds_in_array_object_header, ());
+API_INIT(uint32_t, allocation_granularity, ());
 #endif
-void* (*il2cpp_functions::unity_liveness_calculation_begin)(Il2CppClass * filter, int max_object_count, il2cpp_register_object_callback callback, void* userdata, il2cpp_WorldChangedCallback onWorldStarted, il2cpp_WorldChangedCallback onWorldStopped);
-void (*il2cpp_functions::unity_liveness_calculation_end)(void* state);
-void (*il2cpp_functions::unity_liveness_calculation_from_root)(Il2CppObject * root, void* state);
-void (*il2cpp_functions::unity_liveness_calculation_from_statics)(void* state);
-const Il2CppType* (*il2cpp_functions::method_get_return_type)(const MethodInfo * method);
-Il2CppClass* (*il2cpp_functions::method_get_declaring_type)(const MethodInfo * method);
-const char* (*il2cpp_functions::method_get_name)(const MethodInfo * method);
-const MethodInfo* (*il2cpp_functions::method_get_from_reflection)(const Il2CppReflectionMethod * method);
-Il2CppReflectionMethod* (*il2cpp_functions::method_get_object)(const MethodInfo * method, Il2CppClass * refclass);
-bool (*il2cpp_functions::method_is_generic)(const MethodInfo * method);
-bool (*il2cpp_functions::method_is_inflated)(const MethodInfo * method);
-bool (*il2cpp_functions::method_is_instance)(const MethodInfo * method);
-uint32_t (*il2cpp_functions::method_get_param_count)(const MethodInfo * method);
-const Il2CppType* (*il2cpp_functions::method_get_param)(const MethodInfo * method, uint32_t index);
-Il2CppClass* (*il2cpp_functions::method_get_class)(const MethodInfo * method);
-bool (*il2cpp_functions::method_has_attribute)(const MethodInfo * method, Il2CppClass * attr_class);
-uint32_t (*il2cpp_functions::method_get_flags)(const MethodInfo * method, uint32_t * iflags);
-uint32_t (*il2cpp_functions::method_get_token)(const MethodInfo * method);
-const char* (*il2cpp_functions::method_get_param_name)(const MethodInfo * method, uint32_t index);
+API_INIT(void*, unity_liveness_calculation_begin, (Il2CppClass * filter, int max_object_count, il2cpp_register_object_callback callback, void* userdata, il2cpp_WorldChangedCallback onWorldStarted, il2cpp_WorldChangedCallback onWorldStopped));
+API_INIT(void, unity_liveness_calculation_end, (void* state));
+API_INIT(void, unity_liveness_calculation_from_root, (Il2CppObject * root, void* state));
+API_INIT(void, unity_liveness_calculation_from_statics, (void* state));
+API_INIT(const Il2CppType*, method_get_return_type, (const MethodInfo * method));
+API_INIT(Il2CppClass*, method_get_declaring_type, (const MethodInfo * method));
+API_INIT(const char*, method_get_name, (const MethodInfo * method));
+API_INIT(const MethodInfo*, method_get_from_reflection, (const Il2CppReflectionMethod * method));
+API_INIT(Il2CppReflectionMethod*, method_get_object, (const MethodInfo * method, Il2CppClass * refclass));
+API_INIT(bool, method_is_generic, (const MethodInfo * method));
+API_INIT(bool, method_is_inflated, (const MethodInfo * method));
+API_INIT(bool, method_is_instance, (const MethodInfo * method));
+API_INIT(uint32_t, method_get_param_count, (const MethodInfo * method));
+API_INIT(const Il2CppType*, method_get_param, (const MethodInfo * method, uint32_t index));
+API_INIT(Il2CppClass*, method_get_class, (const MethodInfo * method));
+API_INIT(bool, method_has_attribute, (const MethodInfo * method, Il2CppClass * attr_class));
+API_INIT(uint32_t, method_get_flags, (const MethodInfo * method, uint32_t * iflags));
+API_INIT(uint32_t, method_get_token, (const MethodInfo * method));
+API_INIT(const char*, method_get_param_name, (const MethodInfo * method, uint32_t index));
 
 // ONLY IF THE PROFILER EXISTS FOR UNITY_2019
-void (*il2cpp_functions::profiler_install)(Il2CppProfiler * prof, Il2CppProfileFunc shutdown_callback);
-void (*il2cpp_functions::profiler_set_events)(Il2CppProfileFlags events);
-void (*il2cpp_functions::profiler_install_enter_leave)(Il2CppProfileMethodFunc enter, Il2CppProfileMethodFunc fleave);
-void (*il2cpp_functions::profiler_install_allocation)(Il2CppProfileAllocFunc callback);
-void (*il2cpp_functions::profiler_install_gc)(Il2CppProfileGCFunc callback, Il2CppProfileGCResizeFunc heap_resize_callback);
-void (*il2cpp_functions::profiler_install_fileio)(Il2CppProfileFileIOFunc callback);
-void (*il2cpp_functions::profiler_install_thread)(Il2CppProfileThreadFunc start, Il2CppProfileThreadFunc end);
+API_INIT(void, profiler_install, (Il2CppProfiler * prof, Il2CppProfileFunc shutdown_callback));
+API_INIT(void, profiler_set_events, (Il2CppProfileFlags events));
+API_INIT(void, profiler_install_enter_leave, (Il2CppProfileMethodFunc enter, Il2CppProfileMethodFunc fleave));
+API_INIT(void, profiler_install_allocation, (Il2CppProfileAllocFunc callback));
+API_INIT(void, profiler_install_gc, (Il2CppProfileGCFunc callback, Il2CppProfileGCResizeFunc heap_resize_callback));
+API_INIT(void, profiler_install_fileio, (Il2CppProfileFileIOFunc callback));
+API_INIT(void, profiler_install_thread, (Il2CppProfileThreadFunc start, Il2CppProfileThreadFunc end));
 
-uint32_t (*il2cpp_functions::property_get_flags)(const PropertyInfo * prop);
-const MethodInfo* (*il2cpp_functions::property_get_get_method)(const PropertyInfo * prop);
-const MethodInfo* (*il2cpp_functions::property_get_set_method)(const PropertyInfo * prop);
-const char* (*il2cpp_functions::property_get_name)(const PropertyInfo * prop);
-Il2CppClass* (*il2cpp_functions::property_get_parent)(const PropertyInfo * prop);
-Il2CppClass* (*il2cpp_functions::object_get_class)(Il2CppObject * obj);
-uint32_t (*il2cpp_functions::object_get_size)(Il2CppObject * obj);
-const MethodInfo* (*il2cpp_functions::object_get_virtual_method)(Il2CppObject * obj, const MethodInfo * method);
-Il2CppObject* (*il2cpp_functions::object_new)(const Il2CppClass * klass);
-// Always returns (void*)(obj + 1)
-void* (*il2cpp_functions::object_unbox)(Il2CppObject * obj);
-// If klass is not a ValueType, returns (Il2CppObject*)(*il2cpp_functions::data), else boxes
-Il2CppObject* (*il2cpp_functions::value_box)(Il2CppClass * klass, void* data);
-void (*il2cpp_functions::monitor_enter)(Il2CppObject * obj);
-bool (*il2cpp_functions::monitor_try_enter)(Il2CppObject * obj, uint32_t timeout);
-void (*il2cpp_functions::monitor_exit)(Il2CppObject * obj);
-void (*il2cpp_functions::monitor_pulse)(Il2CppObject * obj);
-void (*il2cpp_functions::monitor_pulse_all)(Il2CppObject * obj);
-void (*il2cpp_functions::monitor_wait)(Il2CppObject * obj);
-bool (*il2cpp_functions::monitor_try_wait)(Il2CppObject * obj, uint32_t timeout);
-Il2CppObject* (*il2cpp_functions::runtime_invoke)(const MethodInfo * method, void *obj, void **params, Il2CppException **exc);
-Il2CppObject* (*il2cpp_functions::runtime_invoke_convert_args)(const MethodInfo * method, void *obj, Il2CppObject **params, int paramCount, Il2CppException **exc);
-void (*il2cpp_functions::runtime_class_init)(Il2CppClass * klass);
-void (*il2cpp_functions::runtime_object_init)(Il2CppObject * obj);
-void (*il2cpp_functions::runtime_object_init_exception)(Il2CppObject * obj, Il2CppException** exc);
-void (*il2cpp_functions::runtime_unhandled_exception_policy_set)(Il2CppRuntimeUnhandledExceptionPolicy value);
-int32_t (*il2cpp_functions::string_length)(Il2CppString * str);
-Il2CppChar* (*il2cpp_functions::string_chars)(Il2CppString * str);
-Il2CppString* (*il2cpp_functions::string_new)(const char* str);
-Il2CppString* (*il2cpp_functions::string_new_len)(const char* str, uint32_t length);
-Il2CppString* (*il2cpp_functions::string_new_utf16)(const Il2CppChar * text, int32_t len);
-Il2CppString* (*il2cpp_functions::string_new_wrapper)(const char* str);
-Il2CppString* (*il2cpp_functions::string_intern)(Il2CppString * str);
-Il2CppString* (*il2cpp_functions::string_is_interned)(Il2CppString * str);
-Il2CppThread* (*il2cpp_functions::thread_current)();
-Il2CppThread* (*il2cpp_functions::thread_attach)(Il2CppDomain * domain);
-void (*il2cpp_functions::thread_detach)(Il2CppThread * thread);
-Il2CppThread** (*il2cpp_functions::thread_get_all_attached_threads)(size_t * size);
-bool (*il2cpp_functions::is_vm_thread)(Il2CppThread * thread);
-void (*il2cpp_functions::current_thread_walk_frame_stack)(Il2CppFrameWalkFunc func, void* user_data);
-void (*il2cpp_functions::thread_walk_frame_stack)(Il2CppThread * thread, Il2CppFrameWalkFunc func, void* user_data);
-bool (*il2cpp_functions::current_thread_get_top_frame)(Il2CppStackFrameInfo * frame);
-bool (*il2cpp_functions::thread_get_top_frame)(Il2CppThread * thread, Il2CppStackFrameInfo * frame);
-bool (*il2cpp_functions::current_thread_get_frame_at)(int32_t offset, Il2CppStackFrameInfo * frame);
-bool (*il2cpp_functions::thread_get_frame_at)(Il2CppThread * thread, int32_t offset, Il2CppStackFrameInfo * frame);
-int32_t (*il2cpp_functions::current_thread_get_stack_depth)();
-int32_t (*il2cpp_functions::thread_get_stack_depth)(Il2CppThread * thread);
+API_INIT(uint32_t, property_get_flags, (const PropertyInfo * prop));
+API_INIT(const MethodInfo*, property_get_get_method, (const PropertyInfo * prop));
+API_INIT(const MethodInfo*, property_get_set_method, (const PropertyInfo * prop));
+API_INIT(const char*, property_get_name, (const PropertyInfo * prop));
+API_INIT(Il2CppClass*, property_get_parent, (const PropertyInfo * prop));
+API_INIT(Il2CppClass*, object_get_class, (Il2CppObject * obj));
+API_INIT(uint32_t, object_get_size, (Il2CppObject * obj));
+API_INIT(const MethodInfo*, object_get_virtual_method, (Il2CppObject * obj, const MethodInfo * method));
+API_INIT(Il2CppObject*, object_new, (const Il2CppClass * klass));
+// Always returns (void*, (obj + 1)
+API_INIT(void*, object_unbox, (Il2CppObject * obj));
+// If klass is not a ValueType, returns (Il2CppObject*, (*data), else boxes
+API_INIT(Il2CppObject*, value_box, (Il2CppClass * klass, void* data));
+API_INIT(void, monitor_enter, (Il2CppObject * obj));
+API_INIT(bool, monitor_try_enter, (Il2CppObject * obj, uint32_t timeout));
+API_INIT(void, monitor_exit, (Il2CppObject * obj));
+API_INIT(void, monitor_pulse, (Il2CppObject * obj));
+API_INIT(void, monitor_pulse_all, (Il2CppObject * obj));
+API_INIT(void, monitor_wait, (Il2CppObject * obj));
+API_INIT(bool, monitor_try_wait, (Il2CppObject * obj, uint32_t timeout));
+API_INIT(Il2CppObject*, runtime_invoke, (const MethodInfo * method, void *obj, void **params, Il2CppException **exc));
+API_INIT(Il2CppObject*, runtime_invoke_convert_args, (const MethodInfo * method, void *obj, Il2CppObject **params, int paramCount, Il2CppException **exc));
+API_INIT(void, runtime_class_init, (Il2CppClass * klass));
+API_INIT(void, runtime_object_init, (Il2CppObject * obj));
+API_INIT(void, runtime_object_init_exception, (Il2CppObject * obj, Il2CppException** exc));
+API_INIT(void, runtime_unhandled_exception_policy_set, (Il2CppRuntimeUnhandledExceptionPolicy value));
+API_INIT(int32_t, string_length, (Il2CppString * str));
+API_INIT(Il2CppChar*, string_chars, (Il2CppString * str));
+API_INIT(Il2CppString*, string_new, (const char* str));
+API_INIT(Il2CppString*, string_new_len, (const char* str, uint32_t length));
+API_INIT(Il2CppString*, string_new_utf16, (const Il2CppChar * text, int32_t len));
+API_INIT(Il2CppString*, string_new_wrapper, (const char* str));
+API_INIT(Il2CppString*, string_intern, (Il2CppString * str));
+API_INIT(Il2CppString*, string_is_interned, (Il2CppString * str));
+API_INIT(Il2CppThread*, thread_current, ());
+API_INIT(Il2CppThread*, thread_attach, (Il2CppDomain * domain));
+API_INIT(void, thread_detach, (Il2CppThread * thread));
+API_INIT(Il2CppThread**, thread_get_all_attached_threads, (size_t * size));
+API_INIT(bool, is_vm_thread, (Il2CppThread * thread));
+API_INIT(void, current_thread_walk_frame_stack, (Il2CppFrameWalkFunc func, void* user_data));
+API_INIT(void, thread_walk_frame_stack, (Il2CppThread * thread, Il2CppFrameWalkFunc func, void* user_data));
+API_INIT(bool, current_thread_get_top_frame, (Il2CppStackFrameInfo * frame));
+API_INIT(bool, thread_get_top_frame, (Il2CppThread * thread, Il2CppStackFrameInfo * frame));
+API_INIT(bool, current_thread_get_frame_at, (int32_t offset, Il2CppStackFrameInfo * frame));
+API_INIT(bool, thread_get_frame_at, (Il2CppThread * thread, int32_t offset, Il2CppStackFrameInfo * frame));
+API_INIT(int32_t, current_thread_get_stack_depth, ());
+API_INIT(int32_t, thread_get_stack_depth, (Il2CppThread * thread));
 #ifdef UNITY_2019
-void (*il2cpp_functions::override_stack_backtrace)(Il2CppBacktraceFunc stackBacktraceFunc);
+API_INIT(void, override_stack_backtrace, (Il2CppBacktraceFunc stackBacktraceFunc));
 #endif
-Il2CppObject* (*il2cpp_functions::type_get_object)(const Il2CppType * type);
-int (*il2cpp_functions::type_get_type)(const Il2CppType * type);
-Il2CppClass* (*il2cpp_functions::type_get_class_or_element_class)(const Il2CppType * type);
-char* (*il2cpp_functions::type_get_name)(const Il2CppType * type);
-bool (*il2cpp_functions::type_is_byref)(const Il2CppType * type);
-uint32_t (*il2cpp_functions::type_get_attrs)(const Il2CppType * type);
-bool (*il2cpp_functions::type_equals)(const Il2CppType * type, const Il2CppType * otherType);
-char* (*il2cpp_functions::type_get_assembly_qualified_name)(const Il2CppType * type);
+API_INIT(Il2CppObject*, type_get_object, (const Il2CppType * type));
+API_INIT(int, type_get_type, (const Il2CppType * type));
+API_INIT(Il2CppClass*, type_get_class_or_element_class, (const Il2CppType * type));
+API_INIT(char*, type_get_name, (const Il2CppType * type));
+API_INIT(bool, type_is_byref, (const Il2CppType * type));
+API_INIT(uint32_t, type_get_attrs, (const Il2CppType * type));
+API_INIT(bool, type_equals, (const Il2CppType * type, const Il2CppType * otherType));
+API_INIT(char*, type_get_assembly_qualified_name, (const Il2CppType * type));
 #ifdef UNITY_2019
-bool (*il2cpp_functions::type_is_static)(const Il2CppType * type);
-bool (*il2cpp_functions::type_is_pointer_type)(const Il2CppType * type);
+API_INIT(bool, type_is_static, (const Il2CppType * type));
+API_INIT(bool, type_is_pointer_type, (const Il2CppType * type));
 #endif
-const Il2CppAssembly* (*il2cpp_functions::image_get_assembly)(const Il2CppImage * image);
-const char* (*il2cpp_functions::image_get_name)(const Il2CppImage * image);
-const char* (*il2cpp_functions::image_get_filename)(const Il2CppImage * image);
-const MethodInfo* (*il2cpp_functions::image_get_entry_point)(const Il2CppImage * image);
-size_t (*il2cpp_functions::image_get_class_count)(const Il2CppImage * image);
-const Il2CppClass* (*il2cpp_functions::image_get_class)(const Il2CppImage * image, size_t index);
-Il2CppManagedMemorySnapshot* (*il2cpp_functions::capture_memory_snapshot)();
-void (*il2cpp_functions::free_captured_memory_snapshot)(Il2CppManagedMemorySnapshot * snapshot);
-void (*il2cpp_functions::set_find_plugin_callback)(Il2CppSetFindPlugInCallback method);
-void (*il2cpp_functions::register_log_callback)(Il2CppLogCallback method);
-void (*il2cpp_functions::debugger_set_agent_options)(const char* options);
-bool (*il2cpp_functions::is_debugger_attached)();
+API_INIT(const Il2CppAssembly*, image_get_assembly, (const Il2CppImage * image));
+API_INIT(const char*, image_get_name, (const Il2CppImage * image));
+API_INIT(const char*, image_get_filename, (const Il2CppImage * image));
+API_INIT(const MethodInfo*, image_get_entry_point, (const Il2CppImage * image));
+API_INIT(size_t, image_get_class_count, (const Il2CppImage * image));
+API_INIT(const Il2CppClass*, image_get_class, (const Il2CppImage * image, size_t index));
+API_INIT(Il2CppManagedMemorySnapshot*, capture_memory_snapshot, ());
+API_INIT(void, free_captured_memory_snapshot, (Il2CppManagedMemorySnapshot * snapshot));
+API_INIT(void, set_find_plugin_callback, (Il2CppSetFindPlugInCallback method));
+API_INIT(void, register_log_callback, (Il2CppLogCallback method));
+API_INIT(void, debugger_set_agent_options, (const char* options));
+API_INIT(bool, is_debugger_attached, ());
 #ifdef UNITY_2019
-void (*il2cpp_functions::register_debugger_agent_transport)(Il2CppDebuggerTransport * debuggerTransport);
-bool (*il2cpp_functions::debug_get_method_info)(const MethodInfo*, Il2CppMethodDebugInfo * methodDebugInfo);
+API_INIT(void, register_debugger_agent_transport, (Il2CppDebuggerTransport * debuggerTransport));
+API_INIT(bool, debug_get_method_info, (const MethodInfo*, Il2CppMethodDebugInfo * methodDebugInfo));
 #endif
-void (*il2cpp_functions::unity_install_unitytls_interface)(const void* unitytlsInterfaceStruct);
-Il2CppCustomAttrInfo* (*il2cpp_functions::custom_attrs_from_class)(Il2CppClass * klass);
-Il2CppCustomAttrInfo* (*il2cpp_functions::custom_attrs_from_method)(const MethodInfo * method);
-Il2CppObject* (*il2cpp_functions::custom_attrs_get_attr)(Il2CppCustomAttrInfo * ainfo, Il2CppClass * attr_klass);
-bool (*il2cpp_functions::custom_attrs_has_attr)(Il2CppCustomAttrInfo * ainfo, Il2CppClass * attr_klass);
-Il2CppArray* (*il2cpp_functions::custom_attrs_construct)(Il2CppCustomAttrInfo * cinfo);
-void (*il2cpp_functions::custom_attrs_free)(Il2CppCustomAttrInfo * ainfo);
+API_INIT(void, unity_install_unitytls_interface, (const void* unitytlsInterfaceStruct));
+API_INIT(Il2CppCustomAttrInfo*, custom_attrs_from_class, (Il2CppClass * klass));
+API_INIT(Il2CppCustomAttrInfo*, custom_attrs_from_method, (const MethodInfo * method));
+API_INIT(Il2CppObject*, custom_attrs_get_attr, (Il2CppCustomAttrInfo * ainfo, Il2CppClass * attr_klass));
+API_INIT(bool, custom_attrs_has_attr, (Il2CppCustomAttrInfo * ainfo, Il2CppClass * attr_klass));
+API_INIT(Il2CppArray*, custom_attrs_construct, (Il2CppCustomAttrInfo * cinfo));
+API_INIT(void, custom_attrs_free, (Il2CppCustomAttrInfo * ainfo));
 #ifdef UNITY_2019
-void (*il2cpp_functions::class_set_userdata)(Il2CppClass * klass, void* userdata);
-int (*il2cpp_functions::class_get_userdata_offset)();
+API_INIT(void, class_set_userdata, (Il2CppClass * klass, void* userdata));
+API_INIT(int, class_get_userdata_offset, ());
 #endif
 
 // MANUALLY DEFINED CONST DEFINITIONS
-const Il2CppType* (*il2cpp_functions::class_get_type_const)(const Il2CppClass * klass);
-const char* (*il2cpp_functions::class_get_name_const)(const Il2CppClass * klass);
+API_INIT(const Il2CppType*, class_get_type_const, (const Il2CppClass * klass));
+API_INIT(const char*, class_get_name_const, (const Il2CppClass * klass));
 
 // SELECT NON-API LIBIL2CPP FUNCTIONS:
-bool (*il2cpp_functions::Class_Init)(Il2CppClass* klass);
+API_INIT(bool, Class_Init, (Il2CppClass* klass));
 
-Il2CppClass* (*il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex)(TypeDefinitionIndex index);
-Il2CppClass* (*il2cpp_functions::MetadataCache_GetTypeInfoFromTypeIndex)(TypeIndex index);
+API_INIT(Il2CppClass*, MetadataCache_GetTypeInfoFromTypeDefinitionIndex, (TypeDefinitionIndex index));
+API_INIT(Il2CppClass*, MetadataCache_GetTypeInfoFromTypeIndex, (TypeIndex index));
 
 #ifdef UNITY_2019
-std::string (*il2cpp_functions::_Type_GetName_)(const Il2CppType *type, Il2CppTypeNameFormat format);
+API_INIT(std::string, _Type_GetName_, (const Il2CppType *type, Il2CppTypeNameFormat format));
 #else
-gnu_string (*il2cpp_functions::_Type_GetName_)(const Il2CppType *type, Il2CppTypeNameFormat format);
+API_INIT(gnu_string, _Type_GetName_, (const Il2CppType *type, Il2CppTypeNameFormat format));
 #endif
-void (*il2cpp_functions::GC_free)(void* addr);
-void (*il2cpp_functions::GarbageCollector_SetWriteBarrier)(void** ptr);
-void* (*il2cpp_functions::GarbageCollector_AllocateFixed)(size_t sz, void* desc);
+API_INIT(void, GC_free, (void* addr));
 
-Il2CppClass* (*il2cpp_functions::Class_FromIl2CppType)(Il2CppType* typ);
-Il2CppClass* (*il2cpp_functions::Class_GetPtrClass)(Il2CppClass* elementClass);
-Il2CppClass* (*il2cpp_functions::GenericClass_GetClass)(Il2CppGenericClass* gclass);
-AssemblyVector* (*il2cpp_functions::Assembly_GetAllAssemblies)();
+API_INIT(void, GarbageCollector_SetWriteBarrier, (void** ptr));
+API_INIT(void*, GarbageCollector_AllocateFixed, (size_t sz, void* descr));
+
+API_INIT(Il2CppClass*, Class_FromIl2CppType, (Il2CppType* typ));
+API_INIT(Il2CppClass*, Class_GetPtrClass, (Il2CppClass* elementClass));
+API_INIT(Il2CppClass*, GenericClass_GetClass, (Il2CppGenericClass* gclass));
+API_INIT(AssemblyVector*, Assembly_GetAllAssemblies, ());
 
 const Il2CppMetadataRegistration** il2cpp_functions::s_Il2CppMetadataRegistrationPtr;
 const void** il2cpp_functions::s_GlobalMetadataPtr;
@@ -449,14 +453,11 @@ LoggerContextObject& il2cpp_functions::getFuncLogger() {
     return logger;
 }
 
-// closes log on application shutdown
-// Address is unused, so left as 0
-// MAKE_HOOK(shutdown_hook, nullptr, void) {
-//     Logger::closeAll();
-//     shutdown_hook();
-// }
 
-// Autogenerated; modified by zoller27osu
+#define API_SYM(name) \
+*(void**)(&il2cpp_##name) = dlsym(imagehandle, "il2cpp_" #name); \
+logger.debug("Loaded: " #name ", error: %s", dlerror())
+// Autogenerated
 // Initializes all of the IL2CPP functions via dlopen and dlsym for use.
 void il2cpp_functions::Init() {
     if (initialized) {
@@ -471,487 +472,267 @@ void il2cpp_functions::Init() {
         logger.error("Failed to dlopen %s: %s!", path.c_str(), dlerror());
         return;
     }
+    #ifdef UNITY_2019
+    API_SYM(init);
+    API_SYM(init_utf16);
+    #else
+    API_SYM(init);
+    API_SYM(init_utf16);
+    #endif
+    API_SYM(shutdown);
+    API_SYM(set_config_dir);
+    API_SYM(set_data_dir);
+    API_SYM(set_temp_dir);
+    API_SYM(set_commandline_arguments);
+    API_SYM(set_commandline_arguments_utf16);
+    API_SYM(set_config_utf16);
+    API_SYM(set_config);
+    API_SYM(set_memory_callbacks);
+    API_SYM(get_corlib);
+    API_SYM(add_internal_call);
+    API_SYM(resolve_icall);
+    API_SYM(alloc);
+    API_SYM(free);
+    API_SYM(array_class_get);
+    API_SYM(array_length);
+    API_SYM(array_get_byte_length);
+    API_SYM(array_new);
+    API_SYM(array_new_specific);
+    API_SYM(array_new_full);
+    API_SYM(bounded_array_class_get);
+    API_SYM(array_element_size);
+    API_SYM(assembly_get_image);
+    #ifdef UNITY_2019
+    API_SYM(class_for_each);
+    #endif
+    API_SYM(class_enum_basetype);
+    API_SYM(class_is_generic);
+    API_SYM(class_is_inflated);
+    API_SYM(class_is_assignable_from);
+    API_SYM(class_is_subclass_of);
+    API_SYM(class_has_parent);
+    API_SYM(class_from_il2cpp_type);
+    API_SYM(class_from_name);
+    API_SYM(class_from_system_type);
+    API_SYM(class_get_element_class);
+    API_SYM(class_get_events);
+    API_SYM(class_get_fields);
+    API_SYM(class_get_nested_types);
+    API_SYM(class_get_interfaces);
+    API_SYM(class_get_properties);
+    API_SYM(class_get_property_from_name);
+    API_SYM(class_get_field_from_name);
+    API_SYM(class_get_methods);
+    API_SYM(class_get_method_from_name);
+    API_SYM(class_get_name);
+    #ifdef UNITY_2019
+    API_SYM(type_get_name_chunked);
+    #endif
+    API_SYM(class_get_namespace);
+    API_SYM(class_get_parent);
+    API_SYM(class_get_declaring_type);
+    API_SYM(class_instance_size);
+    API_SYM(class_num_fields);
+    API_SYM(class_is_valuetype);
+    API_SYM(class_value_size);
+    API_SYM(class_is_blittable);
+    API_SYM(class_get_flags);
+    API_SYM(class_is_abstract);
+    API_SYM(class_is_interface);
+    API_SYM(class_array_element_size);
+    API_SYM(class_from_type);
+    API_SYM(class_get_type);
+    API_SYM(class_get_type_token);
+    API_SYM(class_has_attribute);
+    API_SYM(class_has_references);
+    API_SYM(class_is_enum);
+    API_SYM(class_get_image);
+    API_SYM(class_get_assemblyname);
+    API_SYM(class_get_rank);
+    #ifdef UNITY_2019
+    API_SYM(class_get_data_size);
+    API_SYM(class_get_static_field_data);
+    #endif
+    API_SYM(class_get_bitmap_size);
+    API_SYM(class_get_bitmap);
+    API_SYM(stats_dump_to_file);
+    API_SYM(stats_get_value);
+    API_SYM(domain_get);
+    API_SYM(domain_assembly_open);
+    API_SYM(domain_get_assemblies);
+    #ifdef UNITY_2019
+    API_SYM(raise_exception);
+    #endif
+    API_SYM(exception_from_name_msg);
+    API_SYM(get_exception_argument_null);
+    API_SYM(format_exception);
+    API_SYM(format_stack_trace);
+    API_SYM(unhandled_exception);
+    API_SYM(field_get_flags);
+    API_SYM(field_get_name);
+    API_SYM(field_get_parent);
+    API_SYM(field_get_offset);
+    API_SYM(field_get_type);
+    API_SYM(field_get_value);
+    API_SYM(field_get_value_object);
+    API_SYM(field_has_attribute);
+    API_SYM(field_set_value);
+    API_SYM(field_static_get_value);
+    API_SYM(field_static_set_value);
+    API_SYM(field_set_value_object);
+    #ifdef UNITY_2019
+    API_SYM(field_is_literal);
+    #endif
+    API_SYM(gc_collect);
+    API_SYM(gc_collect_a_little);
+    API_SYM(gc_disable);
+    API_SYM(gc_enable);
+    API_SYM(gc_is_disabled);
+    #ifdef UNITY_2019
+    API_SYM(gc_get_max_time_slice_ns);
+    API_SYM(gc_set_max_time_slice_ns);
+    API_SYM(gc_is_incremental);
+    #endif
+    API_SYM(gc_get_used_size);
+    API_SYM(gc_get_heap_size);
+    API_SYM(gc_wbarrier_set_field);
+    #ifdef UNITY_2019
+    API_SYM(gc_has_strict_wbarriers);
+    API_SYM(gc_set_external_allocation_tracker);
+    API_SYM(gc_set_external_wbarrier_tracker);
+    API_SYM(gc_foreach_heap);
+    API_SYM(stop_gc_world);
+    API_SYM(start_gc_world);
+    #endif
+    API_SYM(gchandle_new);
+    API_SYM(gchandle_new_weakref);
+    API_SYM(gchandle_get_target);
+    API_SYM(gchandle_free);
+    #ifdef UNITY_2019
+    API_SYM(gchandle_foreach_get_target);
+    API_SYM(object_header_size);
+    API_SYM(array_object_header_size);
+    API_SYM(offset_of_array_length_in_array_object_header);
+    API_SYM(offset_of_array_bounds_in_array_object_header);
+    API_SYM(allocation_granularity);
+    #endif
+    API_SYM(unity_liveness_calculation_begin);
+    API_SYM(unity_liveness_calculation_end);
+    API_SYM(unity_liveness_calculation_from_root);
+    API_SYM(unity_liveness_calculation_from_statics);
+    API_SYM(method_get_return_type);
+    API_SYM(method_get_declaring_type);
+    API_SYM(method_get_name);
+    API_SYM(method_get_from_reflection);
+    API_SYM(method_get_object);
+    API_SYM(method_is_generic);
+    API_SYM(method_is_inflated);
+    API_SYM(method_is_instance);
+    API_SYM(method_get_param_count);
+    API_SYM(method_get_param);
+    API_SYM(method_get_class);
+    API_SYM(method_has_attribute);
+    API_SYM(method_get_flags);
+    API_SYM(method_get_token);
+    API_SYM(method_get_param_name);
 
-    // Please verify that these have more than 1 instruction to their name before attempting to hook them!
-    *(void**)(&init) = dlsym(imagehandle, "il2cpp_init");
-    logger.info("Loaded: il2cpp_init, error: %s", dlerror());
-    *(void**)(&shutdown) = dlsym(imagehandle, "il2cpp_shutdown");
-    logger.info("Loaded: il2cpp_shutdown, error: %s", dlerror());
-    *(void**)(&init_utf16) = dlsym(imagehandle, "il2cpp_init_utf16");
-    logger.info("Loaded: il2cpp_init_utf16");
-    *(void**)(&set_config_dir) = dlsym(imagehandle, "il2cpp_set_config_dir");
-    logger.info("Loaded: il2cpp_set_config_dir");
-    *(void**)(&set_data_dir) = dlsym(imagehandle, "il2cpp_set_data_dir");
-    logger.info("Loaded: il2cpp_set_data_dir");
-    *(void**)(&set_temp_dir) = dlsym(imagehandle, "il2cpp_set_temp_dir");
-    logger.info("Loaded: il2cpp_set_temp_dir");
-    *(void**)(&set_commandline_arguments) = dlsym(imagehandle, "il2cpp_set_commandline_arguments");
-    logger.info("Loaded: il2cpp_set_commandline_arguments");
-    *(void**)(&set_commandline_arguments_utf16) = dlsym(imagehandle, "il2cpp_set_commandline_arguments_utf16");
-    logger.info("Loaded: il2cpp_set_commandline_arguments_utf16");
-    *(void**)(&set_config_utf16) = dlsym(imagehandle, "il2cpp_set_config_utf16");
-    logger.info("Loaded: il2cpp_set_config_utf16");
-    *(void**)(&set_config) = dlsym(imagehandle, "il2cpp_set_config");
-    logger.info("Loaded: il2cpp_set_config");
-    *(void**)(&set_memory_callbacks) = dlsym(imagehandle, "il2cpp_set_memory_callbacks");
-    logger.info("Loaded: il2cpp_set_memory_callbacks");
-    *(void**)(&get_corlib) = dlsym(imagehandle, "il2cpp_get_corlib");
-    logger.info("Loaded: il2cpp_get_corlib");
-    *(void**)(&add_internal_call) = dlsym(imagehandle, "il2cpp_add_internal_call");
-    logger.info("Loaded: il2cpp_add_internal_call");
-    *(void**)(&resolve_icall) = dlsym(imagehandle, "il2cpp_resolve_icall");
-    logger.info("Loaded: il2cpp_resolve_icall");
-    *(void**)(&alloc) = dlsym(imagehandle, "il2cpp_alloc");
-    logger.info("Loaded: il2cpp_alloc");
-    *(void**)(&free) = dlsym(imagehandle, "il2cpp_free");
-    logger.info("Loaded: il2cpp_free");
-    *(void**)(&array_class_get) = dlsym(imagehandle, "il2cpp_array_class_get");
-    logger.info("Loaded: il2cpp_array_class_get");
-    *(void**)(&array_length) = dlsym(imagehandle, "il2cpp_array_length");
-    logger.info("Loaded: il2cpp_array_length");
-    *(void**)(&array_get_byte_length) = dlsym(imagehandle, "il2cpp_array_get_byte_length");
-    logger.info("Loaded: il2cpp_array_get_byte_length");
-    *(void**)(&array_new) = dlsym(imagehandle, "il2cpp_array_new");
-    logger.info("Loaded: il2cpp_array_new");
-    *(void**)(&array_new_specific) = dlsym(imagehandle, "il2cpp_array_new_specific");
-    logger.info("Loaded: il2cpp_array_new_specific");
-    *(void**)(&array_new_full) = dlsym(imagehandle, "il2cpp_array_new_full");
-    logger.info("Loaded: il2cpp_array_new_full");
-    *(void**)(&bounded_array_class_get) = dlsym(imagehandle, "il2cpp_bounded_array_class_get");
-    logger.info("Loaded: il2cpp_bounded_array_class_get");
-    *(void**)(&array_element_size) = dlsym(imagehandle, "il2cpp_array_element_size");
-    logger.info("Loaded: il2cpp_array_element_size");
-    *(void**)(&assembly_get_image) = dlsym(imagehandle, "il2cpp_assembly_get_image");
-    logger.info("Loaded: il2cpp_assembly_get_image");
+    // ONLY IF THE PROFILER EXISTS FOR UNITY_2019
+    API_SYM(profiler_install);
+    API_SYM(profiler_set_events);
+    API_SYM(profiler_install_enter_leave);
+    API_SYM(profiler_install_allocation);
+    API_SYM(profiler_install_gc);
+    API_SYM(profiler_install_fileio);
+    API_SYM(profiler_install_thread);
+
+    API_SYM(property_get_flags);
+    API_SYM(property_get_get_method);
+    API_SYM(property_get_set_method);
+    API_SYM(property_get_name);
+    API_SYM(property_get_parent);
+    API_SYM(object_get_class);
+    API_SYM(object_get_size);
+    API_SYM(object_get_virtual_method);
+    API_SYM(object_new);
+    // Always returns (void*, (obj + 1)
+    API_SYM(object_unbox);
+    // If klass is not a ValueType, returns (Il2CppObject*, (*data), else boxes
+    API_SYM(value_box);
+    API_SYM(monitor_enter);
+    API_SYM(monitor_try_enter);
+    API_SYM(monitor_exit);
+    API_SYM(monitor_pulse);
+    API_SYM(monitor_pulse_all);
+    API_SYM(monitor_wait);
+    API_SYM(monitor_try_wait);
+    API_SYM(runtime_invoke);
+    API_SYM(runtime_invoke_convert_args);
+    API_SYM(runtime_class_init);
+    API_SYM(runtime_object_init);
+    API_SYM(runtime_object_init_exception);
+    API_SYM(runtime_unhandled_exception_policy_set);
+    API_SYM(string_length);
+    API_SYM(string_chars);
+    API_SYM(string_new);
+    API_SYM(string_new_len);
+    API_SYM(string_new_utf16);
+    API_SYM(string_new_wrapper);
+    API_SYM(string_intern);
+    API_SYM(string_is_interned);
+    API_SYM(thread_current);
+    API_SYM(thread_attach);
+    API_SYM(thread_detach);
+    API_SYM(thread_get_all_attached_threads);
+    API_SYM(is_vm_thread);
+    API_SYM(current_thread_walk_frame_stack);
+    API_SYM(thread_walk_frame_stack);
+    API_SYM(current_thread_get_top_frame);
+    API_SYM(thread_get_top_frame);
+    API_SYM(current_thread_get_frame_at);
+    API_SYM(thread_get_frame_at);
+    API_SYM(current_thread_get_stack_depth);
+    API_SYM(thread_get_stack_depth);
     #ifdef UNITY_2019
-    *(void**)(&class_for_each) = dlsym(imagehandle, "il2cpp_class_for_each");
-    logger.info("Loaded: il2cpp_class_for_each");
+    API_SYM(override_stack_backtrace);
     #endif
-    *(void**)(&class_enum_basetype) = dlsym(imagehandle, "il2cpp_class_enum_basetype");
-    logger.info("Loaded: il2cpp_class_enum_basetype");
-    *(void**)(&class_is_generic) = dlsym(imagehandle, "il2cpp_class_is_generic");
-    logger.info("Loaded: il2cpp_class_is_generic");
-    *(void**)(&class_is_inflated) = dlsym(imagehandle, "il2cpp_class_is_inflated");
-    logger.info("Loaded: il2cpp_class_is_inflated");
-    *(void**)(&class_is_assignable_from) = dlsym(imagehandle, "il2cpp_class_is_assignable_from");
-    logger.info("Loaded: il2cpp_class_is_assignable_from");
-    *(void**)(&class_is_subclass_of) = dlsym(imagehandle, "il2cpp_class_is_subclass_of");
-    logger.info("Loaded: il2cpp_class_is_subclass_of");
-    *(void**)(&class_has_parent) = dlsym(imagehandle, "il2cpp_class_has_parent");
-    logger.info("Loaded: il2cpp_class_has_parent");
-    *(void**)(&class_from_il2cpp_type) = dlsym(imagehandle, "il2cpp_class_from_il2cpp_type");
-    logger.info("Loaded: il2cpp_class_from_il2cpp_type");
-    *(void**)(&class_from_name) = dlsym(imagehandle, "il2cpp_class_from_name");
-    logger.info("Loaded: il2cpp_class_from_name");
-    *(void**)(&class_from_system_type) = dlsym(imagehandle, "il2cpp_class_from_system_type");
-    logger.info("Loaded: il2cpp_class_from_system_type");
-    *(void**)(&class_get_element_class) = dlsym(imagehandle, "il2cpp_class_get_element_class");
-    logger.info("Loaded: il2cpp_class_get_element_class");
-    *(void**)(&class_get_events) = dlsym(imagehandle, "il2cpp_class_get_events");
-    logger.info("Loaded: il2cpp_class_get_events");
-    *(void**)(&class_get_fields) = dlsym(imagehandle, "il2cpp_class_get_fields");
-    logger.info("Loaded: il2cpp_class_get_fields");
-    *(void**)(&class_get_nested_types) = dlsym(imagehandle, "il2cpp_class_get_nested_types");
-    logger.info("Loaded: il2cpp_class_get_nested_types");
-    *(void**)(&class_get_interfaces) = dlsym(imagehandle, "il2cpp_class_get_interfaces");
-    logger.info("Loaded: il2cpp_class_get_interfaces");
-    *(void**)(&class_get_properties) = dlsym(imagehandle, "il2cpp_class_get_properties");
-    logger.info("Loaded: il2cpp_class_get_properties");
-    *(void**)(&class_get_property_from_name) = dlsym(imagehandle, "il2cpp_class_get_property_from_name");
-    logger.info("Loaded: il2cpp_class_get_property_from_name");
-    *(void**)(&class_get_field_from_name) = dlsym(imagehandle, "il2cpp_class_get_field_from_name");
-    logger.info("Loaded: il2cpp_class_get_field_from_name");
-    *(void**)(&class_get_methods) = dlsym(imagehandle, "il2cpp_class_get_methods");
-    logger.info("Loaded: il2cpp_class_get_methods");
-    *(void**)(&class_get_method_from_name) = dlsym(imagehandle, "il2cpp_class_get_method_from_name");
-    logger.info("Loaded: il2cpp_class_get_method_from_name");
-    *(void**)(&class_get_name) = dlsym(imagehandle, "il2cpp_class_get_name");
-    logger.info("Loaded: il2cpp_class_get_name");
+    API_SYM(type_get_object);
+    API_SYM(type_get_type);
+    API_SYM(type_get_class_or_element_class);
+    API_SYM(type_get_name);
+    API_SYM(type_is_byref);
+    API_SYM(type_get_attrs);
+    API_SYM(type_equals);
+    API_SYM(type_get_assembly_qualified_name);
     #ifdef UNITY_2019
-    *(void**)(&type_get_name_chunked) = dlsym(imagehandle, "il2cpp_type_get_name_chunked");
-    logger.info("Loaded: il2cpp_type_get_name_chunked");
+    API_SYM(type_is_static);
+    API_SYM(type_is_pointer_type);
     #endif
-    *(void**)(&class_get_namespace) = dlsym(imagehandle, "il2cpp_class_get_namespace");
-    logger.info("Loaded: il2cpp_class_get_namespace");
-    *(void**)(&class_get_parent) = dlsym(imagehandle, "il2cpp_class_get_parent");
-    logger.info("Loaded: il2cpp_class_get_parent");
-    *(void**)(&class_get_declaring_type) = dlsym(imagehandle, "il2cpp_class_get_declaring_type");
-    logger.info("Loaded: il2cpp_class_get_declaring_type");
-    *(void**)(&class_instance_size) = dlsym(imagehandle, "il2cpp_class_instance_size");
-    logger.info("Loaded: il2cpp_class_instance_size");
-    *(void**)(&class_num_fields) = dlsym(imagehandle, "il2cpp_class_num_fields");
-    logger.info("Loaded: il2cpp_class_num_fields");
-    *(void**)(&class_is_valuetype) = dlsym(imagehandle, "il2cpp_class_is_valuetype");
-    logger.info("Loaded: il2cpp_class_is_valuetype");
-    *(void**)(&class_value_size) = dlsym(imagehandle, "il2cpp_class_value_size");
-    logger.info("Loaded: il2cpp_class_value_size");
-    *(void**)(&class_is_blittable) = dlsym(imagehandle, "il2cpp_class_is_blittable");
-    logger.info("Loaded: il2cpp_class_is_blittable");
-    *(void**)(&class_get_flags) = dlsym(imagehandle, "il2cpp_class_get_flags");
-    logger.info("Loaded: il2cpp_class_get_flags");
-    *(void**)(&class_is_abstract) = dlsym(imagehandle, "il2cpp_class_is_abstract");
-    logger.info("Loaded: il2cpp_class_is_abstract");
-    *(void**)(&class_is_interface) = dlsym(imagehandle, "il2cpp_class_is_interface");
-    logger.info("Loaded: il2cpp_class_is_interface");
-    *(void**)(&class_array_element_size) = dlsym(imagehandle, "il2cpp_class_array_element_size");
-    logger.info("Loaded: il2cpp_class_array_element_size");
-    *(void**)(&class_from_type) = dlsym(imagehandle, "il2cpp_class_from_type");
-    logger.info("Loaded: il2cpp_class_from_type");
-    *(void**)(&class_get_type) = dlsym(imagehandle, "il2cpp_class_get_type");
-    logger.info("Loaded: il2cpp_class_get_type");
-    *(void**)(&class_get_type_token) = dlsym(imagehandle, "il2cpp_class_get_type_token");
-    logger.info("Loaded: il2cpp_class_get_type_token");
-    *(void**)(&class_has_attribute) = dlsym(imagehandle, "il2cpp_class_has_attribute");
-    logger.info("Loaded: il2cpp_class_has_attribute");
-    *(void**)(&class_has_references) = dlsym(imagehandle, "il2cpp_class_has_references");
-    logger.info("Loaded: il2cpp_class_has_references");
-    *(void**)(&class_is_enum) = dlsym(imagehandle, "il2cpp_class_is_enum");
-    logger.info("Loaded: il2cpp_class_is_enum");
-    *(void**)(&class_get_image) = dlsym(imagehandle, "il2cpp_class_get_image");
-    logger.info("Loaded: il2cpp_class_get_image");
-    *(void**)(&class_get_assemblyname) = dlsym(imagehandle, "il2cpp_class_get_assemblyname");
-    logger.info("Loaded: il2cpp_class_get_assemblyname");
-    *(void**)(&class_get_rank) = dlsym(imagehandle, "il2cpp_class_get_rank");
-    logger.info("Loaded: il2cpp_class_get_rank");
+    API_SYM(image_get_assembly);
+    API_SYM(image_get_name);
+    API_SYM(image_get_filename);
+    API_SYM(image_get_entry_point);
+    API_SYM(image_get_class_count);
+    API_SYM(image_get_class);
+    API_SYM(capture_memory_snapshot);
+    API_SYM(free_captured_memory_snapshot);
+    API_SYM(set_find_plugin_callback);
+    API_SYM(register_log_callback);
+    API_SYM(debugger_set_agent_options);
+    API_SYM(is_debugger_attached);
     #ifdef UNITY_2019
-    *(void**)(&class_get_data_size) = dlsym(imagehandle, "il2cpp_class_get_data_size");
-    logger.info("Loaded: il2cpp_class_get_data_size");
-    *(void**)(&class_get_static_field_data) = dlsym(imagehandle, "il2cpp_class_get_static_field_data");
-    logger.info("Loaded: il2cpp_class_get_static_field_data");
+    API_SYM(register_debugger_agent_transport);
+    API_SYM(debug_get_method_info);
     #endif
-    *(void**)(&class_get_bitmap_size) = dlsym(imagehandle, "il2cpp_class_get_bitmap_size");
-    logger.info("Loaded: il2cpp_class_get_bitmap_size");
-    *(void**)(&class_get_bitmap) = dlsym(imagehandle, "il2cpp_class_get_bitmap");
-    logger.info("Loaded: il2cpp_class_get_bitmap");
-    *(void**)(&stats_dump_to_file) = dlsym(imagehandle, "il2cpp_stats_dump_to_file");
-    logger.info("Loaded: il2cpp_stats_dump_to_file");
-    *(void**)(&stats_get_value) = dlsym(imagehandle, "il2cpp_stats_get_value");
-    logger.info("Loaded: il2cpp_stats_get_value");
-    *(void**)(&domain_get) = dlsym(imagehandle, "il2cpp_domain_get");
-    logger.info("Loaded: il2cpp_domain_get");
-    *(void**)(&domain_assembly_open) = dlsym(imagehandle, "il2cpp_domain_assembly_open");
-    logger.info("Loaded: il2cpp_domain_assembly_open");
-    *(void**)(&domain_get_assemblies) = dlsym(imagehandle, "il2cpp_domain_get_assemblies");
-    logger.info("Loaded: il2cpp_domain_get_assemblies");
+    API_SYM(unity_install_unitytls_interface);
+    API_SYM(custom_attrs_from_class);
+    API_SYM(custom_attrs_from_method);
+    API_SYM(custom_attrs_get_attr);
+    API_SYM(custom_attrs_has_attr);
+    API_SYM(custom_attrs_construct);
+    API_SYM(custom_attrs_free);
     #ifdef UNITY_2019
-    *(void**)(&raise_exception) = dlsym(imagehandle, "il2cpp_raise_exception");
-    logger.info("Loaded: il2cpp_raise_exception");
-    #endif
-    *(void**)(&exception_from_name_msg) = dlsym(imagehandle, "il2cpp_exception_from_name_msg");
-    logger.info("Loaded: il2cpp_exception_from_name_msg");
-    *(void**)(&get_exception_argument_null) = dlsym(imagehandle, "il2cpp_get_exception_argument_null");
-    logger.info("Loaded: il2cpp_get_exception_argument_null");
-    *(void**)(&format_exception) = dlsym(imagehandle, "il2cpp_format_exception");
-    logger.info("Loaded: il2cpp_format_exception");
-    *(void**)(&format_stack_trace) = dlsym(imagehandle, "il2cpp_format_stack_trace");
-    logger.info("Loaded: il2cpp_format_stack_trace");
-    *(void**)(&unhandled_exception) = dlsym(imagehandle, "il2cpp_unhandled_exception");
-    logger.info("Loaded: il2cpp_unhandled_exception");
-    *(void**)(&field_get_flags) = dlsym(imagehandle, "il2cpp_field_get_flags");
-    logger.info("Loaded: il2cpp_field_get_flags");
-    *(void**)(&field_get_name) = dlsym(imagehandle, "il2cpp_field_get_name");
-    logger.info("Loaded: il2cpp_field_get_name");
-    *(void**)(&field_get_parent) = dlsym(imagehandle, "il2cpp_field_get_parent");
-    logger.info("Loaded: il2cpp_field_get_parent");
-    *(void**)(&field_get_offset) = dlsym(imagehandle, "il2cpp_field_get_offset");
-    logger.info("Loaded: il2cpp_field_get_offset");
-    *(void**)(&field_get_type) = dlsym(imagehandle, "il2cpp_field_get_type");
-    logger.info("Loaded: il2cpp_field_get_type");
-    *(void**)(&field_get_value) = dlsym(imagehandle, "il2cpp_field_get_value");
-    logger.info("Loaded: il2cpp_field_get_value");
-    *(void**)(&field_get_value_object) = dlsym(imagehandle, "il2cpp_field_get_value_object");
-    logger.info("Loaded: il2cpp_field_get_value_object");
-    *(void**)(&field_has_attribute) = dlsym(imagehandle, "il2cpp_field_has_attribute");
-    logger.info("Loaded: il2cpp_field_has_attribute");
-    *(void**)(&field_set_value) = dlsym(imagehandle, "il2cpp_field_set_value");
-    logger.info("Loaded: il2cpp_field_set_value");
-    *(void**)(&field_static_get_value) = dlsym(imagehandle, "il2cpp_field_static_get_value");
-    logger.info("Loaded: il2cpp_field_static_get_value");
-    *(void**)(&field_static_set_value) = dlsym(imagehandle, "il2cpp_field_static_set_value");
-    logger.info("Loaded: il2cpp_field_static_set_value");
-    *(void**)(&field_set_value_object) = dlsym(imagehandle, "il2cpp_field_set_value_object");
-    logger.info("Loaded: il2cpp_field_set_value_object");
-    #ifdef UNITY_2019
-    *(void**)(&field_is_literal) = dlsym(imagehandle, "il2cpp_field_is_literal");
-    logger.info("Loaded: il2cpp_field_is_literal");
-    #endif
-    *(void**)(&gc_collect) = dlsym(imagehandle, "il2cpp_gc_collect");
-    logger.info("Loaded: il2cpp_gc_collect");
-    *(void**)(&gc_collect_a_little) = dlsym(imagehandle, "il2cpp_gc_collect_a_little");
-    logger.info("Loaded: il2cpp_gc_collect_a_little");
-    *(void**)(&gc_disable) = dlsym(imagehandle, "il2cpp_gc_disable");
-    logger.info("Loaded: il2cpp_gc_disable");
-    *(void**)(&gc_enable) = dlsym(imagehandle, "il2cpp_gc_enable");
-    logger.info("Loaded: il2cpp_gc_enable");
-    *(void**)(&gc_is_disabled) = dlsym(imagehandle, "il2cpp_gc_is_disabled");
-    logger.info("Loaded: il2cpp_gc_is_disabled");
-    #ifdef UNITY_2019
-    *(void**)(&gc_get_max_time_slice_ns) = dlsym(imagehandle, "il2cpp_gc_get_max_time_slice_ns");
-    logger.info("Loaded: il2cpp_gc_get_max_time_slice_ns");
-    *(void**)(&gc_set_max_time_slice_ns) = dlsym(imagehandle, "il2cpp_gc_set_max_time_slice_ns");
-    logger.info("Loaded: il2cpp_gc_set_max_time_slice_ns");
-    *(void**)(&gc_is_incremental) = dlsym(imagehandle, "il2cpp_gc_is_incremental");
-    logger.info("Loaded: il2cpp_gc_is_incremental");
-    #endif
-    *(void**)(&gc_get_used_size) = dlsym(imagehandle, "il2cpp_gc_get_used_size");
-    logger.info("Loaded: il2cpp_gc_get_used_size");
-    *(void**)(&gc_get_heap_size) = dlsym(imagehandle, "il2cpp_gc_get_heap_size");
-    logger.info("Loaded: il2cpp_gc_get_heap_size");
-    *(void**)(&gc_wbarrier_set_field) = dlsym(imagehandle, "il2cpp_gc_wbarrier_set_field");
-    logger.info("Loaded: il2cpp_gc_wbarrier_set_field");
-    #ifdef UNITY_2019
-    *(void**)(&gc_has_strict_wbarriers) = dlsym(imagehandle, "il2cpp_gc_has_strict_wbarriers");
-    logger.info("Loaded: il2cpp_gc_has_strict_wbarriers");
-    *(void**)(&gc_set_external_allocation_tracker) = dlsym(imagehandle, "il2cpp_gc_set_external_allocation_tracker");
-    logger.info("Loaded: il2cpp_gc_set_external_allocation_tracker");
-    *(void**)(&gc_set_external_wbarrier_tracker) = dlsym(imagehandle, "il2cpp_gc_set_external_wbarrier_tracker");
-    logger.info("Loaded: il2cpp_gc_set_external_wbarrier_tracker");
-    *(void**)(&gc_foreach_heap) = dlsym(imagehandle, "il2cpp_gc_foreach_heap");
-    logger.info("Loaded: il2cpp_gc_foreach_heap");
-    *(void**)(&stop_gc_world) = dlsym(imagehandle, "il2cpp_stop_gc_world");
-    logger.info("Loaded: il2cpp_stop_gc_world");
-    *(void**)(&start_gc_world) = dlsym(imagehandle, "il2cpp_start_gc_world");
-    logger.info("Loaded: il2cpp_start_gc_world");
-    #endif
-    *(void**)(&gchandle_new) = dlsym(imagehandle, "il2cpp_gchandle_new");
-    logger.info("Loaded: il2cpp_gchandle_new");
-    *(void**)(&gchandle_new_weakref) = dlsym(imagehandle, "il2cpp_gchandle_new_weakref");
-    logger.info("Loaded: il2cpp_gchandle_new_weakref");
-    *(void**)(&gchandle_get_target) = dlsym(imagehandle, "il2cpp_gchandle_get_target");
-    logger.info("Loaded: il2cpp_gchandle_get_target");
-    *(void**)(&gchandle_free) = dlsym(imagehandle, "il2cpp_gchandle_free");
-    logger.info("Loaded: il2cpp_gchandle_free");
-    #ifdef UNITY_2019
-    *(void**)(&gchandle_foreach_get_target) = dlsym(imagehandle, "il2cpp_gchandle_foreach_get_target");
-    logger.info("Loaded: il2cpp_gchandle_foreach_get_target");
-    *(void**)(&object_header_size) = dlsym(imagehandle, "il2cpp_object_header_size");
-    logger.info("Loaded: il2cpp_object_header_size");
-    *(void**)(&array_object_header_size) = dlsym(imagehandle, "il2cpp_array_object_header_size");
-    logger.info("Loaded: il2cpp_array_object_header_size");
-    *(void**)(&offset_of_array_length_in_array_object_header) = dlsym(imagehandle, "il2cpp_offset_of_array_length_in_array_object_header");
-    logger.info("Loaded: il2cpp_offset_of_array_length_in_array_object_header");
-    *(void**)(&offset_of_array_bounds_in_array_object_header) = dlsym(imagehandle, "il2cpp_offset_of_array_bounds_in_array_object_header");
-    logger.info("Loaded: il2cpp_offset_of_array_bounds_in_array_object_header");
-    *(void**)(&allocation_granularity) = dlsym(imagehandle, "il2cpp_allocation_granularity");
-    logger.info("Loaded: il2cpp_allocation_granularity");
-    #endif
-    *(void**)(&unity_liveness_calculation_begin) = dlsym(imagehandle, "il2cpp_unity_liveness_calculation_begin");
-    logger.info("Loaded: il2cpp_unity_liveness_calculation_begin");
-    *(void**)(&unity_liveness_calculation_end) = dlsym(imagehandle, "il2cpp_unity_liveness_calculation_end");
-    logger.info("Loaded: il2cpp_unity_liveness_calculation_end");
-    *(void**)(&unity_liveness_calculation_from_root) = dlsym(imagehandle, "il2cpp_unity_liveness_calculation_from_root");
-    logger.info("Loaded: il2cpp_unity_liveness_calculation_from_root");
-    *(void**)(&unity_liveness_calculation_from_statics) = dlsym(imagehandle, "il2cpp_unity_liveness_calculation_from_statics");
-    logger.info("Loaded: il2cpp_unity_liveness_calculation_from_statics");
-    *(void**)(&method_get_return_type) = dlsym(imagehandle, "il2cpp_method_get_return_type");
-    logger.info("Loaded: il2cpp_method_get_return_type");
-    *(void**)(&method_get_declaring_type) = dlsym(imagehandle, "il2cpp_method_get_declaring_type");
-    logger.info("Loaded: il2cpp_method_get_declaring_type");
-    *(void**)(&method_get_name) = dlsym(imagehandle, "il2cpp_method_get_name");
-    logger.info("Loaded: il2cpp_method_get_name");
-    *(void**)(&method_get_from_reflection) = dlsym(imagehandle, "il2cpp_method_get_from_reflection");
-    logger.info("Loaded: il2cpp_method_get_from_reflection");
-    *(void**)(&method_get_object) = dlsym(imagehandle, "il2cpp_method_get_object");
-    logger.info("Loaded: il2cpp_method_get_object");
-    *(void**)(&method_is_generic) = dlsym(imagehandle, "il2cpp_method_is_generic");
-    logger.info("Loaded: il2cpp_method_is_generic");
-    *(void**)(&method_is_inflated) = dlsym(imagehandle, "il2cpp_method_is_inflated");
-    logger.info("Loaded: il2cpp_method_is_inflated");
-    *(void**)(&method_is_instance) = dlsym(imagehandle, "il2cpp_method_is_instance");
-    logger.info("Loaded: il2cpp_method_is_instance");
-    *(void**)(&method_get_param_count) = dlsym(imagehandle, "il2cpp_method_get_param_count");
-    logger.info("Loaded: il2cpp_method_get_param_count");
-    *(void**)(&method_get_param) = dlsym(imagehandle, "il2cpp_method_get_param");
-    logger.info("Loaded: il2cpp_method_get_param");
-    *(void**)(&method_get_class) = dlsym(imagehandle, "il2cpp_method_get_class");
-    logger.info("Loaded: il2cpp_method_get_class");
-    *(void**)(&method_has_attribute) = dlsym(imagehandle, "il2cpp_method_has_attribute");
-    logger.info("Loaded: il2cpp_method_has_attribute");
-    *(void**)(&method_get_flags) = dlsym(imagehandle, "il2cpp_method_get_flags");
-    logger.info("Loaded: il2cpp_method_get_flags");
-    *(void**)(&method_get_token) = dlsym(imagehandle, "il2cpp_method_get_token");
-    logger.info("Loaded: il2cpp_method_get_token");
-    *(void**)(&method_get_param_name) = dlsym(imagehandle, "il2cpp_method_get_param_name");
-    logger.info("Loaded: il2cpp_method_get_param_name");
-    *(void**)(&profiler_install) = dlsym(imagehandle, "il2cpp_profiler_install");
-    logger.info("Loaded: il2cpp_profiler_install");
-    *(void**)(&profiler_set_events) = dlsym(imagehandle, "il2cpp_profiler_set_events");
-    logger.info("Loaded: il2cpp_profiler_set_events");
-    *(void**)(&profiler_install_enter_leave) = dlsym(imagehandle, "il2cpp_profiler_install_enter_leave");
-    logger.info("Loaded: il2cpp_profiler_install_enter_leave");
-    *(void**)(&profiler_install_allocation) = dlsym(imagehandle, "il2cpp_profiler_install_allocation");
-    logger.info("Loaded: il2cpp_profiler_install_allocation");
-    *(void**)(&profiler_install_gc) = dlsym(imagehandle, "il2cpp_profiler_install_gc");
-    logger.info("Loaded: il2cpp_profiler_install_gc");
-    *(void**)(&profiler_install_fileio) = dlsym(imagehandle, "il2cpp_profiler_install_fileio");
-    logger.info("Loaded: il2cpp_profiler_install_fileio");
-    *(void**)(&profiler_install_thread) = dlsym(imagehandle, "il2cpp_profiler_install_thread");
-    logger.info("Loaded: il2cpp_profiler_install_thread");
-    *(void**)(&property_get_flags) = dlsym(imagehandle, "il2cpp_property_get_flags");
-    logger.info("Loaded: il2cpp_property_get_flags");
-    *(void**)(&property_get_get_method) = dlsym(imagehandle, "il2cpp_property_get_get_method");
-    logger.info("Loaded: il2cpp_property_get_get_method");
-    *(void**)(&property_get_set_method) = dlsym(imagehandle, "il2cpp_property_get_set_method");
-    logger.info("Loaded: il2cpp_property_get_set_method");
-    *(void**)(&property_get_name) = dlsym(imagehandle, "il2cpp_property_get_name");
-    logger.info("Loaded: il2cpp_property_get_name");
-    *(void**)(&property_get_parent) = dlsym(imagehandle, "il2cpp_property_get_parent");
-    logger.info("Loaded: il2cpp_property_get_parent");
-    *(void**)(&object_get_class) = dlsym(imagehandle, "il2cpp_object_get_class");
-    logger.info("Loaded: il2cpp_object_get_class");
-    *(void**)(&object_get_size) = dlsym(imagehandle, "il2cpp_object_get_size");
-    logger.info("Loaded: il2cpp_object_get_size");
-    *(void**)(&object_get_virtual_method) = dlsym(imagehandle, "il2cpp_object_get_virtual_method");
-    logger.info("Loaded: il2cpp_object_get_virtual_method");
-    *(void**)(&object_new) = dlsym(imagehandle, "il2cpp_object_new");
-    logger.info("Loaded: il2cpp_object_new");
-    *(void**)(&object_unbox) = dlsym(imagehandle, "il2cpp_object_unbox");
-    logger.info("Loaded: il2cpp_object_unbox");
-    *(void**)(&value_box) = dlsym(imagehandle, "il2cpp_value_box");
-    logger.info("Loaded: il2cpp_value_box");
-    *(void**)(&monitor_enter) = dlsym(imagehandle, "il2cpp_monitor_enter");
-    logger.info("Loaded: il2cpp_monitor_enter");
-    *(void**)(&monitor_try_enter) = dlsym(imagehandle, "il2cpp_monitor_try_enter");
-    logger.info("Loaded: il2cpp_monitor_try_enter");
-    *(void**)(&monitor_exit) = dlsym(imagehandle, "il2cpp_monitor_exit");
-    logger.info("Loaded: il2cpp_monitor_exit");
-    *(void**)(&monitor_pulse) = dlsym(imagehandle, "il2cpp_monitor_pulse");
-    logger.info("Loaded: il2cpp_monitor_pulse");
-    *(void**)(&monitor_pulse_all) = dlsym(imagehandle, "il2cpp_monitor_pulse_all");
-    logger.info("Loaded: il2cpp_monitor_pulse_all");
-    *(void**)(&monitor_wait) = dlsym(imagehandle, "il2cpp_monitor_wait");
-    logger.info("Loaded: il2cpp_monitor_wait");
-    *(void**)(&monitor_try_wait) = dlsym(imagehandle, "il2cpp_monitor_try_wait");
-    logger.info("Loaded: il2cpp_monitor_try_wait");
-    *(void**)(&runtime_invoke) = dlsym(imagehandle, "il2cpp_runtime_invoke");
-    logger.info("Loaded: il2cpp_runtime_invoke");
-    *(void**)(&runtime_invoke_convert_args) = dlsym(imagehandle, "il2cpp_runtime_invoke_convert_args");
-    logger.info("Loaded: il2cpp_runtime_invoke_convert_args");
-    *(void**)(&runtime_class_init) = dlsym(imagehandle, "il2cpp_runtime_class_init");
-    logger.info("Loaded: il2cpp_runtime_class_init");
-    *(void**)(&runtime_object_init) = dlsym(imagehandle, "il2cpp_runtime_object_init");
-    logger.info("Loaded: il2cpp_runtime_object_init");
-    *(void**)(&runtime_object_init_exception) = dlsym(imagehandle, "il2cpp_runtime_object_init_exception");
-    logger.info("Loaded: il2cpp_runtime_object_init_exception");
-    *(void**)(&runtime_unhandled_exception_policy_set) = dlsym(imagehandle, "il2cpp_runtime_unhandled_exception_policy_set");
-    logger.info("Loaded: il2cpp_runtime_unhandled_exception_policy_set");
-    *(void**)(&string_length) = dlsym(imagehandle, "il2cpp_string_length");
-    logger.info("Loaded: il2cpp_string_length");
-    *(void**)(&string_chars) = dlsym(imagehandle, "il2cpp_string_chars");
-    logger.info("Loaded: il2cpp_string_chars");
-    *(void**)(&string_new) = dlsym(imagehandle, "il2cpp_string_new");
-    logger.info("Loaded: il2cpp_string_new");
-    *(void**)(&string_new_len) = dlsym(imagehandle, "il2cpp_string_new_len");
-    logger.info("Loaded: il2cpp_string_new_len");
-    *(void**)(&string_new_utf16) = dlsym(imagehandle, "il2cpp_string_new_utf16");
-    logger.info("Loaded: il2cpp_string_new_utf16");
-    *(void**)(&string_new_wrapper) = dlsym(imagehandle, "il2cpp_string_new_wrapper");
-    logger.info("Loaded: il2cpp_string_new_wrapper");
-    *(void**)(&string_intern) = dlsym(imagehandle, "il2cpp_string_intern");
-    logger.info("Loaded: il2cpp_string_intern");
-    *(void**)(&string_is_interned) = dlsym(imagehandle, "il2cpp_string_is_interned");
-    logger.info("Loaded: il2cpp_string_is_interned");
-    *(void**)(&thread_current) = dlsym(imagehandle, "il2cpp_thread_current");
-    logger.info("Loaded: il2cpp_thread_current");
-    *(void**)(&thread_attach) = dlsym(imagehandle, "il2cpp_thread_attach");
-    logger.info("Loaded: il2cpp_thread_attach");
-    *(void**)(&thread_detach) = dlsym(imagehandle, "il2cpp_thread_detach");
-    logger.info("Loaded: il2cpp_thread_detach");
-    *(void**)(&thread_get_all_attached_threads) = dlsym(imagehandle, "il2cpp_thread_get_all_attached_threads");
-    logger.info("Loaded: il2cpp_thread_get_all_attached_threads");
-    *(void**)(&is_vm_thread) = dlsym(imagehandle, "il2cpp_is_vm_thread");
-    logger.info("Loaded: il2cpp_is_vm_thread");
-    *(void**)(&current_thread_walk_frame_stack) = dlsym(imagehandle, "il2cpp_current_thread_walk_frame_stack");
-    logger.info("Loaded: il2cpp_current_thread_walk_frame_stack");
-    *(void**)(&thread_walk_frame_stack) = dlsym(imagehandle, "il2cpp_thread_walk_frame_stack");
-    logger.info("Loaded: il2cpp_thread_walk_frame_stack");
-    *(void**)(&current_thread_get_top_frame) = dlsym(imagehandle, "il2cpp_current_thread_get_top_frame");
-    logger.info("Loaded: il2cpp_current_thread_get_top_frame");
-    *(void**)(&thread_get_top_frame) = dlsym(imagehandle, "il2cpp_thread_get_top_frame");
-    logger.info("Loaded: il2cpp_thread_get_top_frame");
-    *(void**)(&current_thread_get_frame_at) = dlsym(imagehandle, "il2cpp_current_thread_get_frame_at");
-    logger.info("Loaded: il2cpp_current_thread_get_frame_at");
-    *(void**)(&thread_get_frame_at) = dlsym(imagehandle, "il2cpp_thread_get_frame_at");
-    logger.info("Loaded: il2cpp_thread_get_frame_at");
-    *(void**)(&current_thread_get_stack_depth) = dlsym(imagehandle, "il2cpp_current_thread_get_stack_depth");
-    logger.info("Loaded: il2cpp_current_thread_get_stack_depth");
-    *(void**)(&thread_get_stack_depth) = dlsym(imagehandle, "il2cpp_thread_get_stack_depth");
-    logger.info("Loaded: il2cpp_thread_get_stack_depth");
-    #ifdef UNITY_2019
-    *(void**)(&override_stack_backtrace) = dlsym(imagehandle, "il2cpp_override_stack_backtrace");
-    logger.info("Loaded: il2cpp_override_stack_backtrace");
-    #endif
-    *(void**)(&type_get_object) = dlsym(imagehandle, "il2cpp_type_get_object");
-    logger.info("Loaded: il2cpp_type_get_object");
-    *(void**)(&type_get_type) = dlsym(imagehandle, "il2cpp_type_get_type");
-    logger.info("Loaded: il2cpp_type_get_type");
-    *(void**)(&type_get_class_or_element_class) = dlsym(imagehandle, "il2cpp_type_get_class_or_element_class");
-    logger.info("Loaded: il2cpp_type_get_class_or_element_class");
-    *(void**)(&type_get_name) = dlsym(imagehandle, "il2cpp_type_get_name");
-    logger.info("Loaded: il2cpp_type_get_name");
-    *(void**)(&type_is_byref) = dlsym(imagehandle, "il2cpp_type_is_byref");
-    logger.info("Loaded: il2cpp_type_is_byref");
-    *(void**)(&type_get_attrs) = dlsym(imagehandle, "il2cpp_type_get_attrs");
-    logger.info("Loaded: il2cpp_type_get_attrs");
-    *(void**)(&type_equals) = dlsym(imagehandle, "il2cpp_type_equals");
-    logger.info("Loaded: il2cpp_type_equals");
-    *(void**)(&type_get_assembly_qualified_name) = dlsym(imagehandle, "il2cpp_type_get_assembly_qualified_name");
-    logger.info("Loaded: il2cpp_type_get_assembly_qualified_name");
-    #ifdef UNITY_2019
-    *(void**)(&type_is_static) = dlsym(imagehandle, "il2cpp_type_is_static");
-    logger.info("Loaded: il2cpp_type_is_static");
-    *(void**)(&type_is_pointer_type) = dlsym(imagehandle, "il2cpp_type_is_pointer_type");
-    logger.info("Loaded: il2cpp_type_is_pointer_type");
-    #endif
-    *(void**)(&image_get_assembly) = dlsym(imagehandle, "il2cpp_image_get_assembly");
-    logger.info("Loaded: il2cpp_image_get_assembly");
-    *(void**)(&image_get_name) = dlsym(imagehandle, "il2cpp_image_get_name");
-    logger.info("Loaded: il2cpp_image_get_name");
-    *(void**)(&image_get_filename) = dlsym(imagehandle, "il2cpp_image_get_filename");
-    logger.info("Loaded: il2cpp_image_get_filename");
-    *(void**)(&image_get_entry_point) = dlsym(imagehandle, "il2cpp_image_get_entry_point");
-    logger.info("Loaded: il2cpp_image_get_entry_point");
-    *(void**)(&image_get_class_count) = dlsym(imagehandle, "il2cpp_image_get_class_count");
-    logger.info("Loaded: il2cpp_image_get_class_count");
-    *(void**)(&image_get_class) = dlsym(imagehandle, "il2cpp_image_get_class");
-    logger.info("Loaded: il2cpp_image_get_class");
-    *(void**)(&capture_memory_snapshot) = dlsym(imagehandle, "il2cpp_capture_memory_snapshot");
-    logger.info("Loaded: il2cpp_capture_memory_snapshot");
-    *(void**)(&free_captured_memory_snapshot) = dlsym(imagehandle, "il2cpp_free_captured_memory_snapshot");
-    logger.info("Loaded: il2cpp_free_captured_memory_snapshot");
-    *(void**)(&set_find_plugin_callback) = dlsym(imagehandle, "il2cpp_set_find_plugin_callback");
-    logger.info("Loaded: il2cpp_set_find_plugin_callback");
-    *(void**)(&register_log_callback) = dlsym(imagehandle, "il2cpp_register_log_callback");
-    logger.info("Loaded: il2cpp_register_log_callback");
-    *(void**)(&debugger_set_agent_options) = dlsym(imagehandle, "il2cpp_debugger_set_agent_options");
-    logger.info("Loaded: il2cpp_debugger_set_agent_options");
-    *(void**)(&is_debugger_attached) = dlsym(imagehandle, "il2cpp_is_debugger_attached");
-    logger.info("Loaded: il2cpp_is_debugger_attached");
-    #ifdef UNITY_2019
-    *(void**)(&register_debugger_agent_transport) = dlsym(imagehandle, "il2cpp_register_debugger_agent_transport");
-    logger.info("Loaded: il2cpp_register_debugger_agent_transport");
-    *(void**)(&debug_get_method_info) = dlsym(imagehandle, "il2cpp_debug_get_method_info");
-    logger.info("Loaded: il2cpp_debug_get_method_info");
-    #endif
-    *(void**)(&unity_install_unitytls_interface) = dlsym(imagehandle, "il2cpp_unity_install_unitytls_interface");
-    logger.info("Loaded: il2cpp_unity_install_unitytls_interface");
-    *(void**)(&custom_attrs_from_class) = dlsym(imagehandle, "il2cpp_custom_attrs_from_class");
-    logger.info("Loaded: il2cpp_custom_attrs_from_class");
-    *(void**)(&custom_attrs_from_method) = dlsym(imagehandle, "il2cpp_custom_attrs_from_method");
-    logger.info("Loaded: il2cpp_custom_attrs_from_method");
-    *(void**)(&custom_attrs_get_attr) = dlsym(imagehandle, "il2cpp_custom_attrs_get_attr");
-    logger.info("Loaded: il2cpp_custom_attrs_get_attr");
-    *(void**)(&custom_attrs_has_attr) = dlsym(imagehandle, "il2cpp_custom_attrs_has_attr");
-    logger.info("Loaded: il2cpp_custom_attrs_has_attr");
-    *(void**)(&custom_attrs_construct) = dlsym(imagehandle, "il2cpp_custom_attrs_construct");
-    logger.info("Loaded: il2cpp_custom_attrs_construct");
-    *(void**)(&custom_attrs_free) = dlsym(imagehandle, "il2cpp_custom_attrs_free");
-    logger.info("Loaded: il2cpp_custom_attrs_free");
-    #ifdef UNITY_2019
-    *(void**)(&class_set_userdata) = dlsym(imagehandle, "il2cpp_class_set_userdata");
-    logger.info("Loaded: il2cpp_class_set_userdata");
-    *(void**)(&class_get_userdata_offset) = dlsym(imagehandle, "il2cpp_class_get_userdata_offset");
-    logger.info("Loaded: il2cpp_class_get_userdata_offset");
+    API_SYM(class_set_userdata);
+    API_SYM(class_get_userdata_offset);
     #endif
 
     // MANUALLY DEFINED CONST DEFINITIONS
@@ -960,66 +741,42 @@ void il2cpp_functions::Init() {
     *(void**)(&il2cpp_functions::class_get_name_const) = dlsym(imagehandle, "il2cpp_class_get_name");
     logger.info("Loaded: il2cpp_class_get_name CONST VERSION!");
 
-    const char* err = dlerror();
-    if (err) {
-        logger.critical("A dlsym failed! dlerror: %s", err);
-    }
-
     // XREF TRACES
+    auto Array_NewSpecific_addr = cs::readb(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(array_new_specific)));
+    logger.debug("Array::NewSpecific offset: %lX", reinterpret_cast<uintptr_t>(Array_NewSpecific_addr) - getRealOffset(0));
+    Class_Init = reinterpret_cast<decltype(Class_Init)>(cs::findNthBl<1>(Array_NewSpecific_addr));
     // Class::Init. 0x846A68 in 1.5, 0x9EC0A4 in 1.7.0, 0xA6D1B8 in 1.8.0b1
-    Instruction ans((const int32_t*)HookTracker::GetOrig(array_new_specific));
-    Instruction Array_NewSpecific(CRASH_UNLESS(ans.label));
-    logger.debug("Array::NewSpecific offset: %lX", ((uintptr_t)Array_NewSpecific.addr) - getRealOffset(0));
-    auto j2Cl_I = CRASH_UNLESS(Array_NewSpecific.findNthCall(1));  // also the 113th call in Runtime::Init
-    Class_Init = (decltype(Class_Init))CRASH_UNLESS(j2Cl_I->label);
-    logger.debug("Class::Init found? offset: %lX", ((uintptr_t)Class_Init) - getRealOffset(0));
-    if (j2Cl_I != &Array_NewSpecific) delete j2Cl_I;
-    usleep(1000);  // 0.001s
+    logger.debug("Class::Init found? offset: %lX", reinterpret_cast<uintptr_t>(Class_Init) - getRealOffset(0));
 
+    auto MetadataCache_HasAttribute_addr = cs::findNthB<1>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(custom_attrs_has_attr)));
+    MetadataCache_GetTypeInfoFromTypeIndex = reinterpret_cast<decltype(MetadataCache_GetTypeInfoFromTypeIndex)>(cs::findNthBl<1>(MetadataCache_HasAttribute_addr));
     // MetadataCache::GetTypeInfoFromTypeIndex. offset 0x84F764 in 1.5, 0x9F5250 in 1.7.0, 0xA7A79C in 1.8.0b1
-    Instruction caha((const int32_t*)HookTracker::GetOrig(custom_attrs_has_attr));
-    auto mchab = CRASH_UNLESS(caha.findNthDirectBranchWithoutLink(1));
-    Instruction MetadataCache_HasAttribute(CRASH_UNLESS(mchab->label));
-    if (mchab != &caha) delete mchab;
-    auto j2MC_GTIFTI = CRASH_UNLESS(MetadataCache_HasAttribute.findNthCall(1));
-    MetadataCache_GetTypeInfoFromTypeIndex = (decltype(MetadataCache_GetTypeInfoFromTypeIndex))CRASH_UNLESS(j2MC_GTIFTI->label);
-    logger.debug("MetadataCache::GetTypeInfoFromTypeIndex found? offset: %lX",
-        ((uintptr_t)MetadataCache_GetTypeInfoFromTypeIndex) - getRealOffset(0));
-    if (j2MC_GTIFTI != &MetadataCache_HasAttribute) delete j2MC_GTIFTI;
-    usleep(1000);  // 0.001s
+    logger.debug("MetadataCache::GetTypeInfoFromTypeIndex found? offset: %lX", reinterpret_cast<uintptr_t>(MetadataCache_GetTypeInfoFromTypeIndex) - getRealOffset(0));
 
+    auto Type_GetClassOrElementClass_addr = cs::findNthB<1>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(type_get_class_or_element_class)));
+    MetadataCache_GetTypeInfoFromTypeDefinitionIndex = reinterpret_cast<decltype(MetadataCache_GetTypeInfoFromTypeDefinitionIndex)>(cs::findNthB<5, true>(Type_GetClassOrElementClass_addr));
     // MetadataCache::GetTypeInfoFromTypeDefinitionIndex. offset 0x84FBA4 in 1.5, 0x9F5690 in 1.7.0, 0xA75958 in 1.8.0b1
-    Instruction tgcoec((const int32_t*)HookTracker::GetOrig(type_get_class_or_element_class));
-    auto tgoecb = CRASH_UNLESS(tgcoec.findNthDirectBranchWithoutLink(1));
-    Instruction Type_GetClassOrElementClass(CRASH_UNLESS(tgoecb->label));
-    if (tgoecb != &tgcoec) delete tgoecb;
-    auto j2MC_GTIFTDI = CRASH_UNLESS(Type_GetClassOrElementClass.findNthDirectBranchWithoutLink(5));
-    MetadataCache_GetTypeInfoFromTypeDefinitionIndex =
-        (decltype(MetadataCache_GetTypeInfoFromTypeDefinitionIndex))CRASH_UNLESS(j2MC_GTIFTDI->label);
-    logger.debug("MetadataCache::GetTypeInfoFromTypeDefinitionIndex found? offset: %lX",
-        ((uintptr_t)MetadataCache_GetTypeInfoFromTypeDefinitionIndex) - getRealOffset(0));
-    if (j2MC_GTIFTDI != &Type_GetClassOrElementClass) delete j2MC_GTIFTDI;
-    usleep(1000);  // 0.001s
+    logger.debug("MetadataCache::GetTypeInfoFromTypeDefinitionIndex found? offset: %lX", reinterpret_cast<uintptr_t>(MetadataCache_GetTypeInfoFromTypeDefinitionIndex) - getRealOffset(0));
 
+    _Type_GetName_ = reinterpret_cast<decltype(_Type_GetName_)>(cs::findNthBl<1>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(type_get_assembly_qualified_name))));
     // Type::GetName. offset 0x8735DC in 1.5, 0xA1A458 in 1.7.0, 0xA7B634 in 1.8.0b1
-    Instruction tanq((const int32_t*)HookTracker::GetOrig(type_get_assembly_qualified_name));
-    auto j2T_GN = CRASH_UNLESS(tanq.findNthCall(1));
-    _Type_GetName_ = (decltype(_Type_GetName_))CRASH_UNLESS(j2T_GN->label);
-    logger.debug("Type::GetName found? offset: %lX", ((uintptr_t)_Type_GetName_) - getRealOffset(0));
-    if (j2T_GN != &tanq) delete j2T_GN;
-    usleep(1000);  // 0.001s
+    logger.debug("Type::GetName found? offset: %lX", reinterpret_cast<uintptr_t>(_Type_GetName_) - getRealOffset(0));
 
+    Class_FromIl2CppType = reinterpret_cast<decltype(Class_FromIl2CppType)>(cs::findNthB<1>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(class_from_il2cpp_type))));
     // GenericClass::GetClass. offset 0x88DF64 in 1.5, 0xA34F20 in 1.7.0, 0xA6E4EC in 1.8.0b1
+    auto caseStart = CRASH_UNLESS(EvalSwitch(Class_FromIl2CppType, 1, 1, IL2CPP_TYPE_GENERICINST));
+    auto j2GC_GC = CRASH_UNLESS(caseStart->findNthDirectBranchWithoutLink(1));
+    logger.debug("j2GC_GC: %s", j2GC_GC->toString().c_str());
+    GenericClass_GetClass = (decltype(GenericClass_GetClass))CRASH_UNLESS(j2GC_GC->label);
+    logger.debug("GenericClass::GetClass found? offset: %lX", ((uintptr_t)GenericClass_GetClass) - getRealOffset(0));
+
     Instruction cfit((const int32_t*)HookTracker::GetOrig(class_from_il2cpp_type));
     auto b = CRASH_UNLESS(cfit.findNthDirectBranchWithoutLink(1));
     Class_FromIl2CppType = (decltype(Class_FromIl2CppType))CRASH_UNLESS(b->label);
     if (b != &cfit) delete b;
-    auto caseStart = CRASH_UNLESS(EvalSwitch(Class_FromIl2CppType, 1, 1, IL2CPP_TYPE_GENERICINST));
-    auto j2GC_GC = CRASH_UNLESS(caseStart->findNthDirectBranchWithoutLink(1));
+    
     delete caseStart;
-    logger.debug("j2GC_GC: %s", j2GC_GC->toString().c_str());
-    GenericClass_GetClass = (decltype(GenericClass_GetClass))CRASH_UNLESS(j2GC_GC->label);
-    logger.debug("GenericClass::GetClass found? offset: %lX", ((uintptr_t)GenericClass_GetClass) - getRealOffset(0));
+    
     if (j2GC_GC != caseStart) delete j2GC_GC;
     usleep(1000);  // 0.001s
 
