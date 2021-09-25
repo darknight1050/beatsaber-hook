@@ -79,8 +79,7 @@ struct Il2CppGenericContainer;
 #include "il2cpp-api-types.h"
 #include "il2cpp-metadata.h"
 #include "il2cpp-class-internals.h"
-// #include "il2cpp-object-internals.h"
-
+#include "utils.h"
 
 typedef std::vector<const Il2CppAssembly*> AssemblyVector;
 
@@ -392,26 +391,36 @@ class il2cpp_functions {
     API_FUNC(Il2CppClass*, GenericClass_GetClass, (Il2CppGenericClass* gclass));
     API_FUNC(AssemblyVector*, Assembly_GetAllAssemblies, ());
 
-    // You must il2cpp_functions::free the char* when you are done with it
-    static char* Type_GetName(const Il2CppType *type, Il2CppTypeNameFormat format);
+    private:
+    static bool find_GC_free(const uint32_t* Runtime_Shutdown);
+    static bool find_GC_SetWriteBarrier(const uint32_t* set_wbarrier_field);
+    static bool trace_GC_AllocFixed(const uint32_t* DomainGetCurrent);
+    static bool find_GC_AllocFixed(const uint32_t* DomainGetCurrent);
 
     static const Il2CppMetadataRegistration** s_Il2CppMetadataRegistrationPtr;
     static const void** s_GlobalMetadataPtr;
     static const Il2CppGlobalMetadataHeader** s_GlobalMetadataHeaderPtr;
 
-    static std::remove_pointer_t<decltype(il2cpp_functions::s_GlobalMetadataPtr)> s_GlobalMetadata;
-    static std::remove_pointer_t<decltype(il2cpp_functions::s_GlobalMetadataHeaderPtr)> s_GlobalMetadataHeader;
+    public:
+    static bool hasGCFuncs;
+    // You must il2cpp_functions::free the char* when you are done with it
+    static char* Type_GetName(const Il2CppType *type, Il2CppTypeNameFormat format);
+    static std::remove_pointer_t<decltype(s_GlobalMetadataPtr)> s_GlobalMetadata;
+    static std::remove_pointer_t<decltype(s_GlobalMetadataHeaderPtr)> s_GlobalMetadataHeader;
+    static std::remove_pointer_t<decltype(s_Il2CppMetadataRegistrationPtr)> s_Il2CppMetadataRegistration;
+
     static const Il2CppDefaults* defaults;
 
     // must be done on-demand because the pointers aren't necessarily correct at the time of il2cpp_functions::Init
     static void CheckS_GlobalMetadata() {
         if (!s_GlobalMetadataHeader) {
             static auto& logger = getFuncLogger();
-            s_GlobalMetadata = *(il2cpp_functions::s_GlobalMetadataPtr);
-            s_GlobalMetadataHeader = *(il2cpp_functions::s_GlobalMetadataHeaderPtr);
+            s_GlobalMetadata = *CRASH_UNLESS(il2cpp_functions::s_GlobalMetadataPtr);
+            s_GlobalMetadataHeader = *CRASH_UNLESS(il2cpp_functions::s_GlobalMetadataHeaderPtr);
+            s_Il2CppMetadataRegistration = *CRASH_UNLESS(il2cpp_functions::s_Il2CppMetadataRegistrationPtr);
             logger.debug("sanity: %X (should be 0xFAB11BAF)", s_GlobalMetadataHeader->sanity);
             logger.debug("version: %i", s_GlobalMetadataHeader->version);
-            assert(s_GlobalMetadataHeader->sanity == 0xFAB11BAF);
+            CRASH_UNLESS((uint32_t)s_GlobalMetadataHeader->sanity == 0xFAB11BAF);
             logger.debug("typeDefinitionsOffset: %i", s_GlobalMetadataHeader->typeDefinitionsOffset);
             logger.debug("exportedTypeDefinitionsOffset: %i", s_GlobalMetadataHeader->exportedTypeDefinitionsOffset);
             logger.debug("nestedTypesOffset: %i", s_GlobalMetadataHeader->nestedTypesOffset);

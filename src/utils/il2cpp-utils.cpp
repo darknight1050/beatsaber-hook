@@ -18,7 +18,7 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
 
         std::vector<const Il2CppType*> types(seq.size());
-        std::transform(seq.begin(), seq.end(), types.begin(), il2cpp_functions::class_get_type_const);
+        std::transform(seq.begin(), seq.end(), types.begin(), [](const Il2CppClass * klass) {return il2cpp_functions::class_get_type_const(klass);});
         return types;
     }
 

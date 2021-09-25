@@ -62,13 +62,6 @@ struct HookTracker {
     static const void* GetOrig(T location) noexcept {
         return GetOrigInternal(reinterpret_cast<void*>(location));
     }
-    /// @brief Returns the original location of a function that may or may not be hooked, but confirms it with instruction parsing.
-    /// If the function is not hooked, it returns the input.
-    /// If the function is hooked (instruction check), it returns the first installed hooks original location.
-    /// Note that this should only be called on functions that don't have matching instructions to hook installations, otherwise it may trace too far.
-    /// @param location The offset to get the original function for.
-    /// @returns The returned address.
-    static const void* InstructionGetOrig(const void* const location) noexcept;
     /// @brief Checks to see if there is a hook installed (via instruction parsing) at the offset provided.
     /// Returns true if the first instructions at this location match the instructions created by a hook, implying a hook has been installed.
     /// Note that this should only be called on functions that don't have matching instructions to hook installations, otherwise it may false positive.

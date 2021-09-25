@@ -2,9 +2,11 @@ name: NDK build
 
 on:
   push:
-    branches: [ master, so-update ]
+    branches-ignore:
+    - 'version-*'
   pull_request:
-    branches: [ master, so-update ]
+    branches-ignore:
+    - 'version-*'
 
 jobs:
   build:
@@ -23,7 +25,7 @@ jobs:
       id: setup-ndk
       uses: nttld/setup-ndk@v1.0.3
       with:
-        ndk-version: r22
+        ndk-version: r23
       
     - name: Create ndkpath.txt
       run: echo ${{ steps.setup-ndk.outputs.ndk-path }} > ${GITHUB_WORKSPACE}/ndkpath.txt

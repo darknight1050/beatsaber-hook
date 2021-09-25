@@ -26,6 +26,23 @@ void safeAbort(const char* func, const char* file, int line) {
     std::terminate();  // cleans things up and then calls abort
 }
 
+__attribute__((format(printf, 4, 5))) void safeAbortMsg(const char* func, const char* file, int line, const char* fmt, ...) {
+    static auto logger = Logger::get().WithContext("CRASH_UNLESS");
+    // we REALLY want this to appear at least once in the log (for fastest fixing)
+    for (int i = 0; i < 2; i++) {
+        usleep(100000L);  // 0.1s
+        // TODO: Make this eventually have a passed in context
+        logger.critical("Aborting in %s at %s:%i", func, file, line);
+        va_list lst;
+        va_start(lst, fmt);
+        logger.log_v(Logging::CRITICAL, fmt, lst);
+        va_end(lst);
+    }
+    Logger::closeAll();
+    usleep(100000L);  // 0.1s
+    std::terminate();  // cleans things up and then calls abort
+}
+
 void resetSS(std::stringstream& ss) {
     ss.str("");
     ss.clear();  // Clear state flags.

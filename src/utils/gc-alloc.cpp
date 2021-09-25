@@ -5,7 +5,7 @@
 
 [[nodiscard]] void* gc_alloc_specific(size_t sz) {
     // This function assumes il2cpp_functions will be called at a reasonable time, instead will warn you on allocating unsafe memory.
-    if (il2cpp_functions::GarbageCollector_AllocateFixed && il2cpp_functions::GC_free) {
+    if (il2cpp_functions::hasGCFuncs) {
         // We should absolutely panic if we thought we had the allocation function, but it gave us null.
         auto* ptr = CRASH_UNLESS(il2cpp_functions::GarbageCollector_AllocateFixed(sz, nullptr));
         return ptr;
@@ -25,7 +25,7 @@
 }
 
 void gc_free_specific(void* ptr) noexcept {
-    if (il2cpp_functions::GarbageCollector_AllocateFixed && il2cpp_functions::GC_free) {
+    if (il2cpp_functions::hasGCFuncs) {
         il2cpp_functions::GC_free(ptr);
     }
     // TODO: Also check if a GC free would have been valid?
