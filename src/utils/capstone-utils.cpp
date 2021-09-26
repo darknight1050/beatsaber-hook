@@ -12,6 +12,7 @@ bool valid = false;
 #define ID "beatsaber-hook"
 #endif
 
+namespace cs {
 void __attribute__((constructor)) init_capstone() {
     cs_err e1 = cs_open(CS_ARCH_ARM64, CS_MODE_ARM, &handle);
     cs_option(handle, CS_OPT_DETAIL, 1);
@@ -43,4 +44,50 @@ uint32_t* readb(const uint32_t* addr) {
     auto dst = reinterpret_cast<uint32_t*>(inst.address + (op.imm << 2));
     cs_free(insns, 1);
     return dst;
+}
+
+std::optional<uint32_t*> blConv(cs_insn* insn) {
+    if (insn->id == ARM64_INS_BL) {
+        // BL is pc + (imm << 2)
+        return reinterpret_cast<uint32_t*>((insn->detail->arm64.operands[0].imm << 2) + insn->address);
+    }
+    return std::nullopt;
+}
+
+std::optional<uint32_t*> bConv(cs_insn* insn) {
+    if (insn->id == ARM64_INS_B) {
+        // B is pc + (imm << 2)
+        return reinterpret_cast<uint32_t*>((insn->detail->arm64.operands[0].imm << 2) + insn->address);
+    }
+    return std::nullopt;
+}
+
+std::optional<std::tuple<uint32_t*, arm64_reg, uint32_t*>> pcRelConv(cs_insn* insn) {
+    using tup = std::tuple<uint32_t*, arm64_reg, uint32_t*>;
+    switch (insn->id) {
+        case ARM64_INS_ADR:
+        // ADR is just pc + imm
+        return tup{reinterpret_cast<uint32_t*>(insn->address), insn->detail->arm64.operands[0].reg, reinterpret_cast<uint32_t*>(insn->detail->arm64.operands[1].imm + insn->address)};
+        case ARM64_INS_ADRP:
+        // ADRP is (pc & 1:12(0)) + (imm << 12)
+        return tup{reinterpret_cast<uint32_t*>(insn->address), insn->detail->arm64.operands[0].reg, reinterpret_cast<uint32_t*>(((insn->address >> 12) << 12) + (insn->detail->arm64.operands[1].imm << 12))};
+        default:
+        return std::nullopt;
+    }
+}
+
+std::optional<std::tuple<uint32_t*, arm64_reg, int64_t>> regMatchConv(cs_insn* match, arm64_reg toMatch) {
+    // We need 1 to 2 operands, match 1 to 2 to register, determine dst reg from incoming instruction
+    // For now, it's pretty common for add immediates, which have dst as first op, src 2nd, imm third
+    auto& arm = match->detail->arm64;
+    using tup = std::tuple<uint32_t*, arm64_reg, int64_t>;
+    switch (match->id) {
+        case ARM64_INS_ADD:
+            if (arm.operands[1].reg != toMatch) return std::nullopt;
+            return tup{reinterpret_cast<uint32_t*>(match->address), arm.operands[0].reg, arm.operands[2].imm};
+        // TODO: Add more conversions for instructions!
+        default:
+        return std::nullopt;
+    }
+}
 }
