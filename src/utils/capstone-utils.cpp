@@ -42,9 +42,9 @@ uint32_t* readb(const uint32_t* addr) {
     CRASH_UNLESS(platinsn.op_count == 1);
     auto op = platinsn.operands[0];
     CRASH_UNLESS(op.type == ARM64_OP_IMM);
-    __android_log_print(Logging::CRITICAL, "QuestHook[" ID "|" VERSION "] capstone", "%zu b: %zi", inst.address, op.imm);
-    // Our b dest is addr + (imm << 2)
-    auto dst = reinterpret_cast<uint32_t*>(inst.address + (op.imm << 2));
+    __android_log_print(Logging::CRITICAL, "QuestHook[" ID "|" VERSION "] capstone", "%p b: %zi", addr, op.imm);
+    // Our b dest is addr + (imm << 2), except capstone does this for us.
+    auto dst = reinterpret_cast<uint32_t*>(op.imm);
     cs_free(insns, 1);
     __android_log_print(Logging::CRITICAL, "QuestHook[" ID "|" VERSION "] capstone", "b destination: %p", dst);
     return dst;
@@ -52,16 +52,16 @@ uint32_t* readb(const uint32_t* addr) {
 
 std::optional<uint32_t*> blConv(cs_insn* insn) {
     if (insn->id == ARM64_INS_BL) {
-        // BL is pc + (imm << 2)
-        return reinterpret_cast<uint32_t*>((insn->detail->arm64.operands[0].imm << 2) + insn->address);
+        // BL is pc + (imm << 2), capstone handles this
+        return reinterpret_cast<uint32_t*>(insn->detail->arm64.operands[0].imm);
     }
     return std::nullopt;
 }
 
 std::optional<uint32_t*> bConv(cs_insn* insn) {
     if (insn->id == ARM64_INS_B) {
-        // B is pc + (imm << 2)
-        return reinterpret_cast<uint32_t*>((insn->detail->arm64.operands[0].imm << 2) + insn->address);
+        // B is pc + (imm << 2), capstone handles this
+        return reinterpret_cast<uint32_t*>(insn->detail->arm64.operands[0].imm);
     }
     return std::nullopt;
 }
@@ -70,11 +70,10 @@ std::optional<std::tuple<uint32_t*, arm64_reg, uint32_t*>> pcRelConv(cs_insn* in
     using tup = std::tuple<uint32_t*, arm64_reg, uint32_t*>;
     switch (insn->id) {
         case ARM64_INS_ADR:
-        // ADR is just pc + imm
-        return tup{reinterpret_cast<uint32_t*>(insn->address), insn->detail->arm64.operands[0].reg, reinterpret_cast<uint32_t*>(insn->detail->arm64.operands[1].imm + insn->address)};
+        // ADR is just pc + imm, capstone handles this
         case ARM64_INS_ADRP:
-        // ADRP is (pc & 1:12(0)) + (imm << 12)
-        return tup{reinterpret_cast<uint32_t*>(insn->address), insn->detail->arm64.operands[0].reg, reinterpret_cast<uint32_t*>(((insn->address >> 12) << 12) + (insn->detail->arm64.operands[1].imm << 12))};
+        // ADRP is (pc & 1:12(0)) + (imm << 12), capstone handles this
+        return tup{reinterpret_cast<uint32_t*>(insn->address), insn->detail->arm64.operands[0].reg, reinterpret_cast<uint32_t*>(insn->detail->arm64.operands[1].imm)};
         default:
         return std::nullopt;
     }
