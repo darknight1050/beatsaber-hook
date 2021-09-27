@@ -757,7 +757,7 @@ void il2cpp_functions::Init() {
     logger.debug("MetadataCache::GetTypeInfoFromTypeIndex found? offset: %lX", reinterpret_cast<uintptr_t>(il2cpp_MetadataCache_GetTypeInfoFromTypeIndex) - getRealOffset(0));
 
     auto Type_GetClassOrElementClass_addr = cs::findNthB<1>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_type_get_class_or_element_class)));
-    il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex = reinterpret_cast<decltype(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex)>(cs::findNthB<5, true>(Type_GetClassOrElementClass_addr));
+    il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex = reinterpret_cast<decltype(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex)>(cs::findNthB<5, true, 0>(Type_GetClassOrElementClass_addr));
     // MetadataCache::GetTypeInfoFromTypeDefinitionIndex. offset 0x84FBA4 in 1.5, 0x9F5690 in 1.7.0, 0xA75958 in 1.8.0b1
     logger.debug("MetadataCache::GetTypeInfoFromTypeDefinitionIndex found? offset: %lX", reinterpret_cast<uintptr_t>(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex) - getRealOffset(0));
 

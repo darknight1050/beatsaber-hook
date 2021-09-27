@@ -20,7 +20,7 @@ void __attribute__((constructor)) init_capstone() {
         __android_log_print(Logging::CRITICAL, "QuestHook[" ID "|" VERSION "] capstone", "Capstone initialization failed! %u", e1);
         SAFE_ABORT();
     }
-    __android_log_print(Logging::CRITICAL, "QuestHook[" ID "|" VERSION "] capstone", "Capstone initialized!");
+    __android_log_print(Logging::INFO, "QuestHook[" ID "|" VERSION "] capstone", "Capstone initialized!");
     valid = true;
 }
 
@@ -29,7 +29,7 @@ csh getHandle() {
 }
 
 uint32_t* readb(const uint32_t* addr) {
-    __android_log_print(Logging::CRITICAL, "QuestHook[" ID "|" VERSION "] capstone", "Readb: %p", addr);
+    __android_log_print(Logging::DEBUG, "QuestHook[" ID "|" VERSION "] capstone", "Readb: %p", addr);
     cs_insn* insns;
     // Read from addr, 1 instruction, with pc at addr, into insns.
     // TODO: consider using cs_disasm_iter
@@ -42,11 +42,11 @@ uint32_t* readb(const uint32_t* addr) {
     CRASH_UNLESS(platinsn.op_count == 1);
     auto op = platinsn.operands[0];
     CRASH_UNLESS(op.type == ARM64_OP_IMM);
-    __android_log_print(Logging::CRITICAL, "QuestHook[" ID "|" VERSION "] capstone", "%p b: %zi", addr, op.imm);
+    __android_log_print(Logging::DEBUG, "QuestHook[" ID "|" VERSION "] capstone", "%p b: %zi", addr, op.imm);
     // Our b dest is addr + (imm << 2), except capstone does this for us.
     auto dst = reinterpret_cast<uint32_t*>(op.imm);
     cs_free(insns, 1);
-    __android_log_print(Logging::CRITICAL, "QuestHook[" ID "|" VERSION "] capstone", "b destination: %p", dst);
+    __android_log_print(Logging::DEBUG, "QuestHook[" ID "|" VERSION "] capstone", "b destination: %p", dst);
     return dst;
 }
 
@@ -88,6 +88,9 @@ std::optional<std::tuple<uint32_t*, arm64_reg, int64_t>> regMatchConv(cs_insn* m
         case ARM64_INS_ADD:
             if (arm.operands[1].reg != toMatch) return std::nullopt;
             return tup{reinterpret_cast<uint32_t*>(match->address), arm.operands[0].reg, arm.operands[2].imm};
+        case ARM64_INS_LDR:
+            if (arm.operands[1].mem.base != toMatch) return std::nullopt;
+            return tup{reinterpret_cast<uint32_t*>(match->address), arm.operands[0].reg, arm.operands[1].mem.disp};
         // TODO: Add more conversions for instructions!
         default:
         return std::nullopt;
