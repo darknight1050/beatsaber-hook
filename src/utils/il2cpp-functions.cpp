@@ -786,19 +786,16 @@ void il2cpp_functions::Init() {
 
     if (find_GC_free(Runtime_Shutdown)) {
         logger.debug("gc::GarbageCollector::FreeFixed found? offset: %lX", ((uintptr_t)il2cpp_GC_free) - getRealOffset(0));
-        usleep(1000);  // 0.001s
     }
 
     // GarbageCollector::SetWriteBarrier(void*)
     if (find_GC_SetWriteBarrier((const uint32_t*)HookTracker::GetOrig(il2cpp_gc_wbarrier_set_field))) {
         logger.debug("GarbageCollector::SetWriteBarrier found? offset: %lX", ((uintptr_t)il2cpp_GarbageCollector_SetWriteBarrier) - getRealOffset(0));
-        usleep(1000);  // 0.001s
     }
 
     // GarbageCollector::AllocateFixed(size_t, void*)
     if (find_GC_AllocFixed(cs::findNthB<1>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_domain_get))))) {
         logger.debug("GarbageCollector::AllocateFixed found? offset: %lX", ((uintptr_t)il2cpp_GarbageCollector_AllocateFixed) - getRealOffset(0));
-        usleep(1000);  // 0.001s
     }
 
     hasGCFuncs = il2cpp_GarbageCollector_AllocateFixed != nullptr && il2cpp_GC_free != nullptr;
@@ -839,5 +836,4 @@ void il2cpp_functions::Init() {
     dlclose(imagehandle);
     initialized = true;
     logger.info("il2cpp_functions: Init: Successfully loaded all il2cpp functions!");
-    usleep(100);  // 0.0001s
 }
