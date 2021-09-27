@@ -85,8 +85,8 @@ auto findNth(const uint32_t* addr) {
     uint32_t nCalls = nToRetOn;
     size_t sz = szBytes;
     while (sz > 0) {
-        __android_log_print(Logging::DEBUG, "QuestHook[" ID "|" VERSION "] capstone", "%p diassemb (rCount: %i, nCalls: %u, sz: %zu)", (void*)ptr, rCount, nCalls, sz);
         bool res = cs_disasm_iter(getHandle(), &instructions, &sz, &ptr, insn);
+        __android_log_print(Logging::DEBUG, "QuestHook[" ID "|" VERSION "] capstone", "%p diassemb: %s (rCount: %i, nCalls: %u, sz: %zu)", (void*)ptr, insn->mnemonic, rCount, nCalls, sz);
         if (res) {
             // Valid decode, so lets check to see if it is a match or we need to break.
             if (insn->id == ARM64_INS_RET) {

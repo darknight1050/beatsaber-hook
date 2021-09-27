@@ -29,7 +29,6 @@ csh getHandle() {
 }
 
 uint32_t* readb(const uint32_t* addr) {
-    __android_log_print(Logging::DEBUG, "QuestHook[" ID "|" VERSION "] capstone", "Readb: %p", addr);
     cs_insn* insns;
     // Read from addr, 1 instruction, with pc at addr, into insns.
     // TODO: consider using cs_disasm_iter
@@ -42,11 +41,9 @@ uint32_t* readb(const uint32_t* addr) {
     CRASH_UNLESS(platinsn.op_count == 1);
     auto op = platinsn.operands[0];
     CRASH_UNLESS(op.type == ARM64_OP_IMM);
-    __android_log_print(Logging::DEBUG, "QuestHook[" ID "|" VERSION "] capstone", "%p b: %zi", addr, op.imm);
     // Our b dest is addr + (imm << 2), except capstone does this for us.
     auto dst = reinterpret_cast<uint32_t*>(op.imm);
     cs_free(insns, 1);
-    __android_log_print(Logging::DEBUG, "QuestHook[" ID "|" VERSION "] capstone", "b destination: %p", dst);
     return dst;
 }
 
