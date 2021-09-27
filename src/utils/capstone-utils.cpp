@@ -37,9 +37,9 @@ uint32_t* readb(const uint32_t* addr) {
     // Thunks have a single b
     CRASH_UNLESS(inst.id == ARM64_INS_B);
     auto platinsn = inst.detail->arm64;
-    CRASH_UNLESS(platinsn.op_count != 1);
+    CRASH_UNLESS(platinsn.op_count == 1);
     auto op = platinsn.operands[0];
-    CRASH_UNLESS(op.type != ARM64_OP_IMM);
+    CRASH_UNLESS(op.type == ARM64_OP_IMM);
     // Our b dest is addr + (imm << 2)
     auto dst = reinterpret_cast<uint32_t*>(inst.address + (op.imm << 2));
     cs_free(insns, 1);
