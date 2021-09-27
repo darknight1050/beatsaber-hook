@@ -78,7 +78,6 @@ namespace il2cpp_utils {
 
         auto* reflection_type = RET_0_UNLESS(logger, MakeGenericType(reinterpret_cast<Il2CppReflectionType*>(klassType), arr));
         auto* ret = RET_0_UNLESS(logger, il2cpp_functions::class_from_system_type(reflection_type));
-        logger.debug("Returning '%s'", ClassStandardName(ret).c_str());
         return ret;
     }
 
@@ -108,7 +107,6 @@ namespace il2cpp_utils {
 
         auto* reflection_type = RET_0_UNLESS(logger, MakeGenericType(reinterpret_cast<Il2CppReflectionType*>(klassType), arr));
         auto* ret = RET_0_UNLESS(logger, il2cpp_functions::class_from_system_type(reflection_type));
-        logger.debug("Returning '%s'", ClassStandardName(ret).c_str());
         return ret;
     }
 }
