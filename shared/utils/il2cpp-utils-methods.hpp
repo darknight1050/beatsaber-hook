@@ -323,7 +323,7 @@ namespace il2cpp_utils {
                     if constexpr (il2cpp_type_check::need_box<instanceT>) {
                         // TODO: Eventually remove this dependence on il2cpp_functions::Init
                         auto boxedRepr = &instance;
-                        reinterpret_cast<void (*)(Il2CppObject*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(boxedRepr, params..., method);
+                        reinterpret_cast<void (*)(instanceT*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(boxedRepr, params..., method);
                     } else {
                         reinterpret_cast<void (*)(instanceT, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(instance, params..., method);
                     }
@@ -348,7 +348,7 @@ namespace il2cpp_utils {
                     using instanceT = std::remove_reference_t<T>;
                     if constexpr (il2cpp_type_check::need_box<instanceT>) {
                         auto boxedRepr = &instance;
-                        TOut res = reinterpret_cast<TOut (*)(Il2CppObject*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(boxedRepr, params..., method);
+                        TOut res = reinterpret_cast<TOut (*)(instanceT*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(boxedRepr, params..., method);
                         return res;
                     } else {
                         return reinterpret_cast<TOut (*)(instanceT, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(instance, params..., method);
