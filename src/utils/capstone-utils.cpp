@@ -17,9 +17,10 @@ void __attribute__((constructor)) init_capstone() {
     cs_err e1 = cs_open(CS_ARCH_ARM64, CS_MODE_ARM, &handle);
     cs_option(handle, CS_OPT_DETAIL, 1);
     if (e1) {
-        __android_log_print(Logging::CRITICAL, "QuestHook[" ID "|" VERSION "] capstone", "capstone initialization failed! %u", e1);
+        __android_log_print(Logging::CRITICAL, "QuestHook[" ID "|" VERSION "] capstone", "Capstone initialization failed! %u", e1);
         SAFE_ABORT();
     }
+    __android_log_print(Logging::CRITICAL, "QuestHook[" ID "|" VERSION "] capstone", "Capstone initialized!");
     valid = true;
 }
 
@@ -28,6 +29,7 @@ csh getHandle() {
 }
 
 uint32_t* readb(const uint32_t* addr) {
+    __android_log_print(Logging::CRITICAL, "QuestHook[" ID "|" VERSION "] capstone", "Readb: %p", addr);
     cs_insn* insns;
     // Read from addr, 1 instruction, with pc at addr, into insns.
     // TODO: consider using cs_disasm_iter
@@ -40,9 +42,11 @@ uint32_t* readb(const uint32_t* addr) {
     CRASH_UNLESS(platinsn.op_count == 1);
     auto op = platinsn.operands[0];
     CRASH_UNLESS(op.type == ARM64_OP_IMM);
+    __android_log_print(Logging::CRITICAL, "QuestHook[" ID "|" VERSION "] capstone", "%zu b: %zi", inst.address, op.imm);
     // Our b dest is addr + (imm << 2)
     auto dst = reinterpret_cast<uint32_t*>(inst.address + (op.imm << 2));
     cs_free(insns, 1);
+    __android_log_print(Logging::CRITICAL, "QuestHook[" ID "|" VERSION "] capstone", "b destination: %p", dst);
     return dst;
 }
 
