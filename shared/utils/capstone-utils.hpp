@@ -120,6 +120,7 @@ auto findNth(const uint32_t* addr) {
         else {
             // Invalid instructions are ignored silently.
             // In order to skip these properly, we must increment our instructions, ptr, and size accordingly.
+            __android_log_print(Logging::WARNING, "QuestHook[" ID "|" VERSION "] capstone", "FAILED PARSE: %p diassemb: 0x%x", (void*)ptr, *(uint32_t*)ptr);
             sz -= 4;
             ptr += 4;
             instructions += 4;

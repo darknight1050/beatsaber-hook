@@ -448,7 +448,7 @@ bool il2cpp_functions::find_GC_AllocFixed(const uint32_t* DomainGetCurrent) {
 }
 
 static std::optional<uint32_t*> loadFind(cs_insn* insn) {
-    return insn->id == ARM64_INS_LDR || insn->id == ARM64_INS_LDP ? std::optional<uint32_t*>(reinterpret_cast<uint32_t*>(insn->address)) : std::nullopt;
+    return (insn->id == ARM64_INS_LDR || insn->id == ARM64_INS_LDP) ? std::optional<uint32_t*>(reinterpret_cast<uint32_t*>(insn->address)) : std::nullopt;
 }
 
 LoggerContextObject& il2cpp_functions::getFuncLogger() {
