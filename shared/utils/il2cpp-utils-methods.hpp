@@ -321,9 +321,18 @@ namespace il2cpp_utils {
                 } else {
                     using instanceT = std::remove_reference_t<T>;
                     if constexpr (il2cpp_type_check::need_box<instanceT>) {
-                        // TODO: Eventually remove this dependence on il2cpp_functions::Init
                         auto boxedRepr = &instance;
+                        if constexpr (sizeof(Il2CppCodeGenModule) < 104) {
+                            // Boxing is only required if we invoke to adjustor thunks instead of actual impls
+                            // TODO: Eventually remove this dependence on il2cpp_functions::Init
+                            il2cpp_functions::Init();
+                            // Yeah, we cast literally all over the place.
+                            boxedRepr = reinterpret_cast<instanceT*>(il2cpp_functions::value_box(classof(instanceT), boxedRepr));
+                        }
                         reinterpret_cast<void (*)(instanceT*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(boxedRepr, params..., method);
+                        if constexpr (sizeof(Il2CppCodeGenModule) < 104) {
+                            instance = *reinterpret_cast<T*>(il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(boxedRepr)));
+                        }
                     } else {
                         reinterpret_cast<void (*)(instanceT, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(instance, params..., method);
                     }
@@ -348,7 +357,17 @@ namespace il2cpp_utils {
                     using instanceT = std::remove_reference_t<T>;
                     if constexpr (il2cpp_type_check::need_box<instanceT>) {
                         auto boxedRepr = &instance;
+                        if constexpr (sizeof(Il2CppCodeGenModule) < 104) {
+                            // Boxing is only required if we invoke to adjustor thunks instead of actual impls
+                            // TODO: Eventually remove this dependence on il2cpp_functions::Init
+                            il2cpp_functions::Init();
+                            // Yeah, we cast literally all over the place.
+                            boxedRepr = reinterpret_cast<instanceT*>(il2cpp_functions::value_box(classof(instanceT), boxedRepr));
+                        }
                         TOut res = reinterpret_cast<TOut (*)(instanceT*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(boxedRepr, params..., method);
+                        if constexpr (sizeof(Il2CppCodeGenModule) < 104) {
+                            instance = *reinterpret_cast<T*>(il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(boxedRepr)));
+                        }
                         return res;
                     } else {
                         return reinterpret_cast<TOut (*)(instanceT, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(instance, params..., method);
