@@ -259,18 +259,6 @@ namespace il2cpp_utils {
         return instance;
     }
 
-    Il2CppString* createcsstr(std::string_view inp, StringType type) {
-        static auto logger = getLogger().WithContext("createcsstr");
-        il2cpp_functions::Init();
-        switch (type) {
-            case StringType::Manual: {
-                return newcsstr<CreationType::Manual>(inp);
-            }
-            default:
-                return newcsstr<CreationType::Temporary>(inp);
-        }
-    }
-
     [[nodiscard]] bool Match(const Il2CppObject* source, const Il2CppClass* klass) noexcept {
         return (source->klass == klass);
     }

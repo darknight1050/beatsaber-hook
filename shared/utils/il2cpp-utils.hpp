@@ -451,17 +451,6 @@ namespace il2cpp_utils {
     // Calls the System.RuntimeType.MakeGenericType(System.Type gt, System.Type[] types) function
     Il2CppReflectionType* MakeGenericType(Il2CppReflectionType* gt, Il2CppArray* types);
 
-    enum struct StringType {
-        Temporary,  // string is normal C# object, may be GC'd
-        Manual,     // string is owned by C++, must be manually freed (use this for string constants as well)
-    };
-
-    /// @brief Creates a new C# string and registers it with GC. Copies the input string.
-    /// @param inp String view to create the string from.
-    /// @param type The type of string to create
-    /// @return Created string
-    Il2CppString* createcsstr(::std::string_view inp, StringType type = StringType::Temporary);
-
     // Returns if a given source object is an object of the given class
     // Created by zoller27osu
     [[nodiscard]] bool Match(const Il2CppObject* source, const Il2CppClass* klass) noexcept;
