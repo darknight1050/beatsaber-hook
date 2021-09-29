@@ -757,9 +757,9 @@ void il2cpp_functions::Init() {
     logger.debug("MetadataCache::GetTypeInfoFromTypeIndex found? offset: %lX", reinterpret_cast<uintptr_t>(il2cpp_MetadataCache_GetTypeInfoFromTypeIndex) - getRealOffset(0));
 
     auto Type_GetClassOrElementClass_addr = cs::findNthB<1>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_type_get_class_or_element_class)));
-    il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex = reinterpret_cast<decltype(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex)>(cs::findNthB<5, true, 0>(Type_GetClassOrElementClass_addr));
+    il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex = reinterpret_cast<decltype(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex)>(cs::findNthB<5, false, 0>(Type_GetClassOrElementClass_addr));
     // MetadataCache::GetTypeInfoFromTypeDefinitionIndex. offset 0x84FBA4 in 1.5, 0x9F5690 in 1.7.0, 0xA75958 in 1.8.0b1
-    logger.debug("MetadataCache::GetTypeInfoFromTypeDefinitionIndex found? offset: %lX", reinterpret_cast<uintptr_t>(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex) - getRealOffset(0));
+    logger.debug("MetadataCache::GetTypeInfoFromTypeDefinitionIndex found? offset: %p, %lX", il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex, reinterpret_cast<uintptr_t>(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex) - getRealOffset(0));
 
     il2cpp__Type_GetName_ = reinterpret_cast<decltype(il2cpp__Type_GetName_)>(cs::findNthBl<1>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_type_get_assembly_qualified_name))));
     // Type::GetName. offset 0x8735DC in 1.5, 0xA1A458 in 1.7.0, 0xA7B634 in 1.8.0b1
@@ -772,7 +772,7 @@ void il2cpp_functions::Init() {
     logger.debug("GenericClass::GetClass found? offset: %lX", ((uintptr_t)il2cpp_GenericClass_GetClass) - getRealOffset(0));
 
     // Class::GetPtrClass.
-    auto ptrCase = cs::evalswitch<1, 1, IL2CPP_TYPE_PTR>(reinterpret_cast<uint32_t*>(il2cpp_Class_FromIl2CppType));
+    auto ptrCase = cs::evalswitch<1, 1, IL2CPP_TYPE_PTR>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_Class_FromIl2CppType)));
     il2cpp_Class_GetPtrClass = reinterpret_cast<decltype(il2cpp_Class_GetPtrClass)>(cs::findNthB<1>(ptrCase));
     logger.debug("Class::GetPtrClass(Il2CppClass*) found? offset: %lX", ((uintptr_t)il2cpp_Class_GetPtrClass) - getRealOffset(0));
 
@@ -806,6 +806,7 @@ void il2cpp_functions::Init() {
     // We DO need to skip at least one ret, though.
     auto ldr = cs::findNth<6, &loadFind, &cs::insnMatch<>, 1>(runtimeInit).value();
     defaults = reinterpret_cast<decltype(defaults)>(std::get<2>(cs::getpcaddr<1, 1>(ldr)));
+    logger.debug("il2cpp_defaults found: %p (offset: %lX)", defaults, ((uintptr_t)defaults) - getRealOffset(0));
 
     // FIELDS
     // Extract locations of s_GlobalMetadataHeader, s_Il2CppMetadataRegistration, & s_GlobalMetadata
@@ -821,7 +822,10 @@ void il2cpp_functions::Init() {
         std::get<2>(cs::getpcaddr<5, 1>(
             reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex))
         )));
+    logger.debug("%p %p %p metadata pointers", s_GlobalMetadataHeaderPtr, s_Il2CppMetadataRegistrationPtr, s_GlobalMetadataPtr);
     logger.debug("All global constants found!");
+
+    // WeakPtr stuff somewhere
 
     // NOTE: Runtime.Shutdown is NOT CALLED even for exceptions!
     // There is practically no use in hooking this becuase of that.
