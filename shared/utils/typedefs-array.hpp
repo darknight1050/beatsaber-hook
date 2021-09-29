@@ -338,6 +338,18 @@ struct ArrayWrapper {
     const_iterator end() const {
         return &val->values[Length()];
     }
+    explicit operator const Ptr() const {
+        return val;
+    }
+    explicit operator Ptr() {
+        return val;
+    }
+    explicit operator Il2CppArray*() {
+        return reinterpret_cast<Il2CppArray*>(val);
+    }
+    explicit operator Il2CppArray* const() const {
+        return reinterpret_cast<Il2CppArray* const>(val);
+    }
 
     private:
     Ptr val;

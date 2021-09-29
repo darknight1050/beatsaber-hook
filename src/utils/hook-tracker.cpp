@@ -1,6 +1,7 @@
 #include "../../shared/utils/hook-tracker.hpp"
-#include "shared/utils/instruction-parsing.hpp"
+#include "../../shared/utils/capstone-utils.hpp"
 #include "modloader/shared/modloader.hpp"
+#include "../../shared/utils/logging.hpp"
 
 std::unordered_map<const void*, std::list<HookInfo>> HookTracker::hooks;
 
@@ -130,66 +131,15 @@ extern "C" const void* __HOOKTRACKER_GET_HOOKS() {
     return reinterpret_cast<const void*>(HookTracker::GetHooks());
 }
 
-// Represents the number of instructions to search for the original (BLR)
-#ifndef HOOKTRACKER_ORIG_SEARCH_COUNT
-#define HOOKTRACKER_ORIG_SEARCH_COUNT 500
-#endif
-
-// TODO: Implement and use this function
-const void* getOrigHelper(const void* const location, bool inTrampoline = false) noexcept {
-    // If we are a hook, we can't find our orig here, we must travel to our hook implementation.
-    Instruction inst(reinterpret_cast<const int32_t*>(location));
-    if (inst.isNOP()) {
-        inst = Instruction(reinterpret_cast<const int32_t*>(location) + 1);
-    }
-    if (inst.isLoad() && inst.size == 8 && inst.label == inst.addr + 2) {
-        // For hooks, label will always be 8 past address of function.
-        // This label points to the trampoline.
-        // However, this isn't necessarily all we need to do, since we could have MULTIPLE functions hooking this.
-        // So, we will need to recurse here as well.
-        return getOrigHelper(reinterpret_cast<const void*>(*inst.label), true);
-    }
-    if (!inTrampoline) {
-        // If we are not in a trampoline and we are not hooked, we simply exit.
-        return location;
-    }
-    // Look for all BLs in this function, if we find any, trace their remaining asm to see if they match the remaining instructions from our location
-    // We shall assume for the sake of simplicity that the original function is going to be called within 100 instructions
-    for (int i = 0; i < HOOKTRACKER_ORIG_SEARCH_COUNT; i++) {
-        if (inst.branchType == Instruction::BranchType::INDCALL) {
-            // Source register needs to be emulated/traced
-            // It should be from a LDR from a static field
-            // inst.Rs[0]
-        }
-    }
-    // We can't find the orig function, but we know we are in a trampoline. Chances are the orig is not called or this function is too big.
-
-    return location;
-}
-
-const void* HookTracker::InstructionGetOrig(const void* const location) noexcept {
-    Instruction inst(reinterpret_cast<const int32_t*>(location));
-    if (inst.isNOP()) {
-        inst = Instruction(reinterpret_cast<const int32_t*>(location) + 1);
-    }
-    if (inst.isLoad() && inst.size == 8 && inst.label == inst.addr + 2) {
-        // For hooks, label will always be 8 past address of function.
-        // This label points to the trampoline.
-        // However, this isn't necessarily all we need to do, since we could have MULTIPLE functions hooking this.
-        // So, we will need to recurse here as well.
-        return HookTracker::InstructionGetOrig(*reinterpret_cast<const void* const*>(*inst.label));
-    }
-    // If we aren't any of these things, we exit out.
-    return location;
+std::optional<uint32_t*> getHookBr(cs_insn* ins) {
+    return (ins->id == ARM64_INS_BR && ins->detail->arm64.operands[0].reg == ARM64_REG_X17) ? std::optional<uint32_t*>(reinterpret_cast<uint32_t*>(ins->address)) : std::nullopt;
 }
 
 bool HookTracker::InstructionIsHooked(const void* const location) noexcept {
-    // First actual instruction should be an LDR (literal) PC + 0x8
-    Instruction inst(reinterpret_cast<const int32_t*>(location));
-    if (inst.isNOP()) {
-        inst = Instruction(reinterpret_cast<const int32_t*>(location) + 1);
-    }
-    return inst.isLoad() && inst.size == 8 && inst.label == inst.addr + 2;
+    // TODO: Rewrite this using flamingo knowledge
+    auto brAddr = cs::findNth<1, &getHookBr, &cs::insnMatch<>, -1, 20>(reinterpret_cast<const uint32_t*>(location)).value();
+    // br should be second or third instruction, following 8 bytes should be dst to jump to.
+    return brAddr == reinterpret_cast<const uint32_t*>(location) + 1 || brAddr == reinterpret_cast<const uint32_t*>(location) + 2;
     // // The third instruction should be a BR x17
     // Instruction instr(reinterpret_cast<const int32_t *>(location) + 2);
     // return instr.isIndirectBranch() && instr.numSourceRegisters == 1 && instr.Rs[0] == 17;

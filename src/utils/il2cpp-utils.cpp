@@ -18,7 +18,7 @@ namespace il2cpp_utils {
         il2cpp_functions::Init();
 
         std::vector<const Il2CppType*> types(seq.size());
-        std::transform(seq.begin(), seq.end(), types.begin(), il2cpp_functions::class_get_type_const);
+        std::transform(seq.begin(), seq.end(), types.begin(), [](const Il2CppClass * klass) {return il2cpp_functions::class_get_type_const(klass);});
         return types;
     }
 
@@ -63,7 +63,7 @@ namespace il2cpp_utils {
                 }
             }
             // TODO: just because two parameter lists match doesn't necessarily mean this is the best match...
-            if (!(IsConvertible(paramType, argTypes.at(i)))) {
+            if (!(IsConvertible(argTypes.at(i), paramType))) {
                 return false;
             }
         }
@@ -257,18 +257,6 @@ namespace il2cpp_utils {
         auto* instance = il2cpp_functions::object_new(objKlass);
         objKlass->instance_size = origSize;
         return instance;
-    }
-
-    Il2CppString* createcsstr(std::string_view inp, StringType type) {
-        static auto logger = getLogger().WithContext("createcsstr");
-        il2cpp_functions::Init();
-        switch (type) {
-            case StringType::Manual: {
-                return newcsstr<CreationType::Manual>(inp);
-            }
-            default:
-                return newcsstr<CreationType::Temporary>(inp);
-        }
     }
 
     [[nodiscard]] bool Match(const Il2CppObject* source, const Il2CppClass* klass) noexcept {

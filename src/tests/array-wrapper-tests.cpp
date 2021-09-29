@@ -24,6 +24,8 @@ static void doThing() {
         assert(itr == i);
         std::cout << itr << std::endl;
     }
+    // Should be allowed to cast back
+    std::cout << static_cast<Array<int>*>(arr);
     std::cout << i << std::endl;
 }
 
