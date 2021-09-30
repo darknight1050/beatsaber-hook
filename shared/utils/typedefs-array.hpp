@@ -2,6 +2,7 @@
 #include <optional>
 #include <vector>
 #include <span>
+#include "il2cpp-type-check.hpp"
 
 #if __has_include(<concepts>)
 #include <concepts>
@@ -93,16 +94,8 @@ static const size_t kIl2CppOffsetOfArrayLength = offsetof(Il2CppArray, max_lengt
 #include "il2cpp-utils-methods.hpp"
 #include <initializer_list>
 
-#ifdef HAS_CODEGEN
-#include "System/Collections/Generic/IReadOnlyList_1.hpp"
-#include "System/Collections/Generic/IList_1.hpp"
-template<class T>
-struct Array : public Il2CppArray, public System::Collections::Generic::IReadOnlyList_1<T>,
-  public System::Collections::Generic::IList_1<T>
-#else
 template<class T>
 struct Array : public Il2CppArray
-#endif
 {
     static_assert(is_value_type_v<T>, "T must be a C# value type! (primitive, pointer or Struct)");
     ALIGN_TYPE(8) T values[IL2CPP_ZERO_LEN_ARRAY];
@@ -172,19 +165,11 @@ struct Array : public Il2CppArray
         return New({args...});
     }
 
-  #ifdef HAS_CODEGEN
-    System::Collections::Generic::IEnumerator_1<T>* GetEnumerator() {
-  #else
-    Il2CppObject* GetEnumerator() {
-  #endif
+    template<class U = Il2CppObject*>
+    U GetEnumerator() {
         static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(
             this, "System.Collections.Generic.IEnumerable`1.GetEnumerator", 0));
-      #ifdef HAS_CODEGEN
-        return CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe<System::Collections::Generic::IEnumerator_1<T>*>(
-      #else
-        return CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe(
-      #endif
-            this, method));
+        return CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe<U>(this, method));
     }
 
     bool Contains(T item) {
@@ -219,16 +204,33 @@ struct Array : public Il2CppArray
     }
 };
 
+template<typename TArg>
+struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Array<TArg>*> {
+    static inline Il2CppClass* get() {
+        il2cpp_functions::Init();
+        if constexpr (std::is_same_v<std::decay_t<TArg>, Il2CppObject*>) {
+            il2cpp_functions::CheckS_GlobalMetadata();
+            return il2cpp_functions::array_class_get(il2cpp_functions::defaults->object_class, 1);
+        } else {
+            static auto& logger = getLogger();
+            Il2CppClass* eClass = RET_0_UNLESS(logger, il2cpp_no_arg_class<TArg>::get());
+            return il2cpp_functions::array_class_get(eClass, 1);
+        }
+    }
+};
+
 template<typename T, class Ptr = Array<T>*>
-struct ArrayWrapper {
+struct ArrayW {
     static_assert(sizeof(Ptr) == sizeof(void*), "Size of Ptr type must be the same as a void*!");
 
-    /// @brief Create an ArrayWrapper from a pointer
-    constexpr ArrayWrapper(Ptr initVal) : val(initVal) {}
+    /// @brief Create an ArrayW from a pointer
+    constexpr ArrayW(Ptr initVal) : val(initVal) {}
     /// @brief Default constructor creates an empty array that is wrapped
-    ArrayWrapper() : val(Array<T>::NewLength(0)) {}
-    ArrayWrapper(std::initializer_list<T> vals) : val(Array<T>::New(vals)) {}
-    ArrayWrapper(il2cpp_array_size_t size) : val(Array<T>::NewLength(size)) {}
+    ArrayW() : val(Array<T>::NewLength(0)) {}
+    template<class U>
+    requires (!std::is_same_v<std::nullptr_t, U>)
+    ArrayW(std::initializer_list<U> vals) : val(Array<T>::New(vals)) {}
+    ArrayW(il2cpp_array_size_t size) : val(Array<T>::NewLength(size)) {}
 
     inline il2cpp_array_size_t Length() const {
         return val->Length();
@@ -273,19 +275,11 @@ struct ArrayWrapper {
         return WrapperRef(val->values[i]);
     }
 
-    #ifdef HAS_CODEGEN
-    System::Collections::Generic::IEnumerator_1<T>* GetEnumerator() {
-    #else
-    Il2CppObject* GetEnumerator() {
-    #endif
+    template<class U = Il2CppObject*>
+    U GetEnumerator() {
         static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(
-            val, "System.Collections.Generic.IEnumerable`1.GetEnumerator", 0));
-        #ifdef HAS_CODEGEN
-        return CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe<System::Collections::Generic::IEnumerator_1<T>*>(
-        #else
-        return CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe(
-        #endif
-            val, method));
+            this, "System.Collections.Generic.IEnumerable`1.GetEnumerator", 0));
+        return CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe<U>(val, method));
     }
     bool Contains(T item) {
         // TODO: find a better way around the existence of 2 methods with this name (the 2nd not being generic at all)
@@ -353,6 +347,14 @@ struct ArrayWrapper {
 
     private:
     Ptr val;
+};
+
+template<class T, class Ptr>
+struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<ArrayW<T, Ptr>> {
+    static inline Il2CppClass* get() {
+        static auto klass = ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Array<T>*>::get();
+        return klass;
+    }
 };
 
 #pragma pack(pop)
