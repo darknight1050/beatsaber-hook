@@ -327,29 +327,6 @@ DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppException*, exception);
 
 DEFINE_IL2CPP_ARG_TYPE(long double, "System", "Decimal");
 
-template<typename TArg>
-struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Array<TArg>*> {
-    static inline Il2CppClass* get() {
-        il2cpp_functions::Init();
-        if constexpr (std::is_same_v<std::decay_t<TArg>, Il2CppObject*>) {
-            il2cpp_functions::CheckS_GlobalMetadata();
-            return il2cpp_functions::array_class_get(il2cpp_functions::defaults->object_class, 1);
-        } else {
-            static auto& logger = getLogger();
-            Il2CppClass* eClass = RET_0_UNLESS(logger, il2cpp_no_arg_class<TArg>::get());
-            return il2cpp_functions::array_class_get(eClass, 1);
-        }
-    }
-};
-
-template<class T, class Ptr>
-struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<ArrayWrapper<T, Ptr>> {
-    static inline Il2CppClass* get() {
-        static auto klass = ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Array<T>*>::get();
-        return klass;
-    }
-};
-
 template<class T, class Ptr>
 struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<ListWrapper<T, Ptr>> {
     static inline Il2CppClass* get() {
