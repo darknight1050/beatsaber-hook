@@ -49,9 +49,8 @@ extern "C" {
 #include "il2cpp-utils-methods.hpp"
 #include "il2cpp-type-check.hpp"
 
-#include "typedefs-object.hpp"
-#include "typedefs-delegate.hpp"
 #include "typedefs-array.hpp"
+#include "typedefs-delegate.hpp"
 #include "typedefs-wrappers.hpp"
 
 #include <stdint.h>

@@ -1,7 +1,6 @@
 #ifdef TEST_ARRAY
 
-#include "../../shared/utils/typedefs.h"
-#include "../../shared/utils/il2cpp-utils.hpp"
+#include "../../shared/utils/typedefs-array.hpp"
 #include <iostream>
 
 static void constDoThing(const ArrayW<int>& wrap) {
@@ -33,11 +32,14 @@ static void doThing() {
         assert(itr == i);
         std::cout << itr << std::endl;
     }
+    std::cout << arr.Length() << std::endl;
     std::cout << static_cast<Array<int*>*>(arr3) << std::endl;
     // Should be allowed to cast back
     std::cout << static_cast<Array<int>*>(arr) << std::endl;
     std::cout << i << std::endl;
 }
+
+#include "../../shared/utils/il2cpp-utils.hpp"
 
 static void doThing2() {
     ArrayW<int> arr(2);
