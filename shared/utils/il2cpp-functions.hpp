@@ -98,6 +98,21 @@ static rt name(TArgs&&... args) { \
         return il2cpp_##name(args...); \
     } \
 }
+
+#define API_FUNC_VISIBLE(rt, name, ...) \
+public: \
+static rt (*il2cpp_##name)__VA_ARGS__; \
+template<class... TArgs> \
+static rt name(TArgs&&... args) { \
+    if (!il2cpp_##name) { \
+        SAFE_ABORT(); \
+    } \
+    if constexpr (std::is_same_v<rt, void>) { \
+        il2cpp_##name(args...); \
+    } else { \
+        return il2cpp_##name(args...); \
+    } \
+}
 // A class which contains all available il2cpp functions
 // Created by zoller27osu
 class il2cpp_functions {
@@ -371,25 +386,25 @@ class il2cpp_functions {
     API_FUNC(const char*, class_get_name_const, (const Il2CppClass * klass));
 
     // SELECT NON-API LIBIL2CPP FUNCTIONS:
-    API_FUNC(bool, Class_Init, (Il2CppClass* klass));
+    API_FUNC_VISIBLE(bool, Class_Init, (Il2CppClass* klass));
 
-    API_FUNC(Il2CppClass*, MetadataCache_GetTypeInfoFromTypeDefinitionIndex, (TypeDefinitionIndex index));
-    API_FUNC(Il2CppClass*, MetadataCache_GetTypeInfoFromTypeIndex, (TypeIndex index));
+    API_FUNC_VISIBLE(Il2CppClass*, MetadataCache_GetTypeInfoFromTypeDefinitionIndex, (TypeDefinitionIndex index));
+    API_FUNC_VISIBLE(Il2CppClass*, MetadataCache_GetTypeInfoFromTypeIndex, (TypeIndex index));
 
 #ifdef UNITY_2019
-    API_FUNC(std::string, _Type_GetName_, (const Il2CppType *type, Il2CppTypeNameFormat format));
+    API_FUNC_VISIBLE(std::string, _Type_GetName_, (const Il2CppType *type, Il2CppTypeNameFormat format));
 #else
-    API_FUNC(gnu_string, _Type_GetName_, (const Il2CppType *type, Il2CppTypeNameFormat format));
+    API_FUNC_VISIBLE(gnu_string, _Type_GetName_, (const Il2CppType *type, Il2CppTypeNameFormat format));
 #endif
-    API_FUNC(void, GC_free, (void* addr));
+    API_FUNC_VISIBLE(void, GC_free, (void* addr));
 
-    API_FUNC(void, GarbageCollector_SetWriteBarrier, (void** ptr));
-    API_FUNC(void*, GarbageCollector_AllocateFixed, (size_t sz, void* descr));
+    API_FUNC_VISIBLE(void, GarbageCollector_SetWriteBarrier, (void** ptr));
+    API_FUNC_VISIBLE(void*, GarbageCollector_AllocateFixed, (size_t sz, void* descr));
 
-    API_FUNC(Il2CppClass*, Class_FromIl2CppType, (Il2CppType* typ));
-    API_FUNC(Il2CppClass*, Class_GetPtrClass, (Il2CppClass* elementClass));
-    API_FUNC(Il2CppClass*, GenericClass_GetClass, (Il2CppGenericClass* gclass));
-    API_FUNC(AssemblyVector*, Assembly_GetAllAssemblies, ());
+    API_FUNC_VISIBLE(Il2CppClass*, Class_FromIl2CppType, (Il2CppType* typ));
+    API_FUNC_VISIBLE(Il2CppClass*, Class_GetPtrClass, (Il2CppClass* elementClass));
+    API_FUNC_VISIBLE(Il2CppClass*, GenericClass_GetClass, (Il2CppGenericClass* gclass));
+    API_FUNC_VISIBLE(AssemblyVector*, Assembly_GetAllAssemblies, ());
 
     private:
     static bool find_GC_free(const uint32_t* Runtime_Shutdown);
