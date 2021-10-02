@@ -1,7 +1,7 @@
 #pragma once
 #include "../../shared/utils/utils.h"
-#include "../../extern/capstone/shared/capstone/capstone.h"
-#include "../../extern/capstone/shared/platform.h"
+#include "capstone/shared/capstone/capstone.h"
+#include "capstone/shared/platform.h"
 #include <array>
 #include <tuple>
 #include <optional>

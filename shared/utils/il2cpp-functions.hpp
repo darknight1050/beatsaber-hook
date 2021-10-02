@@ -83,8 +83,12 @@ struct Il2CppGenericContainer;
 
 typedef std::vector<const Il2CppAssembly*> AssemblyVector;
 
+#ifndef IL2CPP_FUNC_VISIBILITY
+#define IL2CPP_FUNC_VISIBILITY private
+#endif
+
 #define API_FUNC(rt, name, ...) \
-private: \
+IL2CPP_FUNC_VISIBILITY: \
 static rt (*il2cpp_##name)__VA_ARGS__; \
 public: \
 template<class... TArgs> \

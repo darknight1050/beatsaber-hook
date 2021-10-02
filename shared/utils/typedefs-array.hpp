@@ -54,41 +54,6 @@ struct WrapperRef {
 
 #pragma pack(push)
 
-#ifdef HAS_CODEGEN
-typedef int32_t il2cpp_array_lower_bound_t;
-#define IL2CPP_ARRAY_MAX_INDEX ((int32_t) 0x7fffffff)
-#define IL2CPP_ARRAY_MAX_SIZE  ((uint32_t) 0xffffffff)
-
-typedef struct Il2CppArrayBounds
-{
-    il2cpp_array_size_t length;
-    il2cpp_array_lower_bound_t lower_bound;
-} Il2CppArrayBounds;
-
-#if IL2CPP_COMPILER_MSVC
-#pragma warning( push )
-#pragma warning( disable : 4200 )
-#elif defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winvalid-offsetof"
-#endif
-
-#include "System/Array.hpp"
-struct Il2CppArray : public System::Array {
-    /* bounds is NULL for szarrays */
-    Il2CppArrayBounds *bounds;
-    /* total number of elements of the array */
-    il2cpp_array_size_t max_length;
-};
-
-struct Il2CppArraySize : public Il2CppArray {
-    ALIGN_TYPE(8) void* vector[IL2CPP_ZERO_LEN_ARRAY];
-};
-
-static const size_t kIl2CppSizeOfArray = offsetof(Il2CppArraySize, vector);
-static const size_t kIl2CppOffsetOfArrayBounds = offsetof(Il2CppArray, bounds);
-static const size_t kIl2CppOffsetOfArrayLength = offsetof(Il2CppArray, max_length);
-#else
 #include "typedefs-object.hpp"
 typedef int32_t il2cpp_array_lower_bound_t;
 #define IL2CPP_ARRAY_MAX_INDEX ((int32_t) 0x7fffffff)
@@ -140,7 +105,6 @@ typedef struct Il2CppArraySize
 static const size_t kIl2CppSizeOfArray = (offsetof(Il2CppArraySize, vector));
 static const size_t kIl2CppOffsetOfArrayBounds = (offsetof(Il2CppArray, bounds));
 static const size_t kIl2CppOffsetOfArrayLength = (offsetof(Il2CppArray, max_length));
-#endif
 
 #include "utils.h"
 #include "il2cpp-utils-methods.hpp"
