@@ -90,6 +90,12 @@ namespace il2cpp_utils {
 }
 
 #ifdef HAS_CODEGEN
+
+#ifdef USE_CODEGEN_FIELDS
+#define _HAD_CODEGEN_FIELDS
+#endif
+#define USE_CODEGEN_FIELDS
+
 #include "System/String.hpp"
 struct Il2CppString : public System::String {};
 #endif
@@ -287,6 +293,12 @@ typedef System::Threading::InternalThread Il2CppInternalThread;
 #include "System/Threading/Thread.hpp"
 // self-typedef'd in il2cpp-api-types.h
 struct Il2CppThread : public System::Threading::Thread {};
+
+#ifndef _HAD_CODEGEN_FIELDS
+#undef USE_CODEGEN_FIELDS
+#endif
+
+#undef _HAD_CODEGEN_FIELDS
 
 #else
 // From Runtime.cpp (some may need the * removed):

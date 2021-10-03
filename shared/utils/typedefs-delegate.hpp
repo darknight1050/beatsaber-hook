@@ -3,7 +3,19 @@
 #include "typedefs-object.hpp"
 
 #ifdef HAS_CODEGEN
+
+#ifdef USE_CODEGEN_FIELDS
+#define _HAD_CODEGEN_FIELDS
+#endif
+#define USE_CODEGEN_FIELDS
+
 #include "System/Delegate.hpp"
+#ifndef _HAD_CODEGEN_FIELDS
+#undef USE_CODEGEN_FIELDS
+#endif
+
+#undef _HAD_CODEGEN_FIELDS
+
 // self-typedef'd in il2cpp-class-internals.h
 struct Il2CppDelegate : public System::Delegate {};
 typedef System::Delegate Delegate;
@@ -32,7 +44,19 @@ typedef struct Delegate : Il2CppObject {
 #endif
 
 #ifdef HAS_CODEGEN
+
+#ifdef USE_CODEGEN_FIELDS
+#define _HAD_CODEGEN_FIELDS
+#endif
+#define USE_CODEGEN_FIELDS
+
 #include "System/MulticastDelegate.hpp"
+#ifndef _HAD_CODEGEN_FIELDS
+#undef USE_CODEGEN_FIELDS
+#endif
+
+#undef _HAD_CODEGEN_FIELDS
+
 typedef System::MulticastDelegate Il2CppMulticastDelegate;
 typedef System::MulticastDelegate MulticastDelegate;
 #else

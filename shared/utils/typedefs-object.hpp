@@ -1,7 +1,19 @@
 #pragma once
 
 #ifdef HAS_CODEGEN
+
+#ifdef USE_CODEGEN_FIELDS
+#define _HAD_CODEGEN_FIELDS
+#endif
+#define USE_CODEGEN_FIELDS
+
 #include "System/Object.hpp"
+#ifndef _HAD_CODEGEN_FIELDS
+#undef USE_CODEGEN_FIELDS
+#endif
+
+#undef _HAD_CODEGEN_FIELDS
+
 typedef Il2CppClass Il2CppVTable;
 struct MonitorData;
 struct Il2CppObject : public System::Object {
