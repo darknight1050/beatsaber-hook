@@ -4,8 +4,9 @@
 
 #ifdef USE_CODEGEN_FIELDS
 #define _HAD_CODEGEN_FIELDS
-#endif
+#else
 #define USE_CODEGEN_FIELDS
+#endif
 
 #include "System/Object.hpp"
 #ifndef _HAD_CODEGEN_FIELDS

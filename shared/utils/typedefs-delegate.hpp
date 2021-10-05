@@ -6,8 +6,9 @@
 
 #ifdef USE_CODEGEN_FIELDS
 #define _HAD_CODEGEN_FIELDS
-#endif
+#else
 #define USE_CODEGEN_FIELDS
+#endif
 
 #include "System/Delegate.hpp"
 #ifndef _HAD_CODEGEN_FIELDS
@@ -47,8 +48,9 @@ typedef struct Delegate : Il2CppObject {
 
 #ifdef USE_CODEGEN_FIELDS
 #define _HAD_CODEGEN_FIELDS
-#endif
+#else
 #define USE_CODEGEN_FIELDS
+#endif
 
 #include "System/MulticastDelegate.hpp"
 #ifndef _HAD_CODEGEN_FIELDS

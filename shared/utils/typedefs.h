@@ -93,8 +93,9 @@ namespace il2cpp_utils {
 
 #ifdef USE_CODEGEN_FIELDS
 #define _HAD_CODEGEN_FIELDS
-#endif
+#else
 #define USE_CODEGEN_FIELDS
+#endif
 
 #include "System/String.hpp"
 struct Il2CppString : public System::String {};
