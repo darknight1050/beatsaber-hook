@@ -378,9 +378,10 @@ namespace il2cpp_utils {
         template<typename T>
         struct il2cpp_arg_type<T&> {
             static inline const Il2CppType* get(T& arg) {
-                // A method can store a result back to a non-const ref! Make the type byref!
+                // Pure reference type is not the same as ByRef<T>. Thus, use the byval version.
+                // Therefore, the only way to get the byref type match for any expression is to use a ByRef.
                 Il2CppClass* klass = il2cpp_arg_class<T>::get(arg);
-                return &klass->this_arg;
+                return &klass->byval_arg;
             }
         };
 
