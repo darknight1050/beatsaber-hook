@@ -228,8 +228,7 @@ namespace il2cpp_utils {
         }
         auto genCount = (method->is_generic && !method->is_inflated) ? method->genericContainer->type_argc : 0;
         if (genCount != genSz) {
-            logger.warning("Potential method match had wrong number of generics %i (expected %lu)",
-                genCount, genSz);
+            // logger.warning("Potential method match had wrong number of generics %i (expected %lu)", genCount, genSz);
             return false;
         }
         // TODO: supply boolStrictMatch and use type_equals instead of IsConvertible if supplied?
@@ -248,7 +247,7 @@ namespace il2cpp_utils {
                 }
             }
             // TODO: just because two parameter lists match doesn't necessarily mean this is the best match...
-            if (!(IsConvertible(paramType, argTypes.at(i)))) {
+            if (!IsConvertible(argTypes.at(i), paramType)) {
                 return false;
             }
         }
