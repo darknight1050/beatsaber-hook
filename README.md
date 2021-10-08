@@ -23,7 +23,7 @@ This framework provides a good deal of functionality, including, but not limited
 - Opt-in runtime type checking
 - Detailed exceptions, opt-in-able
 - Helpers for installing inline hooks (build within each mod: `And64InlineHook.hpp`)
-- Helpers for parsing many ARM64 instructions (`instruction-parsing.hpp`)
+- Helpers for parsing many ARM64 instructions (`capstone-utils.hpp`)
 - Macros for hook installation + trampoline allocation, type safety conversions
 - Performant context logging (including to file)
 - Interop with [the modloader](https://github.com/sc2ad/QuestLoader/tree/staticModloader)
