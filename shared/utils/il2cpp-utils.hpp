@@ -124,10 +124,14 @@ namespace il2cpp_utils {
             return reinterpret_cast<Il2CppString*>(str);
         } else {
             static auto logger = getLogger().WithContext("newcsstr");
-            static auto enc = RET_0_UNLESS(logger, GetPropertyValue("System.Text", "Encoding", "ASCII"));
+            auto len = inp.length();
+            auto* str = RET_0_UNLESS(logger, RunMethod<Il2CppString*>("System", "String", "FastAllocateString", static_cast<int>(len)));
+            for (size_t i = 0; i < len; i++) {
+                str->chars[i] = inp[i];
+            }
+            str->chars[len] = '\0';
             // Create new string, created from the literal char*, not to be confused with a copy of this data
-            auto* obj = RET_0_UNLESS(logger, RunMethod<Il2CppString*>("System", "String", "CreateStringFromEncoding", (uint8_t*)inp.data(), (int)inp.length(), enc));
-            return reinterpret_cast<Il2CppString*>(obj);
+            return str;
         }
     }
 
