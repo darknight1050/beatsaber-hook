@@ -288,8 +288,8 @@ namespace il2cpp_utils {
         logger.debug("%s%s %s(%s);", flagStr, retTypeStr, methodName, paramStr);
     }
 
-    bool IsConvertible(const Il2CppType* to, const Il2CppType* from, bool asArgs) {
-        static auto logger = getLogger().WithContext("IsConvertible");
+    bool IsConvertibleFrom(const Il2CppType* to, const Il2CppType* from, bool asArgs) {
+        static auto logger = getLogger().WithContext("IsConvertibleFrom");
         RET_0_UNLESS(logger, to);
         RET_0_UNLESS(logger, from);
         if (asArgs) {
@@ -307,7 +307,7 @@ namespace il2cpp_utils {
         bool ret = (to->type == IL2CPP_TYPE_MVAR) || il2cpp_functions::class_is_assignable_from(classTo, classFrom);
         if (!ret) {
             if (il2cpp_functions::class_is_enum(classTo)) {
-                ret = IsConvertible(il2cpp_functions::class_enum_basetype(classTo), from, asArgs);
+                ret = IsConvertibleFrom(il2cpp_functions::class_enum_basetype(classTo), from, asArgs);
             }
         }
         return ret;

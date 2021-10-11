@@ -47,7 +47,7 @@ namespace il2cpp_utils {
                 genCount, genTypes.size());
             return false;
         }
-        // TODO: supply boolStrictMatch and use type_equals instead of IsConvertible if supplied?
+        // TODO: supply boolStrictMatch and use type_equals instead of IsConvertibleFrom if supplied?
         for (decltype(method->parameters_count) i = 0; i < method->parameters_count; i++) {
             auto* paramType = method->parameters[i].parameter_type;
             if (paramType->type == IL2CPP_TYPE_MVAR) {
@@ -63,7 +63,7 @@ namespace il2cpp_utils {
                 }
             }
             // TODO: just because two parameter lists match doesn't necessarily mean this is the best match...
-            if (!(IsConvertible(argTypes.at(i), paramType))) {
+            if (!IsConvertibleFrom(paramType, argTypes.at(i))) {
                 return false;
             }
         }

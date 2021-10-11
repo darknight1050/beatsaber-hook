@@ -211,7 +211,7 @@ namespace il2cpp_utils {
         return FindMethod(info);
     }
 
-    bool IsConvertible(const Il2CppType* to, const Il2CppType* from, bool asArgs = true);
+    bool IsConvertibleFrom(const Il2CppType* to, const Il2CppType* from, bool asArgs = true);
 
     // Returns if a given MethodInfo's parameters match the Il2CppType vector
     bool ParameterMatch(const MethodInfo* method, ::std::vector<const Il2CppType*> argTypes);
@@ -231,7 +231,7 @@ namespace il2cpp_utils {
             // logger.warning("Potential method match had wrong number of generics %i (expected %lu)", genCount, genSz);
             return false;
         }
-        // TODO: supply boolStrictMatch and use type_equals instead of IsConvertible if supplied?
+        // TODO: supply boolStrictMatch and use type_equals instead of IsConvertibleFrom if supplied?
         for (decltype(method->parameters_count) i = 0; i < argSz; i++) {
             auto* paramType = method->parameters[i].parameter_type;
             if (paramType->type == IL2CPP_TYPE_MVAR) {
@@ -247,7 +247,7 @@ namespace il2cpp_utils {
                 }
             }
             // TODO: just because two parameter lists match doesn't necessarily mean this is the best match...
-            if (!IsConvertible(argTypes.at(i), paramType)) {
+            if (!IsConvertibleFrom(argTypes.at(i), paramType)) {
                 return false;
             }
         }
@@ -288,7 +288,7 @@ namespace il2cpp_utils {
             }
             auto* outType = ExtractIndependentType<TOut>();
             if (outType) {
-                if (!IsConvertible(outType, method->return_type, false)) {
+                if (!IsConvertibleFrom(outType, method->return_type, false)) {
                     logger.warning("User requested TOut %s does not match the method's return object of type %s!",
                         TypeGetSimpleName(outType), TypeGetSimpleName(method->return_type));
                     throw RunMethodException("Return type of method is not convertible!", method);
@@ -418,7 +418,7 @@ namespace il2cpp_utils {
         return FindMethod(info);
     }
 
-    bool IsConvertible(const Il2CppType* to, const Il2CppType* from, bool asArgs = true);
+    bool IsConvertibleFrom(const Il2CppType* to, const Il2CppType* from, bool asArgs = true);
     // Returns if a given MethodInfo's parameters match the Il2CppType vector
     bool ParameterMatch(const MethodInfo* method, ::std::vector<const Il2CppType*> argTypes);
 
@@ -460,7 +460,7 @@ namespace il2cpp_utils {
                 auto* outType = ExtractIndependentType<TOut>();
                 if (outType) {
                     auto* retType = ExtractType(ret);
-                    if (!IsConvertible(outType, retType, false)) {
+                    if (!IsConvertibleFrom(outType, retType, false)) {
                         logger.warning("User requested TOut %s does not match the method's return object of type %s!",
                             TypeGetSimpleName(outType), TypeGetSimpleName(retType));
                     }
