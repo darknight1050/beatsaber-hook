@@ -123,15 +123,7 @@ namespace il2cpp_utils {
             str->chars[len] = '\0';
             return reinterpret_cast<Il2CppString*>(str);
         } else {
-            static auto logger = getLogger().WithContext("newcsstr");
-            auto len = inp.length();
-            auto* str = RET_0_UNLESS(logger, RunMethod<Il2CppString*>("System", "String", "FastAllocateString", static_cast<int>(len)));
-            for (size_t i = 0; i < len; i++) {
-                str->chars[i] = inp[i];
-            }
-            str->chars[len] = '\0';
-            // Create new string, created from the literal char*, not to be confused with a copy of this data
-            return str;
+            return il2cpp_functions::string_new_len(inp.data(), inp.size());
         }
     }
 
