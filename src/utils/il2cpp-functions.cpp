@@ -768,12 +768,12 @@ void il2cpp_functions::Init() {
     il2cpp_Class_FromIl2CppType = reinterpret_cast<decltype(il2cpp_Class_FromIl2CppType)>(cs::findNthB<1>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_class_from_il2cpp_type))));
     // GenericClass::GetClass. offset 0x88DF64 in 1.5, 0xA34F20 in 1.7.0, 0xA6E4EC in 1.8.0b1
     // Skip found br
-    auto caseStart = cs::evalswitch<1, 1, IL2CPP_TYPE_GENERICINST>(reinterpret_cast<uint32_t*>(il2cpp_Class_FromIl2CppType) + 5);
+    auto caseStart = cs::evalswitch<1, 1, IL2CPP_TYPE_GENERICINST>(reinterpret_cast<uint32_t*>(il2cpp_Class_FromIl2CppType));
     il2cpp_GenericClass_GetClass = reinterpret_cast<decltype(il2cpp_GenericClass_GetClass)>(cs::findNthB<1>(caseStart));
     logger.debug("GenericClass::GetClass found? offset: %lX", ((uintptr_t)il2cpp_GenericClass_GetClass) - getRealOffset(0));
 
     // Class::GetPtrClass.
-    auto ptrCase = cs::evalswitch<1, 1, IL2CPP_TYPE_PTR>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_Class_FromIl2CppType) + 5));
+    auto ptrCase = cs::evalswitch<1, 1, IL2CPP_TYPE_PTR>(reinterpret_cast<const uint32_t*>(il2cpp_Class_FromIl2CppType));
     il2cpp_Class_GetPtrClass = reinterpret_cast<decltype(il2cpp_Class_GetPtrClass)>(cs::findNthB<1>(ptrCase));
     logger.debug("Class::GetPtrClass(Il2CppClass*) found? offset: %lX", ((uintptr_t)il2cpp_Class_GetPtrClass) - getRealOffset(0));
 
