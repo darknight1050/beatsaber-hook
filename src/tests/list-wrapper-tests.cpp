@@ -17,7 +17,7 @@ static void constDoThing(const ListWrapper<int>& wrap) {
 
 static void doThing() {
     ListWrapper<int> arr(*il2cpp_utils::New<List<int>*>(classof(List<int>*)));
-    il2cpp_utils::RunMethodThrow(arr, il2cpp_utils::FindMethod(arr, "Add"), 2);
+    il2cpp_utils::RunMethodThrow(*reinterpret_cast<List<int>**>(&arr), il2cpp_utils::FindMethod(arr, "Add"), 2);
     auto i = arr[0];
     assert(arr.size() == 1);
     for (auto itr : arr) {

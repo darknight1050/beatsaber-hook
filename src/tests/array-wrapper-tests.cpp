@@ -44,8 +44,8 @@ static void doThing() {
 static void doThing2() {
     ArrayW<int> arr(2);
     MethodInfo info;
-    il2cpp_utils::RunMethodThrow(classof(Il2CppObject*), &info, arr);
-    il2cpp_utils::RunMethodThrow<ArrayW<Il2CppObject*>>(classof(Il2CppObject*), &info);
+    il2cpp_utils::RunMethodThrow(static_cast<Il2CppObject*>(nullptr), &info, arr);
+    il2cpp_utils::RunMethodThrow<ArrayW<Il2CppObject*>>(static_cast<Il2CppObject*>(nullptr), &info);
 }
 
 #endif

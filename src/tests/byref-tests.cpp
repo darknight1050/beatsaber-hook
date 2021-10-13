@@ -9,7 +9,7 @@ static void test() {
     int x = 3;
     il2cpp_utils::RunMethod((Il2CppClass*)nullptr, &inf, byref(x));
     il2cpp_utils::RunMethodThrow((Il2CppClass*)nullptr, &inf, byref(x));
-    il2cpp_utils::RunMethodThrow(x, &inf);
+    il2cpp_utils::RunMethodThrow(&x, &inf);
     il2cpp_utils::RunStaticMethod(&inf, byref(x));
     il2cpp_utils::ExtractIndependentType<ByRef<int>>();
     il2cpp_utils::ExtractIndependentType<int>();
