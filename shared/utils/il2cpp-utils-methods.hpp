@@ -265,14 +265,14 @@ namespace il2cpp_utils {
     /// This function still performs simple checks (such as void vs. non-void returns and instance vs. static method invokes) even with checkTypes as false.
     /// @tparam TOut The output to return. Defaults to void.
     /// @tparam checkTypes Whether to check types or not. Defaults to true.
-    /// @tparam T The instance type (either an actual instance or an Il2CppClass*/Il2CppType*).
+    /// @tparam T The instance type.
     /// @tparam TArgs The argument types.
-    /// @param instance The instance or Il2CppClass*/Il2CppType* to invoke with.
+    /// @param instance The instance to invoke with. Should almost always be `this`.
     /// @param method The MethodInfo* to use for type checking and conversions.
     /// @param mPtr The method pointer to invoke specifically.
     /// @param params The arguments to pass into the function.
     template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
-    TOut RunMethodThrow(T& instance, const MethodInfo* method, Il2CppMethodPointer mPtr, TArgs&&... params) {
+    TOut RunMethodThrow(T* instance, const MethodInfo* method, Il2CppMethodPointer mPtr, TArgs&&... params) {
         static auto& logger = getLogger();
         if (!method) {
             throw RunMethodException("Method cannot be null!", nullptr);
@@ -318,9 +318,9 @@ namespace il2cpp_utils {
                     // Static method
                     reinterpret_cast<void (*)(std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(params..., method);
                 } else {
-                    using instanceT = std::remove_reference_t<T>;
+                    using instanceT = std::remove_pointer_t<T>;
                     if constexpr (il2cpp_type_check::need_box<instanceT>) {
-                        auto boxedRepr = &instance;
+                        auto boxedRepr = instance;
                         if constexpr (sizeof(Il2CppCodeGenModule) < 104) {
                             // Boxing is only required if we invoke to adjustor thunks instead of actual impls
                             // TODO: Eventually remove this dependence on il2cpp_functions::Init
@@ -330,10 +330,10 @@ namespace il2cpp_utils {
                         }
                         reinterpret_cast<void (*)(instanceT*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(boxedRepr, params..., method);
                         if constexpr (sizeof(Il2CppCodeGenModule) < 104) {
-                            instance = *reinterpret_cast<T*>(il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(boxedRepr)));
+                            *instance = *reinterpret_cast<T*>(il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(boxedRepr)));
                         }
                     } else {
-                        reinterpret_cast<void (*)(instanceT, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(instance, params..., method);
+                        reinterpret_cast<void (*)(instanceT*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(instance, params..., method);
                     }
                 }
             } else {
@@ -353,9 +353,9 @@ namespace il2cpp_utils {
                     // Static method
                     return reinterpret_cast<TOut (*)(std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(params..., method);
                 } else {
-                    using instanceT = std::remove_reference_t<T>;
+                    using instanceT = std::remove_pointer_t<T>;
                     if constexpr (il2cpp_type_check::need_box<instanceT>) {
-                        auto boxedRepr = &instance;
+                        auto boxedRepr = instance;
                         if constexpr (sizeof(Il2CppCodeGenModule) < 104) {
                             // Boxing is only required if we invoke to adjustor thunks instead of actual impls
                             // TODO: Eventually remove this dependence on il2cpp_functions::Init
@@ -365,11 +365,11 @@ namespace il2cpp_utils {
                         }
                         TOut res = reinterpret_cast<TOut (*)(instanceT*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(boxedRepr, params..., method);
                         if constexpr (sizeof(Il2CppCodeGenModule) < 104) {
-                            instance = *reinterpret_cast<T*>(il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(boxedRepr)));
+                            *instance = *reinterpret_cast<T*>(il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(boxedRepr)));
                         }
                         return res;
                     } else {
-                        return reinterpret_cast<TOut (*)(instanceT, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(instance, params..., method);
+                        return reinterpret_cast<TOut (*)(instanceT*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(instance, params..., method);
                     }
                 }
             }
@@ -391,13 +391,8 @@ namespace il2cpp_utils {
     /// @param method The MethodInfo* to invoke.
     /// @param params The arguments to pass into the function.
     template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
-    TOut RunMethodThrow(T& instance, const MethodInfo* method, TArgs&& ...params) {
+    TOut RunMethodThrow(T* instance, const MethodInfo* method, TArgs&& ...params) {
         return RunMethodThrow<TOut, checkTypes>(instance, method, method->methodPointer, params...);
-    }
-    template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
-    requires ((std::is_same_v<T, Il2CppClass*> || std::is_same_v<T, Il2CppType*> || std::is_same_v<T, std::nullptr_t>) && !std::is_reference_v<T>)
-    TOut RunMethodThrow(T instance, const MethodInfo* method, TArgs&& ...params) {
-        return RunMethodThrow<TOut, checkTypes, T&, TArgs...>(instance, method, std::forward<TArgs>(params)...);
     }
     #else
     /// @brief Instantiates a generic MethodInfo* from the provided Il2CppClasses.
