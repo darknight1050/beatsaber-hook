@@ -745,27 +745,27 @@ void il2cpp_functions::Init() {
     logger.info("Loaded: il2cpp_class_get_name CONST VERSION!");
 
     // XREF TRACES
-    auto Array_NewSpecific_addr = cs::readb(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_array_new_specific)));
+    auto Array_NewSpecific_addr = cs::readb(reinterpret_cast<const uint32_t*>(il2cpp_array_new_specific));
     logger.debug("Array::NewSpecific offset: %lX", reinterpret_cast<uintptr_t>(Array_NewSpecific_addr) - getRealOffset(0));
     il2cpp_Class_Init = reinterpret_cast<decltype(il2cpp_Class_Init)>(cs::findNthBl<1>(Array_NewSpecific_addr));
     // Class::Init. 0x846A68 in 1.5, 0x9EC0A4 in 1.7.0, 0xA6D1B8 in 1.8.0b1
     logger.debug("Class::Init found? offset: %lX", reinterpret_cast<uintptr_t>(il2cpp_Class_Init) - getRealOffset(0));
 
-    auto MetadataCache_HasAttribute_addr = cs::findNthB<1>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_custom_attrs_has_attr)));
+    auto MetadataCache_HasAttribute_addr = cs::findNthB<1>(reinterpret_cast<const uint32_t*>(il2cpp_custom_attrs_has_attr));
     il2cpp_MetadataCache_GetTypeInfoFromTypeIndex = reinterpret_cast<decltype(il2cpp_MetadataCache_GetTypeInfoFromTypeIndex)>(cs::findNthBl<1>(MetadataCache_HasAttribute_addr));
     // MetadataCache::GetTypeInfoFromTypeIndex. offset 0x84F764 in 1.5, 0x9F5250 in 1.7.0, 0xA7A79C in 1.8.0b1
     logger.debug("MetadataCache::GetTypeInfoFromTypeIndex found? offset: %lX", reinterpret_cast<uintptr_t>(il2cpp_MetadataCache_GetTypeInfoFromTypeIndex) - getRealOffset(0));
 
-    auto Type_GetClassOrElementClass_addr = cs::findNthB<1>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_type_get_class_or_element_class)));
+    auto Type_GetClassOrElementClass_addr = cs::findNthB<1>(reinterpret_cast<const uint32_t*>(il2cpp_type_get_class_or_element_class));
     il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex = reinterpret_cast<decltype(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex)>(cs::findNthB<5, false, 0>(Type_GetClassOrElementClass_addr));
     // MetadataCache::GetTypeInfoFromTypeDefinitionIndex. offset 0x84FBA4 in 1.5, 0x9F5690 in 1.7.0, 0xA75958 in 1.8.0b1
     logger.debug("MetadataCache::GetTypeInfoFromTypeDefinitionIndex found? offset: %p, %lX", il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex, reinterpret_cast<uintptr_t>(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex) - getRealOffset(0));
 
-    il2cpp__Type_GetName_ = reinterpret_cast<decltype(il2cpp__Type_GetName_)>(cs::findNthBl<1>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_type_get_assembly_qualified_name))));
+    il2cpp__Type_GetName_ = reinterpret_cast<decltype(il2cpp__Type_GetName_)>(cs::findNthBl<1>(reinterpret_cast<const uint32_t*>(il2cpp_type_get_assembly_qualified_name)));
     // Type::GetName. offset 0x8735DC in 1.5, 0xA1A458 in 1.7.0, 0xA7B634 in 1.8.0b1
     logger.debug("Type::GetName found? offset: %lX", reinterpret_cast<uintptr_t>(il2cpp__Type_GetName_) - getRealOffset(0));
 
-    il2cpp_Class_FromIl2CppType = reinterpret_cast<decltype(il2cpp_Class_FromIl2CppType)>(cs::findNthB<1>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_class_from_il2cpp_type))));
+    il2cpp_Class_FromIl2CppType = reinterpret_cast<decltype(il2cpp_Class_FromIl2CppType)>(cs::findNthB<1>(reinterpret_cast<const uint32_t*>(il2cpp_class_from_il2cpp_type)));
     // GenericClass::GetClass. offset 0x88DF64 in 1.5, 0xA34F20 in 1.7.0, 0xA6E4EC in 1.8.0b1
     // Skip found br
     auto caseStart = cs::evalswitch<1, 1, IL2CPP_TYPE_GENERICINST>(reinterpret_cast<uint32_t*>(il2cpp_Class_FromIl2CppType));
@@ -778,31 +778,31 @@ void il2cpp_functions::Init() {
     logger.debug("Class::GetPtrClass(Il2CppClass*) found? offset: %lX", ((uintptr_t)il2cpp_Class_GetPtrClass) - getRealOffset(0));
 
     // Assembly::GetAllAssemblies
-    il2cpp_Assembly_GetAllAssemblies = reinterpret_cast<decltype(il2cpp_Assembly_GetAllAssemblies)>(cs::findNthBl<1>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_domain_get_assemblies))));
+    il2cpp_Assembly_GetAllAssemblies = reinterpret_cast<decltype(il2cpp_Assembly_GetAllAssemblies)>(cs::findNthBl<1>(reinterpret_cast<const uint32_t*>(il2cpp_domain_get_assemblies)));
     logger.debug("Assembly::GetAllAssemblies found? offset: %lX", ((uintptr_t)il2cpp_Assembly_GetAllAssemblies) - getRealOffset(0));
 
     CRASH_UNLESS(il2cpp_shutdown);
     // GC_free
-    auto Runtime_Shutdown = cs::findNthB<1>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_shutdown)));
+    auto Runtime_Shutdown = cs::findNthB<1>(reinterpret_cast<const uint32_t*>(il2cpp_shutdown));
 
     if (find_GC_free(Runtime_Shutdown)) {
         logger.debug("gc::GarbageCollector::FreeFixed found? offset: %lX", ((uintptr_t)il2cpp_GC_free) - getRealOffset(0));
     }
 
     // GarbageCollector::SetWriteBarrier(void*)
-    if (find_GC_SetWriteBarrier((const uint32_t*)HookTracker::GetOrig(il2cpp_gc_wbarrier_set_field))) {
+    if (find_GC_SetWriteBarrier(reinterpret_cast<const uint32_t*>(il2cpp_gc_wbarrier_set_field))) {
         logger.debug("GarbageCollector::SetWriteBarrier found? offset: %lX", ((uintptr_t)il2cpp_GarbageCollector_SetWriteBarrier) - getRealOffset(0));
     }
 
     // GarbageCollector::AllocateFixed(size_t, void*)
-    if (find_GC_AllocFixed(cs::findNthB<1>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_domain_get))))) {
+    if (find_GC_AllocFixed(cs::findNthB<1>(reinterpret_cast<const uint32_t*>(il2cpp_domain_get)))) {
         logger.debug("GarbageCollector::AllocateFixed found? offset: %lX", ((uintptr_t)il2cpp_GarbageCollector_AllocateFixed) - getRealOffset(0));
     }
 
     hasGCFuncs = il2cpp_GarbageCollector_AllocateFixed != nullptr && il2cpp_GC_free != nullptr;
 
     // il2cpp_defaults. Runtime::Init is 3rd bl from init_utf16
-    auto runtimeInit = cs::findNthBl<3>(reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_init_utf16)));
+    auto runtimeInit = cs::findNthBl<3>(reinterpret_cast<const uint32_t*>(il2cpp_init_utf16));
     // alternatively, could just get the 1st ADRP in Runtime::Init with dest reg x20 (or the 9th ADRP)
     // We DO need to skip at least one ret, though.
     auto ldr = cs::findNth<6, &loadFind, &cs::insnMatch<>, 1>(runtimeInit).value();
@@ -813,15 +813,15 @@ void il2cpp_functions::Init() {
     // Extract locations of s_GlobalMetadataHeader, s_Il2CppMetadataRegistration, & s_GlobalMetadata
     s_GlobalMetadataHeaderPtr = reinterpret_cast<decltype(s_GlobalMetadataHeaderPtr)>(
         std::get<2>(cs::getpcaddr<3, 1>(
-            reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex))
+            reinterpret_cast<const uint32_t*>(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex)
         )));
     s_Il2CppMetadataRegistrationPtr = reinterpret_cast<decltype(s_Il2CppMetadataRegistrationPtr)>(
         std::get<2>(cs::getpcaddr<4, 1>(
-            reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex))
+            reinterpret_cast<const uint32_t*>(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex)
         )));
     s_GlobalMetadataPtr = reinterpret_cast<decltype(s_GlobalMetadataPtr)>(
         std::get<2>(cs::getpcaddr<5, 1>(
-            reinterpret_cast<const uint32_t*>(HookTracker::GetOrig(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex))
+            reinterpret_cast<const uint32_t*>(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex)
         )));
     logger.debug("%p %p %p metadata pointers", s_GlobalMetadataHeaderPtr, s_Il2CppMetadataRegistrationPtr, s_GlobalMetadataPtr);
     logger.debug("All global constants found!");
