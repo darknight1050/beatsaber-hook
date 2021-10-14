@@ -321,15 +321,20 @@ namespace il2cpp_utils {
                     if (method->klass->valuetype) {
                         // Value type instance method. Instance parameter is always boxed in some way.
                         auto boxedRepr = instance;
-                        if constexpr (sizeof(Il2CppCodeGenModule) < 104) {
+                        if constexpr (sizeof(Il2CppCodeGenModule) <= 104) {
                             // Boxing is only required if we invoke to adjustor thunks instead of actual impls
-                            // TODO: Eventually remove this dependence on il2cpp_functions::Init
-                            il2cpp_functions::Init();
-                            // Yeah, we cast literally all over the place.
-                            boxedRepr = reinterpret_cast<T*>(il2cpp_functions::value_box(classof(T), boxedRepr));
+                            // Note that for whatever reason, we have exposed methods that are compiled that use literals, yet we still need to passed boxed reprs.
+                            if constexpr (il2cpp_type_check::need_box<T>) {
+                                // TODO: Eventually remove this dependence on il2cpp_functions::Init
+                                il2cpp_functions::Init();
+                                // Yeah, we cast literally all over the place.
+                                boxedRepr = reinterpret_cast<T*>(il2cpp_functions::value_box(classof(T), boxedRepr));
+                            } else {
+                                boxedRepr = reinterpret_cast<T*>(reinterpret_cast<Il2CppObject*>(boxedRepr) - 1)
+                            }
                         }
                         reinterpret_cast<void (*)(T*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(boxedRepr, params..., method);
-                        if constexpr (sizeof(Il2CppCodeGenModule) < 104) {
+                        if constexpr (sizeof(Il2CppCodeGenModule) <= 104) {
                             *instance = *reinterpret_cast<T*>(il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(boxedRepr)));
                         }
                     } else {
@@ -355,15 +360,20 @@ namespace il2cpp_utils {
                 } else {
                     if (method->klass->valuetype) {
                         auto boxedRepr = instance;
-                        if constexpr (sizeof(Il2CppCodeGenModule) < 104) {
+                        if constexpr (sizeof(Il2CppCodeGenModule) <= 104) {
                             // Boxing is only required if we invoke to adjustor thunks instead of actual impls
-                            // TODO: Eventually remove this dependence on il2cpp_functions::Init
-                            il2cpp_functions::Init();
-                            // Yeah, we cast literally all over the place.
-                            boxedRepr = reinterpret_cast<T*>(il2cpp_functions::value_box(classof(T), boxedRepr));
+                            // Note that for whatever reason, we have exposed methods that are compiled that use literals, yet we still need to passed boxed reprs.
+                            if constexpr (il2cpp_type_check::need_box<T>) {
+                                // TODO: Eventually remove this dependence on il2cpp_functions::Init
+                                il2cpp_functions::Init();
+                                // Yeah, we cast literally all over the place.
+                                boxedRepr = reinterpret_cast<T*>(il2cpp_functions::value_box(classof(T), boxedRepr));
+                            } else {
+                                boxedRepr = reinterpret_cast<T*>(reinterpret_cast<Il2CppObject*>(boxedRepr) - 1)
+                            }
                         }
                         TOut res = reinterpret_cast<TOut (*)(T*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(boxedRepr, params..., method);
-                        if constexpr (sizeof(Il2CppCodeGenModule) < 104) {
+                        if constexpr (sizeof(Il2CppCodeGenModule) <= 104) {
                             *instance = *reinterpret_cast<T*>(il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(boxedRepr)));
                         }
                         return res;
