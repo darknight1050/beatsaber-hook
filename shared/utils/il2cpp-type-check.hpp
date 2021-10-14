@@ -55,6 +55,28 @@ namespace il2cpp_utils {
 
     // Framework provided by DaNike
     namespace il2cpp_type_check {
+        template<typename T>
+        /// @brief Describes whether the type T needs to be boxed or not (for instance method invokes).
+        /// This is true for all non-pointer types by default.
+        /// @tparam T The type to be boxed or not.
+        struct need_box {
+            constexpr static bool value = true;
+        };
+
+        template<typename T>
+        /// @brief Describes whether the type T needs to be boxed or not (for instance method invokes).
+        /// This is false for T*s by default.
+        /// @tparam T The type to be boxed or not.
+        struct need_box<T*> {
+            constexpr static bool value = false;
+        };
+
+        #define NEED_NO_BOX(type) \
+        template<> \
+        struct ::il2cpp_utils::il2cpp_type_check::need_box<type> { \
+            constexpr static bool value = false; \
+        }
+
         // You should extend this class for any nested/inner type of a generic type, and also put a
         // `using declaring_type = Foo<T>*;` (minus the * if it is a value type)
         // and a `static constexpr std::string_view NESTED_NAME = "Bar";`
@@ -218,9 +240,15 @@ namespace il2cpp_utils {
 
         DEFINE_IL2CPP_DEFAULT_TYPE(void, void);
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppObject*, object);
+        NEED_NO_BOX(Il2CppObject);
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppString*, string);
+        NEED_NO_BOX(Il2CppString);
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppArray*, array);
+        NEED_NO_BOX(Il2CppArray);
         DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionType*, systemtype);
+        NEED_NO_BOX(Il2CppReflectionType);
+
+        NEED_NO_BOX(Il2CppClass);
 
         template<>
         struct il2cpp_arg_class<Il2CppClass*> {
@@ -269,6 +297,11 @@ namespace il2cpp_utils {
         template<template<typename... ST> class S>
         struct il2cpp_gen_class_no_arg_class;
 
+        template<template<typename... ST> class S>
+        struct need_box_gen {
+            constexpr static bool value = true;
+        };
+
         template<typename... TArgs, template<typename... ST> class S>
         #ifndef BS_HOOK_USE_CONCEPTS
         struct il2cpp_no_arg_class<S<TArgs...>, typename std::enable_if_t<has_get<il2cpp_gen_struct_no_arg_class<S>>>> {
@@ -280,6 +313,16 @@ namespace il2cpp_utils {
                 auto* klass = il2cpp_gen_struct_no_arg_class<S>::get();
                 return il2cpp_utils::MakeGeneric(klass, {il2cpp_no_arg_class<TArgs>::get()...});
             }
+        };
+
+        template<typename... TArgs, template<typename... ST> class S>
+        struct need_box<S<TArgs...>> {
+            constexpr static bool value = need_box_gen<S>::value;
+        };
+
+        template<typename... TArgs, template<typename... ST> class S>
+        struct need_box<S<TArgs...>*> {
+            constexpr static bool value = false;
         };
 
         template<typename... TArgs, template<typename... ST> class S>
@@ -319,6 +362,10 @@ namespace il2cpp_utils {
                 static auto klass = ::il2cpp_utils::GetClassFromName(nameSpace, className); \
                 return klass; \
             } \
+        }; \
+        template<> \
+        struct ::il2cpp_utils::il2cpp_type_check::need_box_gen<templateType> { \
+            constexpr static bool value = false; \
         }
 
         template<typename T>
@@ -455,19 +502,6 @@ namespace il2cpp_utils {
                 return reinterpret_cast<typename MethodDecomposer<decltype(val)>::mPtr>(il2cpp_utils::il2cpp_type_check::MetadataGetter<val>::get()->methodPointer);
             }
         };
-
-        
-        template<typename T>
-        /// @brief Describes whether the type T needs to be boxed or not (for instance method invokes).
-        /// This is true for all non-pointer types by default.
-        /// @tparam T The type to be boxed or not.
-        constexpr bool need_box = true;
-
-        template<typename T>
-        /// @brief Describes whether the type T needs to be boxed or not (for instance method invokes).
-        /// This is false for T*s by default.
-        /// @tparam T The type to be boxed or not.
-        constexpr bool need_box<T*> = false;
     }
 }
 

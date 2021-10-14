@@ -324,13 +324,13 @@ namespace il2cpp_utils {
                         if constexpr (sizeof(Il2CppCodeGenModule) <= 104) {
                             // Boxing is only required if we invoke to adjustor thunks instead of actual impls
                             // Note that for whatever reason, we have exposed methods that are compiled that use literals, yet we still need to passed boxed reprs.
-                            if constexpr (il2cpp_type_check::need_box<T>) {
+                            if constexpr (il2cpp_type_check::need_box<T>::value) {
                                 // TODO: Eventually remove this dependence on il2cpp_functions::Init
                                 il2cpp_functions::Init();
                                 // Yeah, we cast literally all over the place.
                                 boxedRepr = reinterpret_cast<T*>(il2cpp_functions::value_box(classof(T), boxedRepr));
                             } else {
-                                boxedRepr = reinterpret_cast<T*>(reinterpret_cast<Il2CppObject*>(boxedRepr) - 1)
+                                boxedRepr = reinterpret_cast<T*>(reinterpret_cast<Il2CppObject*>(boxedRepr) - 1);
                             }
                         }
                         reinterpret_cast<void (*)(T*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(boxedRepr, params..., method);
@@ -363,13 +363,13 @@ namespace il2cpp_utils {
                         if constexpr (sizeof(Il2CppCodeGenModule) <= 104) {
                             // Boxing is only required if we invoke to adjustor thunks instead of actual impls
                             // Note that for whatever reason, we have exposed methods that are compiled that use literals, yet we still need to passed boxed reprs.
-                            if constexpr (il2cpp_type_check::need_box<T>) {
+                            if constexpr (il2cpp_type_check::need_box<T>::value) {
                                 // TODO: Eventually remove this dependence on il2cpp_functions::Init
                                 il2cpp_functions::Init();
                                 // Yeah, we cast literally all over the place.
                                 boxedRepr = reinterpret_cast<T*>(il2cpp_functions::value_box(classof(T), boxedRepr));
                             } else {
-                                boxedRepr = reinterpret_cast<T*>(reinterpret_cast<Il2CppObject*>(boxedRepr) - 1)
+                                boxedRepr = reinterpret_cast<T*>(reinterpret_cast<Il2CppObject*>(boxedRepr) - 1);
                             }
                         }
                         TOut res = reinterpret_cast<TOut (*)(T*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(boxedRepr, params..., method);

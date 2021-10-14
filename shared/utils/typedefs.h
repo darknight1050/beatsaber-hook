@@ -125,10 +125,12 @@ DEFINE_IL2CPP_ARG_TYPE_GENERIC_CLASS(List, "System.Collections.Generic", "List`1
 #include "System/AppDomain.hpp"
 // self-typedef'd in il2cpp-class-internals.h
 struct Il2CppAppDomain : public System::AppDomain {};
+NEED_NO_BOX(Il2CppAppDomain);
 
 #include "System/AppDomainSetup.hpp"
 // self-typedef'd in il2cpp-class-internals.h
 struct Il2CppAppDomainSetup : public System::AppDomainSetup {};
+NEED_NO_BOX(Il2CppAppDomainSetup);
 
 #include "System/ArgumentException.hpp"
 typedef System::ArgumentException Il2CppArgumentException;
@@ -178,6 +180,7 @@ typedef System::SystemException Il2CppSystemException;
 #include "System/Type.hpp"
 // self-typedef'd in il2cpp-api-types.h
 struct Il2CppReflectionType : public System::Type {};
+NEED_NO_BOX(Il2CppReflectionType);
 
 #include "System/TypedReference.hpp"
 typedef System::TypedReference Il2CppTypedRef;
@@ -229,6 +232,7 @@ typedef System::Reflection::MonoProperty Il2CppReflectionProperty;
 #include "System/Reflection/MonoMethod.hpp"
 // self-typedef'd in il2cpp-api-types.h
 struct Il2CppReflectionMethod : public System::Reflection::MonoMethod {};
+NEED_NO_BOX(Il2CppReflectionMethod);
 
 #if __has_include("System/Reflection/MonoGenericMethod.hpp")
 #include "System/Reflection/MonoGenericMethod.hpp"
@@ -276,10 +280,12 @@ typedef System::Runtime::InteropServices::SafeHandle Il2CppSafeHandle;
 #include "System/Runtime/Remoting/Contexts/Context.hpp"
 // self-typedef'd in il2cpp-class-internals.h
 struct Il2CppAppContext : public System::Runtime::Remoting::Contexts::Context {};
+NEED_NO_BOX(Il2CppAppContext);
 
 #include "System/Runtime/Remoting/Messaging/AsyncResult.hpp"
 // self-typedef'd in il2cpp-api-types.h
 struct Il2CppAsyncResult : public System::Runtime::Remoting::Messaging::AsyncResult {};
+NEED_NO_BOX(Il2CppAsyncResult);
 
 // TODO: Il2CppCallType which "is a copy of System.Runtime.Remoting.Messaging.CallType" enum
 
@@ -304,38 +310,67 @@ struct Il2CppThread : public System::Threading::Thread {};
 #else
 // From Runtime.cpp (some may need the * removed):
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppMulticastDelegate*, multicastdelegate);
+NEED_NO_BOX(Il2CppMulticastDelegate);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppAsyncCall*, async_call);
+NEED_NO_BOX(Il2CppAsyncCall);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppInternalThread*, internal_thread);
+NEED_NO_BOX(Il2CppInternalThread);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionEvent*, event_info);
+NEED_NO_BOX(Il2CppReflectionEvent);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppStringBuilder*, stringbuilder);
+NEED_NO_BOX(Il2CppStringBuilder);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppStackFrame*, stack_frame);
+NEED_NO_BOX(Il2CppStackFrame);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionAssemblyName*, assembly_name);
+NEED_NO_BOX(Il2CppReflectionAssemblyName);
 // DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionAssembly*, assembly);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionAssembly*, mono_assembly);
+NEED_NO_BOX(Il2CppReflectionAssembly);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionField*, mono_field);
+NEED_NO_BOX(Il2CppReflectionField);
 // DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionParameter*, parameter_info);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionParameter*, mono_parameter_info);
+NEED_NO_BOX(Il2CppReflectionParameter);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionModule*, module);
+NEED_NO_BOX(Il2CppReflectionModule);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionPointer*, pointer);
+NEED_NO_BOX(Il2CppReflectionPointer);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppSystemException*, system_exception);
+NEED_NO_BOX(Il2CppSystemException);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppArgumentException*, argument_exception);
+NEED_NO_BOX(Il2CppArgumentException);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppMarshalByRefObject*, marshalbyrefobject);
+NEED_NO_BOX(Il2CppMarshalByRefObject);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppSafeHandle*, safe_handle);
+NEED_NO_BOX(Il2CppSafeHandle);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppSortKey*, sort_key);
+NEED_NO_BOX(Il2CppSortKey);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppErrorWrapper*, error_wrapper);
+NEED_NO_BOX(Il2CppErrorWrapper);
 // TODO: attempt to move out of this conditional if codegen ever gets an Il2CppComObject?
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppComObject*, il2cpp_com_object);
+NEED_NO_BOX(Il2CppComObject);
 #endif
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppDelegate*, delegate);
+NEED_NO_BOX(Il2CppDelegate);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionMonoType*, monotype);
+NEED_NO_BOX(Il2CppReflectionMonoType);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppThread*, thread);
+NEED_NO_BOX(Il2CppThread);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionRuntimeType*, runtimetype);
+NEED_NO_BOX(Il2CppReflectionRuntimeType);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionMonoEventInfo*, mono_event_info);
+NEED_NO_BOX(Il2CppReflectionMonoEventInfo);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppTypedRef*, typed_reference);
+NEED_NO_BOX(Il2CppTypedRef);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionMethod*, mono_method);
+NEED_NO_BOX(Il2CppReflectionMethod);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppMethodInfo*, mono_method_info);
+NEED_NO_BOX(Il2CppMethodInfo);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppPropertyInfo*, mono_property_info);
+NEED_NO_BOX(Il2CppPropertyInfo);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppException*, exception);
+NEED_NO_BOX(Il2CppException);
 
 DEFINE_IL2CPP_ARG_TYPE(long double, "System", "Decimal");
 
