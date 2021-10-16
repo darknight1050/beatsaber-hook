@@ -180,7 +180,6 @@ typedef System::SystemException Il2CppSystemException;
 #include "System/Type.hpp"
 // self-typedef'd in il2cpp-api-types.h
 struct Il2CppReflectionType : public System::Type {};
-NEED_NO_BOX(Il2CppReflectionType);
 
 #include "System/TypedReference.hpp"
 typedef System::TypedReference Il2CppTypedRef;
@@ -232,7 +231,6 @@ typedef System::Reflection::MonoProperty Il2CppReflectionProperty;
 #include "System/Reflection/MonoMethod.hpp"
 // self-typedef'd in il2cpp-api-types.h
 struct Il2CppReflectionMethod : public System::Reflection::MonoMethod {};
-NEED_NO_BOX(Il2CppReflectionMethod);
 
 #if __has_include("System/Reflection/MonoGenericMethod.hpp")
 #include "System/Reflection/MonoGenericMethod.hpp"
