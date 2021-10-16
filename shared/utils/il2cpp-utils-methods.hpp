@@ -330,7 +330,7 @@ namespace il2cpp_utils {
                                 // Yeah, we cast literally all over the place.
                                 boxedRepr = reinterpret_cast<T*>(il2cpp_functions::value_box(classof(T), boxedRepr));
                             } else {
-                                boxedRepr = reinterpret_cast<T*>(reinterpret_cast<Il2CppObject*>(boxedRepr) - 1);
+                                boxedRepr = reinterpret_cast<T*>(reinterpret_cast<void**>(boxedRepr) - 2);
                             }
                         }
                         reinterpret_cast<void (*)(T*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(boxedRepr, params..., method);
@@ -369,7 +369,7 @@ namespace il2cpp_utils {
                                 // Yeah, we cast literally all over the place.
                                 boxedRepr = reinterpret_cast<T*>(il2cpp_functions::value_box(classof(T), boxedRepr));
                             } else {
-                                boxedRepr = reinterpret_cast<T*>(reinterpret_cast<Il2CppObject*>(boxedRepr) - 1);
+                                boxedRepr = reinterpret_cast<T*>(reinterpret_cast<void**>(boxedRepr) - 2);
                             }
                         }
                         TOut res = reinterpret_cast<TOut (*)(T*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(boxedRepr, params..., method);
