@@ -139,6 +139,11 @@ namespace il2cpp_utils {
     }
 
     template<class T>
+    concept has_il2cpp_conversion = requires (T const t) {
+        {t.convert()} -> std::same_as<void*>;
+    };
+
+    template<class T>
     void* ExtractValue(T&& arg) {
         il2cpp_functions::Init();
 
@@ -156,7 +161,10 @@ namespace il2cpp_utils {
                 }
             }
             return arg;
-        } else {
+        } else if constexpr (has_il2cpp_conversion<T>) {
+            return arg.convert();
+        }
+        else {
             return const_cast<Dt*>(&arg);
         }
     }
@@ -247,7 +255,7 @@ namespace il2cpp_utils {
                 }
             }
             // TODO: just because two parameter lists match doesn't necessarily mean this is the best match...
-            if (!IsConvertibleFrom(argTypes.at(i), paramType)) {
+            if (!IsConvertibleFrom(paramType, argTypes.at(i))) {
                 return false;
             }
         }

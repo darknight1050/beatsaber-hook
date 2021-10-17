@@ -360,10 +360,28 @@ struct ArrayW {
     explicit operator Il2CppArray* const() const {
         return reinterpret_cast<Il2CppArray* const>(val);
     }
+    template<class U>
+    requires (std::is_convertible_v<U, T> || std::is_convertible_v<T, U>)
+    operator ArrayW<U>() {
+        return ArrayW<U>(reinterpret_cast<Array<U>*>(val));
+    }
+    template<class U>
+    requires (std::is_convertible_v<U, T> || std::is_convertible_v<T, U>)
+    operator ArrayW<U> const() const {
+        return ArrayW<U>(reinterpret_cast<Array<U>* const>(val));
+    }
+    operator bool() const {
+        return val != nullptr;
+    }
+
+    void* convert() const {
+        return reinterpret_cast<void*>(val);
+    }
 
     private:
     Ptr val;
 };
+static_assert(il2cpp_utils::has_il2cpp_conversion<ArrayW<int, Array<int>*>>);
 
 template<class T, class Ptr>
 struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<ArrayW<T, Ptr>> {
