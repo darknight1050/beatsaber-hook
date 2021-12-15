@@ -1,5 +1,6 @@
 #ifdef TEST_CALLBACKS
 #include "../../shared/utils/typedefs-wrappers.hpp"
+#include <iostream>
 EventCallback<> asdf;
 
 static void test() {

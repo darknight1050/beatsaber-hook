@@ -2,7 +2,7 @@
 
 #include "../../shared/utils/typedefs.h"
 #include "../../shared/utils/il2cpp-utils.hpp"
-
+#include <iostream>
 
 static void constDoThing(const ListWrapper<int>& wrap) {
     auto i = wrap[0];

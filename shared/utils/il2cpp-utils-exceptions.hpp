@@ -4,6 +4,7 @@
 #include <exception>
 #include <string_view>
 #include <string>
+#include <stdexcept>
 
 struct Il2CppException;
 struct MethodInfo;

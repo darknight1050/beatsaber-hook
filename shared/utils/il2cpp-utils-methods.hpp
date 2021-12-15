@@ -12,6 +12,7 @@
 #include "utils.h"
 #include "il2cpp-tabledefs.h"
 #include <array>
+#include <exception>
 
 #if __has_include(<concepts>)
 #include <concepts>
@@ -273,13 +274,15 @@ namespace il2cpp_utils {
     /// This function still performs simple checks (such as void vs. non-void returns and instance vs. static method invokes) even with checkTypes as false.
     /// @tparam TOut The output to return. Defaults to void.
     /// @tparam checkTypes Whether to check types or not. Defaults to true.
+    /// @tparam forwardToInvoke Whether to forward to runtime_invoke or not. If true, will call runtime_invoke instead of pure method parsing.
+    /// This is ultimately only useful for cases where exception handling is important.
     /// @tparam T The instance type.
     /// @tparam TArgs The argument types.
     /// @param instance The instance to invoke with. Should almost always be `this`.
     /// @param method The MethodInfo* to use for type checking and conversions.
     /// @param mPtr The method pointer to invoke specifically.
     /// @param params The arguments to pass into the function.
-    template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
+    template<class TOut = void, bool checkTypes = true, bool forwardToInvoke = true, class T, class... TArgs>
     TOut RunMethodThrow(T* instance, const MethodInfo* method, Il2CppMethodPointer mPtr, TArgs&&... params) {
         static auto& logger = getLogger();
         if (!method) {
@@ -301,6 +304,23 @@ namespace il2cpp_utils {
                         TypeGetSimpleName(outType), TypeGetSimpleName(method->return_type));
                     throw RunMethodException("Return type of method is not convertible!", method);
                 }
+            }
+        }
+
+        if constexpr (forwardToInvoke) {
+            std::array<void*, sizeof...(params)> invokeParams{ExtractValue(params)...};
+            Il2CppException* ex;
+            auto res = il2cpp_functions::runtime_invoke(method, instance, invokeParams.data(), &ex);
+            if (ex) {
+                // Failed due to exception.
+                RunMethodException toThrow(wrapper.ex, method);
+                logger.error("%s: Failed with exception: %s", il2cpp_functions::method_get_name(method), toThrow.what());
+                throw toThrow;
+            }
+            if constexpr (!std::is_same_v<void, TOut>) {
+                return FromIl2CppObject<TOut>(ret);
+            } else {
+                return;
             }
         }
         // NOTE: We need to remove references from our method pointers and copy in our parameters
@@ -410,6 +430,25 @@ namespace il2cpp_utils {
     template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
     TOut RunMethodThrow(T* instance, const MethodInfo* method, TArgs&& ...params) {
         return RunMethodThrow<TOut, checkTypes>(instance, method, method->methodPointer, params...);
+    }
+    /// @brief Forwards to the RunMethodThrow variant that either runtime_invokes or not.
+    /// @tparam TOut The output to return. Defaults to void.
+    /// @tparam checkTypes Whether to check types or not. Defaults to true.
+    /// @tparam T The instance type.
+    /// @tparam TArgs The argument types.
+    /// @param instance The instance to invoke with. Should almost always be `this`.
+    /// @param method The MethodInfo* to use for type checking and conversions.
+    /// @param mPtr The method pointer to invoke specifically.
+    /// @param params The arguments to pass into the function.
+    /// @param runtimeInvoke Whether to runtime invoke instead of perform optimized method invoking.
+    template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
+    TOut RunMethodThrow(T* instance, const MethodInfo* method, Il2CppMethodPointer mPtr, TArgs&&... params, bool runtimeInvoke = false) {
+        if (runtimeInvoke) {
+            return RunMethodThrow<TOut, checkTypes, true>(instance, method, mPtr, params...);
+        } else {
+            return RunMethodThrow<TOut, checkTypes, false>(instance, method, mPtr, params...);
+        }
+
     }
     #else
     /// @brief Instantiates a generic MethodInfo* from the provided Il2CppClasses.

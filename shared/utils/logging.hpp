@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
-#include <iostream>
 #include <unistd.h>
 #include <cmath> // Included to support cmath's definition of log
 #include <string_view>
