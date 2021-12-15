@@ -26,7 +26,7 @@ struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_type<ByRef<T>> {
 
 template<typename T>
 struct ::il2cpp_utils::il2cpp_type_check::il2cpp_arg_type<ByRef<T>> {
-    static inline const Il2CppType* get(ByRef<T> arg) {
+    static inline const Il2CppType* get([[maybe_unused]] ByRef<T> arg) {
         // ByRef types should NOT perform argument based lookups, since they could be holding a null reference.
         // ex: out
         // Instead, we should deduce the type from our held type alone.

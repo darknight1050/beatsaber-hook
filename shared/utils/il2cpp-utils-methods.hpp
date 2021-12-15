@@ -313,12 +313,16 @@ namespace il2cpp_utils {
             auto res = il2cpp_functions::runtime_invoke(method, instance, invokeParams.data(), &ex);
             if (ex) {
                 // Failed due to exception.
-                RunMethodException toThrow(wrapper.ex, method);
+                RunMethodException toThrow(ex, method);
                 logger.error("%s: Failed with exception: %s", il2cpp_functions::method_get_name(method), toThrow.what());
                 throw toThrow;
             }
             if constexpr (!std::is_same_v<void, TOut>) {
-                return FromIl2CppObject<TOut>(ret);
+                auto opt = FromIl2CppObject<TOut>(res);
+                if (!opt) {
+                    throw RunMethodException("Could not validly convert return type from method to desired value!", method);
+                }
+                return *opt;
             } else {
                 return;
             }
