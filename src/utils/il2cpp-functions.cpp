@@ -2,7 +2,7 @@
 
 #include "../../shared/utils/hooking.hpp"
 #include "../../shared/utils/il2cpp-functions.hpp"
-#include "extern/capstone/shared/capstone/capstone.h"
+#include "capstone/shared/capstone/capstone.h"
 #include "../../shared/utils/logging.hpp"
 #include "../../shared/utils/capstone-utils.hpp"
 #include "modloader/shared/modloader.hpp"
