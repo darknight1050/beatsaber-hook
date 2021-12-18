@@ -50,11 +50,7 @@ class LoggerBuffer {
     std::mutex messageLock;
     const ModInfo modInfo;
     bool closed = false;
-    static std::string get_logDir() {
-        // Copy it
-        static std::string d = string_format(LOG_PATH, Modloader::getApplicationId().c_str());
-        return d;
-    }
+    static std::string get_logDir();
     std::string get_path() {
         std::string cpy = modInfo.version;
         std::replace(cpy.begin(), cpy.end(), '.', '_');
