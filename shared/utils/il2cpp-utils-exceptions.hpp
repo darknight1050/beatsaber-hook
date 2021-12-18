@@ -13,6 +13,10 @@ namespace il2cpp_utils {
     // Returns a legible string from an Il2CppException*
     ::std::string ExceptionToString(Il2CppException* exp) noexcept;
 
+    /// @brief Raises the provided Il2CppException to be used within il2cpp.
+    /// @param exp The exception instance to throw
+    [[noreturn]] void raise(Il2CppException* exp);
+
     #if __has_feature(cxx_exceptions)
     struct Il2CppUtilsException : std::runtime_error {
         std::string context;

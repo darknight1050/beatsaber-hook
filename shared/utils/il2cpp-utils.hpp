@@ -629,6 +629,37 @@ namespace il2cpp_utils {
             return ::il2cpp_utils::FindMethod(klass, methodName, ::std::vector<Il2CppClass*>{}, ::std::vector<const Il2CppType*>{ExtractIndependentType<TArgs>()...});
         }
     };
+
+    template<class T>
+    concept what_able = requires (T t) {
+        {t.what()} -> std::same_as<const char*>;
+    };
+
+    /// @brief Raises the provided type as if it were an Il2CppException* in the il2cpp domain.
+    /// @tparam The exception type to throw
+    /// @param arg The exception instance to throw
+    template<class T>
+    [[noreturn]] void raise(T&& arg) {
+        // Already cached in defaults, no need to re-cache
+        Il2CppException* allocEx = CRASH_UNLESS(New<Il2CppException*>(classof(Il2CppException*)));
+        #if __has_feature(cxx_rtti)
+        const char* tName = typeid(T).name();
+        int status;
+        char *demangled_name = abi::__cxa_demangle(tName, NULL, NULL, &status);
+        if (status == 0) {
+            allocEx->className = newcsstr(demangled_name);
+            std::free(demangled_name);
+        } else {
+            allocEx->className = newcsstr(tName);
+        }
+        #else
+        #warning "Do not raise C++ exceptions without rtti!"
+        #endif
+        if constexpr (what_able<T>) {
+            allocEx->message = newcsstr(arg.what());
+        }
+        raise(allocEx);
+    }
 }
 
 #pragma pack(pop)

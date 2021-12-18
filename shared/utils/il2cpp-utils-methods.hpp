@@ -272,17 +272,16 @@ namespace il2cpp_utils {
     /// @brief Calls the methodPointer on the provided const MethodInfo*, but throws a RunMethodException on failure.
     /// If checkTypes is false, does not perform type checking and instead is a partially unsafe wrapper around invoking the methodPointer directly.
     /// This function still performs simple checks (such as void vs. non-void returns and instance vs. static method invokes) even with checkTypes as false.
+    /// If you wish to forward this call to runtime_invoke (for example, in order to catch exceptions), consider using RunMethod/RunMethodUnsafe instead.
     /// @tparam TOut The output to return. Defaults to void.
     /// @tparam checkTypes Whether to check types or not. Defaults to true.
-    /// @tparam forwardToInvoke Whether to forward to runtime_invoke or not. If true, will call runtime_invoke instead of pure method parsing.
-    /// This is ultimately only useful for cases where exception handling is important.
     /// @tparam T The instance type.
     /// @tparam TArgs The argument types.
     /// @param instance The instance to invoke with. Should almost always be `this`.
     /// @param method The MethodInfo* to use for type checking and conversions.
     /// @param mPtr The method pointer to invoke specifically.
     /// @param params The arguments to pass into the function.
-    template<class TOut = void, bool checkTypes = true, bool forwardToInvoke = true, class T, class... TArgs>
+    template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
     TOut RunMethodThrow(T* instance, const MethodInfo* method, Il2CppMethodPointer mPtr, TArgs&&... params) {
         static auto& logger = getLogger();
         if (!method) {
@@ -304,27 +303,6 @@ namespace il2cpp_utils {
                         TypeGetSimpleName(outType), TypeGetSimpleName(method->return_type));
                     throw RunMethodException("Return type of method is not convertible!", method);
                 }
-            }
-        }
-
-        if constexpr (forwardToInvoke) {
-            std::array<void*, sizeof...(params)> invokeParams{ExtractValue(params)...};
-            Il2CppException* ex;
-            auto res = il2cpp_functions::runtime_invoke(method, instance, invokeParams.data(), &ex);
-            if (ex) {
-                // Failed due to exception.
-                RunMethodException toThrow(ex, method);
-                logger.error("%s: Failed with exception: %s", il2cpp_functions::method_get_name(method), toThrow.what());
-                throw toThrow;
-            }
-            if constexpr (!std::is_same_v<void, TOut>) {
-                auto opt = FromIl2CppObject<TOut>(res);
-                if (!opt) {
-                    throw RunMethodException("Could not validly convert return type from method to desired value!", method);
-                }
-                return *opt;
-            } else {
-                return;
             }
         }
         // NOTE: We need to remove references from our method pointers and copy in our parameters

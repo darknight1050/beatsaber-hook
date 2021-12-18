@@ -14,5 +14,6 @@ static void test() {
     il2cpp_utils::ExtractIndependentType<ByRef<int>>();
     il2cpp_utils::ExtractIndependentType<int>();
     assert(il2cpp_utils::ExtractIndependentType<int&>() == il2cpp_utils::ExtractIndependentType<ByRef<int>>());
+    il2cpp_utils::raise(il2cpp_utils::RunMethodException("test", nullptr));
 }
 #endif
