@@ -435,7 +435,7 @@ static void __fix_instructions(uint32_t *__restrict inp, int32_t count, uint32_t
     static constexpr uint_fast64_t mask = 0x03ffffffu; // 0b00000011111111111111111111111111
     auto callback  = reinterpret_cast<int64_t>(inp);
     auto pc_offset = static_cast<int64_t>(callback - reinterpret_cast<int64_t>(outp)) >> 2;
-    if (llabs(pc_offset) >= (mask >> 1)) {
+    if (static_cast<uint64_t>(llabs(pc_offset)) >= (mask >> 1)) {
         if ((reinterpret_cast<uint64_t>(outp + 2) & 7u) != 0u) {
             outp[0] = A64_NOP;
             ++outp;
@@ -513,12 +513,9 @@ extern "C" {
     A64_JNIEXPORT void *A64HookFunctionV(void *const symbol, void *const replace,
                                          void *const rwx, const uintptr_t rwx_size)
     {
-        static constexpr uint_fast64_t mask = 0x03ffffffu; // 0b00000011111111111111111111111111
-
         uint32_t *trampoline = static_cast<uint32_t *>(rwx), *original = static_cast<uint32_t *>(symbol);
 
         static_assert(A64_MAX_INSTRUCTIONS >= 5, "please fix A64_MAX_INSTRUCTIONS!");
-        auto pc_offset = static_cast<int64_t>(__intval(replace) - __intval(symbol)) >> 2;
         int32_t count = (reinterpret_cast<uint64_t>(original + 2) & 7u) != 0u ? 5 : 4;
         if (trampoline) {
             if (rwx_size < count * 10u) {
