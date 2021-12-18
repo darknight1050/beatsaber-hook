@@ -1,21 +1,41 @@
+
+function Clean-Build-Folder {
+    if (Test-Path -Path "build")
+    {
+        remove-item build -R
+        new-item -Path build -ItemType Directory
+    } else {
+        new-item -Path build -ItemType Directory
+    }
+}
+
 $NDKPath = Get-Content $PSScriptRoot/ndkpath.txt
-$ErrorActionPreference = "Stop"
 
-$buildScript = "$NDKPath/build/ndk-build"
-if (-not ($PSVersionTable.PSEdition -eq "Core")) {
-    $buildScript += ".cmd"
+Clean-Build-Folder
+# build tests
+cd build
+
+& cmake -G "Ninja" -DCMAKE_BUILD_TYPE="Release" -DTEST_BUILD=a ../
+& cmake --build .
+
+$ExitCode = $LastExitCode
+cd ..
+
+if (-not ($ExitCode -eq 0)) {
+    $msg = "ExitCode: " + $ExitCode
+    Write-Output $msg
+    exit $ExitCode
 }
 
-& $buildScript NDK_PROJECT_PATH=$PSScriptRoot APP_BUILD_SCRIPT=$PSScriptRoot/Android.tests.mk NDK_APPLICATION_MK=$PSScriptRoot/Application.mk clean
-# BUILD tests (compile warnings and errors only), always with a clean build
-& $buildScript NDK_PROJECT_PATH=$PSScriptRoot APP_BUILD_SCRIPT=$PSScriptRoot/Android.tests.mk NDK_APPLICATION_MK=$PSScriptRoot/Application.mk
-if (-not ($LastExitCode -eq 0)) {
-    exit $LastExitCode
-}
-# Cleanup built tests so we don't accidentally upload them as artifacts
-& $buildScript NDK_PROJECT_PATH=$PSScriptRoot APP_BUILD_SCRIPT=$PSScriptRoot/Android.tests.mk NDK_APPLICATION_MK=$PSScriptRoot/Application.mk clean
-& $buildScript NDK_PROJECT_PATH=$PSScriptRoot APP_BUILD_SCRIPT=$PSScriptRoot/Android.mk NDK_APPLICATION_MK=$PSScriptRoot/Application.mk clean
-& $buildScript NDK_PROJECT_PATH=$PSScriptRoot APP_BUILD_SCRIPT=$PSScriptRoot/Android.mk NDK_APPLICATION_MK=$PSScriptRoot/Application.mk
-if (-not ($LastExitCode -eq 0)) {
-    exit $LastExitCode
-}
+# clean folder
+Clean-Build-Folder
+# build mod
+cd build
+
+& cmake -G "Ninja" -DCMAKE_BUILD_TYPE="Release" ../
+& cmake --build .
+
+$ExitCode = $LastExitCode
+cd ..
+
+exit $ExitCode

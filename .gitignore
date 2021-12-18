@@ -24,3 +24,6 @@ obj/
 extern/
 qpm.shared.json
 *.backup
+extern.cmake
+qpm_defines.cmake
+build/
