@@ -92,6 +92,12 @@ std::size_t LoggerBuffer::length() {
     return messages.size();
 }
 
+std::string LoggerBuffer::get_logDir() {
+    // Copy it
+    static std::string d = string_format(LOG_PATH, Modloader::getApplicationId().c_str());
+    return d;
+}
+
 void LoggerBuffer::addMessage(std::string_view msg) {
     if (closed) {
         return;

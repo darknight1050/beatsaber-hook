@@ -17,4 +17,12 @@ namespace il2cpp_utils {
         // return to_utf8(exception_message);
         return msg;
     }
+
+    #ifdef UNITY_2019
+    [[noreturn]] void raise(Il2CppException* exp) {
+        il2cpp_functions::raise_exception(exp);
+        // Should never get here, since the exception raise should happen and thus we should no longer be the caller.
+        std::terminate();
+    }
+    #endif
 }
