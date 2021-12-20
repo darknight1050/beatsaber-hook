@@ -140,11 +140,6 @@ namespace il2cpp_utils {
     }
 
     template<class T>
-    concept has_il2cpp_conversion = requires (T const t) {
-        {t.convert()} -> std::same_as<void*>;
-    };
-
-    template<class T>
     void* ExtractValue(T&& arg) {
         il2cpp_functions::Init();
 
@@ -412,25 +407,6 @@ namespace il2cpp_utils {
     template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
     TOut RunMethodThrow(T* instance, const MethodInfo* method, TArgs&& ...params) {
         return RunMethodThrow<TOut, checkTypes>(instance, method, method->methodPointer, params...);
-    }
-    /// @brief Forwards to the RunMethodThrow variant that either runtime_invokes or not.
-    /// @tparam TOut The output to return. Defaults to void.
-    /// @tparam checkTypes Whether to check types or not. Defaults to true.
-    /// @tparam T The instance type.
-    /// @tparam TArgs The argument types.
-    /// @param instance The instance to invoke with. Should almost always be `this`.
-    /// @param method The MethodInfo* to use for type checking and conversions.
-    /// @param mPtr The method pointer to invoke specifically.
-    /// @param params The arguments to pass into the function.
-    /// @param runtimeInvoke Whether to runtime invoke instead of perform optimized method invoking.
-    template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
-    TOut RunMethodThrow(T* instance, const MethodInfo* method, Il2CppMethodPointer mPtr, TArgs&&... params, bool runtimeInvoke = false) {
-        if (runtimeInvoke) {
-            return RunMethodThrow<TOut, checkTypes, true>(instance, method, mPtr, params...);
-        } else {
-            return RunMethodThrow<TOut, checkTypes, false>(instance, method, mPtr, params...);
-        }
-
     }
     #else
     /// @brief Instantiates a generic MethodInfo* from the provided Il2CppClasses.
