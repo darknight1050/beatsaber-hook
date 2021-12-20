@@ -42,7 +42,7 @@ namespace il2cpp_utils {
         if constexpr (::std::is_pointer_v<TOut>) {
             return static_cast<TOut>(val);
         } else if constexpr (has_il2cpp_conversion<TOut>) {
-            return *static_cast<TOut*>(&val);
+            return *reinterpret_cast<TOut*>(&val);
         }
         else {
             return *static_cast<TOut*>(val);
