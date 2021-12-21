@@ -10,8 +10,19 @@ struct ByRef {
     ByRef(T& val) : heldRef(val) {}
 
     T& heldRef;
+    T* operator->() noexcept {
+        return &heldRef;
+    }
+    T& operator*() noexcept {
+        return heldRef;
+    }
+    ByRef<T>& operator =(T const&& other) {
+        heldRef = other;
+        return *this;
+    }
     static_assert(sizeof(T*) == sizeof(void*));
 };
+
 
 // Type specializations for byref specifics
 // We do not need il2cpp_no_arg_class specialization for ByRef, since it will never get to that point.

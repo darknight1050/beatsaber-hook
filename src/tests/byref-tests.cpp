@@ -13,6 +13,7 @@ static void test() {
     il2cpp_utils::RunStaticMethod(&inf, byref(x));
     il2cpp_utils::ExtractIndependentType<ByRef<int>>();
     il2cpp_utils::ExtractIndependentType<int>();
+    il2cpp_utils::RunMethodRethrow((Il2CppClass*)nullptr, &inf, byref(x));
     assert(il2cpp_utils::ExtractIndependentType<int&>() == il2cpp_utils::ExtractIndependentType<ByRef<int>>());
     il2cpp_utils::raise(il2cpp_utils::RunMethodException("test", nullptr));
 }
