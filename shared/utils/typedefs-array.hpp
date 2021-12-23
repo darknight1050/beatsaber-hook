@@ -264,11 +264,11 @@ struct ArrayW {
     constexpr ArrayW(Ptr initVal) : val(initVal) {}
     /// @brief Create an ArrayW from an arbitrary pointer
     constexpr ArrayW(void* alterInit) : val(reinterpret_cast<Ptr>(alterInit)) {}
-    constexpr ArrayW(nullptr_t nptr) = delete;
+    constexpr ArrayW(std::nullptr_t nptr) = delete;
     /// @brief Default constructor creates an empty array that is wrapped
     ArrayW() : val(Array<T>::NewLength(0)) {}
     template<class U>
-    requires (!std::is_same_v<std::nullptr_t, U>)
+    requires (!std::is_same_v<std::nullptr_t, U> && std::is_convertible_v<U, T>)
     ArrayW(std::initializer_list<U> vals) : val(Array<T>::New(vals)) {}
     ArrayW(il2cpp_array_size_t size) : val(Array<T>::NewLength(size)) {}
 
