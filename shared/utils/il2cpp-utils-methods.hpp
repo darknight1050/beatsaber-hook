@@ -467,7 +467,7 @@ namespace il2cpp_utils {
 
         void* inst = ExtractValue(instance);  // null is allowed (for T = Il2CppType* or Il2CppClass*)
         Il2CppException* exp = nullptr;
-        std::array<void*, sizeof...(params)> invokeParams{ExtractTypeValue<TArgs>()...};
+        std::array<void*, sizeof...(params)> invokeParams{ExtractTypeValue(params)...};
         il2cpp_functions::Init();
         auto* ret = il2cpp_functions::runtime_invoke(method, inst, invokeParams.data(), &exp);
 
