@@ -4,6 +4,11 @@
 #include "../../shared/utils/typedefs.h"
 #include <cassert>
 
+static_assert(il2cpp_utils::has_il2cpp_conversion<ByRef<int>>);
+static_assert(il2cpp_utils::has_il2cpp_conversion<ByRef<const int>>);
+static_assert(il2cpp_utils::has_il2cpp_conversion<const ByRef<int>>);
+static_assert(il2cpp_utils::has_il2cpp_conversion<const ByRef<const int>>);
+
 static void test() {
     MethodInfo inf;
     int x = 3;

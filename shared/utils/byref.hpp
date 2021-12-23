@@ -7,22 +7,32 @@
 template<class T>
 requires (!std::is_reference_v<T>)
 struct ByRef {
-    ByRef(T& val) : heldRef(val) {}
+    constexpr ByRef(T& val) : heldRef(val) {}
+    constexpr ByRef(void* val) : heldRef(*reinterpret_cast<T*>(val)) {}
 
     T& heldRef;
-    T* operator->() noexcept {
+    constexpr T* operator->() noexcept {
         return &heldRef;
     }
-    T& operator*() noexcept {
+    constexpr T& operator*() noexcept {
         return heldRef;
+    }
+    constexpr T const& operator*() const noexcept {
+        return heldRef;
+    }
+    constexpr const T* operator->() const noexcept {
+        return &heldRef;
     }
     ByRef<T>& operator =(T const&& other) {
         heldRef = other;
         return *this;
     }
+
+    constexpr void* convert() const {
+        return (void*)&heldRef;
+    }
     static_assert(sizeof(T*) == sizeof(void*));
 };
-
 
 // Type specializations for byref specifics
 // We do not need il2cpp_no_arg_class specialization for ByRef, since it will never get to that point.

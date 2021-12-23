@@ -165,6 +165,30 @@ namespace il2cpp_utils {
         }
     }
 
+    template<class T>
+    void* ExtractTypeValue(T& arg) {
+        using Dt = ::std::decay_t<T>;
+        if constexpr (std::is_same_v<nullptr_t, T>) {
+            return nullptr;
+        }
+        else if constexpr (has_il2cpp_conversion<T>) {
+            return arg.convert();
+        }
+        else if constexpr (::std::is_pointer_v<Dt>) {
+            // Pointer type, grab class and perform deduction for unbox.
+            // Must be classof deducible!
+            auto* k = classof(Dt);
+            if (k && k->valuetype) {
+                // Arg is an Il2CppObject* of a value type. It needs to be unboxed.
+                return il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(arg));
+            }
+            return arg;
+        }
+        else {
+            return const_cast<Dt*>(&arg);
+        }
+    }
+
     inline auto ExtractValues() {
         return ::std::vector<void*>();
     }
@@ -443,7 +467,7 @@ namespace il2cpp_utils {
 
         void* inst = ExtractValue(instance);  // null is allowed (for T = Il2CppType* or Il2CppClass*)
         Il2CppException* exp = nullptr;
-        std::array<void*, sizeof...(params)> invokeParams{ExtractValue(params)...};
+        std::array<void*, sizeof...(params)> invokeParams{ExtractTypeValue<TArgs>()...};
         il2cpp_functions::Init();
         auto* ret = il2cpp_functions::runtime_invoke(method, inst, invokeParams.data(), &exp);
 

@@ -18,7 +18,7 @@ static void doThing() {
     ArrayW<int> arr(5);
     ArrayW<int> arr2(arr);
     // Init the pointer to nullptr
-    ArrayW<int*> arr3{nullptr};
+    ArrayW<int*> arr3{(void*)nullptr};
     auto i = arr[0];
     assert(arr.Length() == 5);
     assert(arr2.Length() == 5);
