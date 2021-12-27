@@ -15,7 +15,7 @@ Clean-Build-Folder
 # build tests
 cd build
 
-& cmake -G "Ninja" -DCMAKE_BUILD_TYPE="Release" -DTEST_BUILD=a ../
+& cmake -G "Ninja" -DCMAKE_BUILD_TYPE="RelWithDebInfo" -DTEST_BUILD=a ../
 & cmake --build .
 
 $ExitCode = $LastExitCode
@@ -32,7 +32,7 @@ Clean-Build-Folder
 # build mod
 cd build
 
-& cmake -G "Ninja" -DCMAKE_BUILD_TYPE="Release" ../
+& cmake -G "Ninja" -DCMAKE_BUILD_TYPE="RelWithDebInfo" ../
 & cmake --build .
 
 $ExitCode = $LastExitCode
