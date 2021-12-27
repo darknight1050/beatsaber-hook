@@ -3,6 +3,7 @@
 #include <vector>
 #include <span>
 #include "il2cpp-type-check.hpp"
+#include <stdexcept>
 
 #if __has_include(<concepts>)
 #include <concepts>
@@ -110,6 +111,12 @@ static const size_t kIl2CppOffsetOfArrayLength = (offsetof(Il2CppArray, max_leng
 #include "il2cpp-utils-methods.hpp"
 #include <initializer_list>
 
+/// @brief Represents an exception thrown from usage of an Array.
+struct ArrayException : std::runtime_error {
+    void* arrayInstance;
+    ArrayException(void* instance, std::string_view msg) : std::runtime_error(msg.data()), arrayInstance(instance) {}
+};
+
 template<class T>
 struct Array : public Il2CppArray
 {
@@ -122,6 +129,11 @@ struct Array : public Il2CppArray
         }
         return max_length;
     }
+    inline void assertBounds(size_t i) {
+        if (i < 0 || i >= Length()) {
+            throw ArrayException(this, string_format("%zu is out of bounds for array of length: %zu", i, Length()));
+        }
+    }
     T& operator[](size_t i) {
         return values[i];
     }
@@ -133,14 +145,14 @@ struct Array : public Il2CppArray
     /// @param i The index to get.
     /// @return The reference to the item.
     T& get(size_t i) {
-        THROW_UNLESS(i < Length() && i >= 0);
+        assertBounds(i);
         return values[i];
     }
     /// @brief Get a given index, performs bound checking and throws std::runtime_error on failure.
     /// @param i The index to get.
     /// @return The const reference to the item.
     const T& get(size_t i) const {
-        THROW_UNLESS(i < Length() && i >= 0);
+        assertBounds(i);
         return values[i];
     }
     /// @brief Tries to get a given index, performs bound checking and returns a std::nullopt on failure.
@@ -166,14 +178,21 @@ struct Array : public Il2CppArray
         il2cpp_functions::Init();
         auto* arr = reinterpret_cast<Array<T>*>(il2cpp_functions::array_new(
             il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<T>::get(), vals.size()));
+        if (!arr) {
+            throw ArrayException(nullptr, "Could not create Array!");
+        }
         memcpy(arr->values, vals.begin(), sizeof(T)*vals.size());
         return arr;
     }
 
     static Array<T>* NewLength(il2cpp_array_size_t size) {
         il2cpp_functions::Init();
-        return reinterpret_cast<Array<T>*>(il2cpp_functions::array_new(
+        auto arr = reinterpret_cast<Array<T>*>(il2cpp_functions::array_new(
             il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<T>::get(), size));
+        if (!arr) {
+            throw ArrayException(nullptr, "Could not create Array!");
+        }
+        return arr;
     }
 
     template<typename... TArgs>
@@ -185,23 +204,23 @@ struct Array : public Il2CppArray
     U GetEnumerator() {
         static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(
             this, "System.Collections.Generic.IEnumerable`1.GetEnumerator", 0));
-        return CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe<U>(this, method));
+        return il2cpp_utils::RunMethodRethrow<U, false>(this, method);
     }
 
     bool Contains(T item) {
         // TODO: find a better way around the existence of 2 methods with this name (the 2nd not being generic at all)
         static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(
             this, "System.Collections.Generic.ICollection`1.Contains", 1));
-        return CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe<bool>(this, method, item));
+        return il2cpp_utils::RunMethodRethrow<bool, false>(this, method, item);
     }
     void CopyTo(::Array<T>* array, int arrayIndex) {
         static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(
             this, "System.Collections.Generic.ICollection`1.CopyTo", 2));
-        CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe(this, method, array, arrayIndex));
+        il2cpp_utils::RunMethodRethrow<void, false>(this, method, array, arrayIndex);
     }
     int IndexOf(T item) {
         static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(this, "System.Collections.Generic.IList`1.IndexOf", 1));
-        return CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe<int>(this, method, item));
+        return il2cpp_utils::RunMethodRethrow<int, false>(this, method, item);
     }
     /// @brief Copies the array to the provided vector reference of same type.
     /// @param vec The vector to copy to.
@@ -236,15 +255,20 @@ struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Array<TArg>*> {
 };
 
 template<typename T, class Ptr = Array<T>*>
+/// @brief An Array wrapper type that is responsible for holding an (ideally valid) pointer to an array on the GC heap.
+/// Allows for C++ array semantics. Ex, [], begin(), end(), etc...
 struct ArrayW {
     static_assert(sizeof(Ptr) == sizeof(void*), "Size of Ptr type must be the same as a void*!");
 
     /// @brief Create an ArrayW from a pointer
     constexpr ArrayW(Ptr initVal) : val(initVal) {}
+    /// @brief Create an ArrayW from an arbitrary pointer
+    constexpr ArrayW(void* alterInit) : val(reinterpret_cast<Ptr>(alterInit)) {}
+    constexpr ArrayW(std::nullptr_t nptr) = delete;
     /// @brief Default constructor creates an empty array that is wrapped
     ArrayW() : val(Array<T>::NewLength(0)) {}
     template<class U>
-    requires (!std::is_same_v<std::nullptr_t, U>)
+    requires (!std::is_same_v<std::nullptr_t, U> && std::is_convertible_v<U, T>)
     ArrayW(std::initializer_list<U> vals) : val(Array<T>::New(vals)) {}
     ArrayW(il2cpp_array_size_t size) : val(Array<T>::NewLength(size)) {}
 
@@ -258,18 +282,24 @@ struct ArrayW {
         return val->values[i];
     }
 
+    inline void assertBounds(size_t i) {
+        if (i < 0 || i >= Length()) {
+            throw ArrayException(this, string_format("%zu is out of bounds for array of length: %zu", i, Length()));
+        }
+    }
+
     /// @brief Get a given index, performs bound checking and throws std::runtime_error on failure.
     /// @param i The index to get.
     /// @return The reference to the item.
     T& get(size_t i) {
-        THROW_UNLESS(i < Length() && i >= 0);
+        assertBounds(i);
         return val->values[i];
     }
     /// @brief Get a given index, performs bound checking and throws std::runtime_error on failure.
     /// @param i The index to get.
     /// @return The const reference to the item.
     const T& get(size_t i) const {
-        THROW_UNLESS(i < Length() && i >= 0);
+        assertBounds(i);
         return val->values[i];
     }
     /// @brief Tries to get a given index, performs bound checking and returns a std::nullopt on failure.
@@ -295,22 +325,22 @@ struct ArrayW {
     U GetEnumerator() {
         static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(
             this, "System.Collections.Generic.IEnumerable`1.GetEnumerator", 0));
-        return CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe<U>(val, method));
+        return il2cpp_utils::RunMethodRethrow<U, false>(this, method);
     }
     bool Contains(T item) {
         // TODO: find a better way around the existence of 2 methods with this name (the 2nd not being generic at all)
         static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(
             val, "System.Collections.Generic.ICollection`1.Contains", 1));
-        return CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe<bool>(val, method, item));
+        return il2cpp_utils::RunMethodRethrow<bool, false>(val, method, item);
     }
     void CopyTo(::Array<T>* array, int arrayIndex) {
         static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(
             val, "System.Collections.Generic.ICollection`1.CopyTo", 2));
-        CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe(val, method, array, arrayIndex));
+        il2cpp_utils::RunMethodRethrow<void, false>(val, method, array, arrayIndex);
     }
     int IndexOf(T item) {
         static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(val, "System.Collections.Generic.IList`1.IndexOf", 1));
-        return CRASH_UNLESS(il2cpp_utils::RunMethodUnsafe<int>(val, method, item));
+        return il2cpp_utils::RunMethodRethrow<int, false>(val, method, item);
     }
     /// @brief Copies the array to the provided vector reference of same type.
     /// @param vec The vector to copy to.
