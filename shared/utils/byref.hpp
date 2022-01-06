@@ -29,7 +29,7 @@ struct ByRef {
     }
 
     constexpr void* convert() const noexcept {
-        return (void*)&heldRef;
+        return static_cast<void*>(&heldRef);
     }
     static_assert(sizeof(T*) == sizeof(void*));
 };
