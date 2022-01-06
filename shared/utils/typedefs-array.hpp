@@ -123,7 +123,7 @@ struct Array : public Il2CppArray
     static_assert(is_value_type_v<T>, "T must be a C# value type! (primitive, pointer or Struct)");
     ALIGN_TYPE(8) T values[IL2CPP_ZERO_LEN_ARRAY];
 
-    inline il2cpp_array_size_t Length() const {
+    inline il2cpp_array_size_t Length() const noexcept {
         if (bounds) {
             return bounds->length;
         }
@@ -134,10 +134,10 @@ struct Array : public Il2CppArray
             throw ArrayException(this, string_format("%zu is out of bounds for array of length: %zu", i, Length()));
         }
     }
-    T& operator[](size_t i) {
+    T& operator[](size_t i) noexcept {
         return values[i];
     }
-    const T& operator[](size_t i) const {
+    const T& operator[](size_t i) const noexcept {
         return values[i];
     }
 
@@ -158,7 +158,7 @@ struct Array : public Il2CppArray
     /// @brief Tries to get a given index, performs bound checking and returns a std::nullopt on failure.
     /// @param i The index to get.
     /// @return The WrapperRef<T> to the item, mostly considered to be a T&.
-    std::optional<WrapperRef<T>> try_get(size_t i) {
+    std::optional<WrapperRef<T>> try_get(size_t i) noexcept {
         if (i >= Length() || i < 0) {
             return std::nullopt;
         }
@@ -167,7 +167,7 @@ struct Array : public Il2CppArray
     /// @brief Tries to get a given index, performs bound checking and returns a std::nullopt on failure.
     /// @param i The index to get.
     /// @return The WrapperRef<const T> to the item, mostly considered to be a const T&.
-    std::optional<WrapperRef<const T>> try_get(size_t i) const {
+    std::optional<WrapperRef<const T>> try_get(size_t i) const noexcept {
         if (i >= Length() || i < 0) {
             return std::nullopt;
         }
@@ -261,24 +261,28 @@ struct ArrayW {
     static_assert(sizeof(Ptr) == sizeof(void*), "Size of Ptr type must be the same as a void*!");
 
     /// @brief Create an ArrayW from a pointer
-    constexpr ArrayW(Ptr initVal) : val(initVal) {}
+    constexpr ArrayW(Ptr initVal) noexcept : val(initVal) {}
     /// @brief Create an ArrayW from an arbitrary pointer
-    constexpr ArrayW(void* alterInit) : val(reinterpret_cast<Ptr>(alterInit)) {}
-    constexpr ArrayW(std::nullptr_t nptr) = delete;
-    /// @brief Default constructor creates an empty array that is wrapped
-    ArrayW() : val(Array<T>::NewLength(0)) {}
+    constexpr ArrayW(void* alterInit) noexcept : val(reinterpret_cast<Ptr>(alterInit)) {}
+    /// @brief Constructs an ArrayW that wraps a null value
+    constexpr ArrayW(std::nullptr_t nptr) noexcept : val(nptr) {}
+    /// @brief Default constructor wraps a nullptr array
+    ArrayW() noexcept : val(nullptr) {}
     template<class U>
     requires (!std::is_same_v<std::nullptr_t, U> && std::is_convertible_v<U, T>)
     ArrayW(std::initializer_list<U> vals) : val(Array<T>::New(vals)) {}
     ArrayW(il2cpp_array_size_t size) : val(Array<T>::NewLength(size)) {}
 
-    inline il2cpp_array_size_t Length() const {
+    inline il2cpp_array_size_t Length() const noexcept {
         return val->Length();
     }
-    T& operator[](size_t i) {
+    inline il2cpp_array_size_t size() const noexcept {
+        return val->Length();
+    }
+    T& operator[](size_t i) noexcept {
         return val->values[i];
     }
-    const T& operator[](size_t i) const {
+    const T& operator[](size_t i) const noexcept {
         return val->values[i];
     }
 
@@ -305,7 +309,7 @@ struct ArrayW {
     /// @brief Tries to get a given index, performs bound checking and returns a std::nullopt on failure.
     /// @param i The index to get.
     /// @return The WrapperRef<T> to the item, mostly considered to be a T&.
-    std::optional<WrapperRef<T>> try_get(size_t i) {
+    std::optional<WrapperRef<T>> try_get(size_t i) noexcept {
         if (i >= Length() || i < 0) {
             return std::nullopt;
         }
@@ -314,7 +318,7 @@ struct ArrayW {
     /// @brief Tries to get a given index, performs bound checking and returns a std::nullopt on failure.
     /// @param i The index to get.
     /// @return The WrapperRef<const T> to the item, mostly considered to be a const T&.
-    std::optional<WrapperRef<const T>> try_get(size_t i) const {
+    std::optional<WrapperRef<const T>> try_get(size_t i) const noexcept {
         if (i >= Length() || i < 0) {
             return std::nullopt;
         }
@@ -392,20 +396,20 @@ struct ArrayW {
     }
     template<class U>
     requires (std::is_convertible_v<U, T> || std::is_convertible_v<T, U>)
-    operator ArrayW<U>() {
+    operator ArrayW<U>() noexcept {
         return ArrayW<U>(reinterpret_cast<Array<U>*>(val));
     }
     template<class U>
     requires (std::is_convertible_v<U, T> || std::is_convertible_v<T, U>)
-    operator ArrayW<U> const() const {
+    operator ArrayW<U> const() const noexcept {
         return ArrayW<U>(reinterpret_cast<Array<U>* const>(val));
     }
-    operator bool() const {
+    operator bool() const noexcept {
         return val != nullptr;
     }
 
-    void* convert() const {
-        return reinterpret_cast<void*>(val);
+    constexpr void* convert() const noexcept {
+        return val;
     }
 
     private:
