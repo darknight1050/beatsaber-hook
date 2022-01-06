@@ -14,11 +14,13 @@ static void constDoThing(const ArrayW<int>& wrap) {
     std::cout << i << std::endl;
 }
 
+ArrayW<float> initThing;
+
 static void doThing() {
     ArrayW<int> arr(5);
     ArrayW<int> arr2(arr);
     // Init the pointer to nullptr
-    ArrayW<int*> arr3((void*)nullptr);
+    ArrayW<int*> arr3(nullptr);
     auto i = arr[0];
     assert(arr.Length() == 5);
     assert(arr2.Length() == 5);
@@ -37,6 +39,8 @@ static void doThing() {
     // Should be allowed to cast back
     std::cout << static_cast<Array<int>*>(arr) << std::endl;
     std::cout << i << std::endl;
+    // Should be simply nullptr
+    std::cout << static_cast<Array<float>*>(initThing) << std::endl;
 }
 
 #include "../../shared/utils/il2cpp-utils.hpp"
