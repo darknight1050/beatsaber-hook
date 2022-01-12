@@ -416,6 +416,10 @@ struct ArrayW {
     Ptr val;
 };
 static_assert(il2cpp_utils::has_il2cpp_conversion<ArrayW<int, Array<int>*>>);
+template<class T, class Ptr>
+struct ::il2cpp_utils::il2cpp_type_check::need_box<ArrayW<T, Ptr>> {
+    constexpr static bool value = false;
+};
 
 template<class T, class Ptr>
 struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<ArrayW<T, Ptr>> {
