@@ -96,6 +96,7 @@ struct StringW {
     constexpr StringW(void* ins) noexcept : inst(static_cast<Il2CppString*>(ins)) {}
     constexpr StringW(Il2CppString* ins) noexcept : inst(ins) {}
     constexpr StringW(std::nullptr_t npt) noexcept : inst(npt) {}
+    constexpr StringW() noexcept : inst(nullptr) {}
 
     operator std::string();
     constexpr void* convert() noexcept {
