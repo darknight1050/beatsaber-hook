@@ -14,12 +14,14 @@ struct UseBeforeInitError : std::runtime_error {
 
 struct Il2CppString;
 
+namespace il2cpp_utils {
 namespace detail {
     void convstr(char const* inp, char16_t* outp, int sz);
     void convstr(char16_t const* inp, char* outp, int sz);
 
     Il2CppString* alloc_str(std::string_view str);
     Il2CppString* alloc_str(std::u16string_view str);
+}
 }
 
 // C# strings can only have 'int' max length.
@@ -31,7 +33,7 @@ struct ConstString {
             klass = il2cpp_functions::defaults->string_class;
         }
         length = sz;
-        detail::convstr(st, chars, sz);
+        il2cpp_utils::detail::convstr(st, chars, sz);
     }
     constexpr ConstString(const char16_t (&st)[sz]) noexcept {
         if (il2cpp_functions::initialized) {
@@ -68,14 +70,14 @@ struct ConstString {
     operator std::string() {
         std::string val;
         val.reserve(sz);
-        detail::convstr(chars, val.data(), sz);
+        il2cpp_utils::detail::convstr(chars, val.data(), sz);
         return val;
     }
     operator std::u16string() {
-        return {chars, chars + length + 1};
+        return {chars, chars + length};
     }
     operator std::wstring() {
-        return {chars, chars + length + 1};
+        return {chars, chars + length};
     }
     constexpr operator std::u16string_view() {
         return {chars, static_cast<std::size_t>(sz)};
@@ -92,7 +94,7 @@ struct StringW {
     // Dynamically allocated string
     template<class T>
     requires (!std::is_convertible_v<T, Il2CppString*> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
-    StringW(T str) noexcept : inst(detail::alloc_str(str)) {}
+    StringW(T str) noexcept : inst(il2cpp_utils::detail::alloc_str(str)) {}
     constexpr StringW(void* ins) noexcept : inst(static_cast<Il2CppString*>(ins)) {}
     constexpr StringW(Il2CppString* ins) noexcept : inst(ins) {}
     constexpr StringW(std::nullptr_t npt) noexcept : inst(npt) {}
