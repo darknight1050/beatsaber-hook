@@ -98,7 +98,7 @@ struct StringW {
     constexpr StringW(void* ins) noexcept : inst(static_cast<Il2CppString*>(ins)) {}
     constexpr StringW(Il2CppString* ins) noexcept : inst(ins) {}
     template <int sz>
-    constexpr StringW(ConstString<sz>& conststring) noexcept : inst(conststring) {}
+    constexpr StringW(ConstString<sz> const& conststring) noexcept : inst(conststring) {}
     constexpr StringW(std::nullptr_t npt) noexcept : inst(npt) {}
     constexpr StringW() noexcept : inst(nullptr) {}
 
