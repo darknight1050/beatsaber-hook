@@ -17,7 +17,7 @@ struct Il2CppString;
 namespace il2cpp_utils {
 namespace detail {
     void convstr(char const* inp, char16_t* outp, int sz);
-    void convstr(char16_t const* inp, char* outp, int sz);
+    std::size_t convstr(char16_t const* inp, char* outp, int isz, int osz);
 
     Il2CppString* alloc_str(std::string_view str);
     Il2CppString* alloc_str(std::u16string_view str);
@@ -68,9 +68,9 @@ struct ConstString {
         return operator Il2CppString*();
     }
     operator std::string() {
-        std::string val;
-        val.reserve(sz);
-        il2cpp_utils::detail::convstr(chars, val.data(), sz);
+        std::string val(sz * 2, '\0');
+        auto resSize = il2cpp_utils::detail::convstr(chars, val.data(), sz, val.size());
+        val.resize(resSize);
         return val;
     }
     operator std::u16string() {

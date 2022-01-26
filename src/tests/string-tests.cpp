@@ -40,5 +40,8 @@ static void test2() {
     std::wstring w3s(w3);
     std::u16string_view w6s(w6);
     Il2CppString* v2(w1);
+
+    using namespace il2cpp_utils;
+    RunMethod<bool>((Il2CppString*)w1, "Equals", w2);
 }
 #endif

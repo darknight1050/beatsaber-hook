@@ -21,17 +21,21 @@ namespace detail {
 
     void convstr(char const* inp, char16_t* outp, int sz) {
         std::mbstate_t state;
-        const char* from_next;
+        char const* from_next;
         char16_t* to_next;
         conv.in(state, inp, inp + sz, from_next, outp, outp + sz, to_next);
-        outp[sz] = '\0';
+        *to_next = '\0';
     }
-    void convstr(char16_t const* inp, char* outp, int sz) {
+    std::size_t convstr(char16_t const* inp, char* outp, int isz, int osz) {
         std::mbstate_t state;
-        const char16_t* from_next;
+        char16_t const* from_next;
         char* to_next;
-        conv.out(state, inp, inp + sz, from_next, outp, outp + sz, to_next);
-        outp[sz] = '\0';
+        auto convOut = conv.out(state, inp, inp + isz, from_next, outp, outp + osz, to_next);
+        if (convOut != std::codecvt_base::ok) {
+            throw convOut;
+        }
+        *to_next = '\0';
+        return (std::size_t)(to_next - 1 - outp);
     }
 
     Il2CppString* alloc_str(std::string_view str) {
@@ -46,9 +50,9 @@ namespace detail {
 }
 
 StringW::operator std::string() {
-    std::string val;
-    val.reserve(inst->length);
-    il2cpp_utils::detail::convstr(inst->chars, val.data(), inst->length);
+    std::string val(inst->length * 2, '\0');
+    auto resSize = il2cpp_utils::detail::convstr(inst->chars, val.data(), inst->length, val.size());
+    val.resize(resSize);
     return val;
 }
 
