@@ -24,6 +24,34 @@ namespace detail {
 }
 }
 
+struct StringW {
+    // Dynamically allocated string
+    template<class T>
+    requires (!std::is_convertible_v<T, Il2CppString*> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
+    StringW(T str) noexcept : inst(il2cpp_utils::detail::alloc_str(str)) {}
+    constexpr StringW(void* ins) noexcept : inst(static_cast<Il2CppString*>(ins)) {}
+    constexpr StringW(Il2CppString* ins) noexcept : inst(ins) {}
+    constexpr StringW(std::nullptr_t npt) noexcept : inst(npt) {}
+    constexpr StringW() noexcept : inst(nullptr) {}
+
+    operator std::string();
+    constexpr void* convert() noexcept {
+        return inst;
+    }
+    constexpr operator Il2CppString*() noexcept {
+        return inst;
+    }
+    constexpr Il2CppString* operator->() noexcept {
+        return inst;
+    }
+    operator std::u16string();
+    operator std::wstring();
+    operator std::u16string_view();
+
+    private:
+    Il2CppString* inst;
+};
+
 // C# strings can only have 'int' max length.
 template<int sz>
 struct ConstString {
@@ -67,6 +95,9 @@ struct ConstString {
     constexpr Il2CppString* operator->() noexcept {
         return operator Il2CppString*();
     }
+    constexpr operator StringW() {
+        return operator Il2CppString*();
+    }
     operator std::string() {
         std::string val;
         val.reserve(sz);
@@ -90,33 +121,6 @@ struct ConstString {
     char16_t chars[sz + 1];
 };
 
-struct StringW {
-    // Dynamically allocated string
-    template<class T>
-    requires (!std::is_convertible_v<T, Il2CppString*> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
-    StringW(T str) noexcept : inst(il2cpp_utils::detail::alloc_str(str)) {}
-    constexpr StringW(void* ins) noexcept : inst(static_cast<Il2CppString*>(ins)) {}
-    constexpr StringW(Il2CppString* ins) noexcept : inst(ins) {}
-    constexpr StringW(std::nullptr_t npt) noexcept : inst(npt) {}
-    constexpr StringW() noexcept : inst(nullptr) {}
-
-    operator std::string();
-    constexpr void* convert() noexcept {
-        return inst;
-    }
-    constexpr operator Il2CppString*() noexcept {
-        return inst;
-    }
-    constexpr Il2CppString* operator->() noexcept {
-        return inst;
-    }
-    operator std::u16string();
-    operator std::wstring();
-    operator std::u16string_view();
-
-    private:
-    Il2CppString* inst;
-};
 static_assert(sizeof(StringW) == sizeof(void*));
 DEFINE_IL2CPP_DEFAULT_TYPE(StringW, string);
 NEED_NO_BOX(StringW);
