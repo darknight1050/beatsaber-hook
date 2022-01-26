@@ -10,6 +10,12 @@
 #include <vector>
 
 namespace il2cpp_utils {
+    template<class T>
+    concept has_il2cpp_conversion = requires (T t) {
+        {t.convert()} -> std::same_as<void*>;
+        std::is_constructible_v<T, void*>;
+    };
+
     template<class TOut>
     ::std::optional<TOut> FromIl2CppObject(Il2CppObject* obj) {
         il2cpp_functions::Init();
@@ -36,7 +42,10 @@ namespace il2cpp_utils {
         }
         if constexpr (::std::is_pointer_v<TOut>) {
             return static_cast<TOut>(val);
-        } else {
+        } else if constexpr (has_il2cpp_conversion<TOut>) {
+            return TOut(static_cast<void*>(val));
+        }
+        else {
             return *static_cast<TOut*>(val);
         }
     }

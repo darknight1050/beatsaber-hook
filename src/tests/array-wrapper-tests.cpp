@@ -14,11 +14,13 @@ static void constDoThing(const ArrayW<int>& wrap) {
     std::cout << i << std::endl;
 }
 
+ArrayW<float> initThing;
+
 static void doThing() {
     ArrayW<int> arr(5);
     ArrayW<int> arr2(arr);
     // Init the pointer to nullptr
-    ArrayW<int*> arr3{nullptr};
+    ArrayW<int*> arr3(nullptr);
     auto i = arr[0];
     assert(arr.Length() == 5);
     assert(arr2.Length() == 5);
@@ -37,6 +39,8 @@ static void doThing() {
     // Should be allowed to cast back
     std::cout << static_cast<Array<int>*>(arr) << std::endl;
     std::cout << i << std::endl;
+    // Should be simply nullptr
+    std::cout << static_cast<Array<float>*>(initThing) << std::endl;
 }
 
 #include "../../shared/utils/il2cpp-utils.hpp"
@@ -46,6 +50,7 @@ static void doThing2() {
     MethodInfo info;
     il2cpp_utils::RunMethodThrow(static_cast<Il2CppObject*>(nullptr), &info, arr);
     il2cpp_utils::RunMethodThrow<ArrayW<Il2CppObject*>>(static_cast<Il2CppObject*>(nullptr), &info);
+    il2cpp_utils::RunMethod<ArrayW<Il2CppObject*>>(static_cast<Il2CppObject*>(nullptr), &info);
     if (arr) {
         ArrayW<float> x(static_cast<ArrayW<float>>(arr));
         for (auto itr : x) {
@@ -53,6 +58,7 @@ static void doThing2() {
         }
     }
     il2cpp_utils::RunMethod(arr, "test", arr);
+    il2cpp_utils::RunMethodRethrow<ArrayW<Il2CppObject*>>((Il2CppClass*)nullptr, &info);
 }
 
 #endif

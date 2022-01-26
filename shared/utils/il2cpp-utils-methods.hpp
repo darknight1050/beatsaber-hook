@@ -140,11 +140,6 @@ namespace il2cpp_utils {
     }
 
     template<class T>
-    concept has_il2cpp_conversion = requires (T const t) {
-        {t.convert()} -> std::same_as<void*>;
-    };
-
-    template<class T>
     void* ExtractValue(T&& arg) {
         il2cpp_functions::Init();
 
@@ -164,6 +159,30 @@ namespace il2cpp_utils {
             return arg;
         } else if constexpr (has_il2cpp_conversion<T>) {
             return arg.convert();
+        }
+        else {
+            return const_cast<Dt*>(&arg);
+        }
+    }
+
+    template<class T>
+    void* ExtractTypeValue(T& arg) {
+        using Dt = ::std::decay_t<T>;
+        if constexpr (std::is_same_v<nullptr_t, T>) {
+            return nullptr;
+        }
+        else if constexpr (has_il2cpp_conversion<T>) {
+            return arg.convert();
+        }
+        else if constexpr (::std::is_pointer_v<Dt>) {
+            // Pointer type, grab class and perform deduction for unbox.
+            // Must be classof deducible!
+            auto* k = classof(Dt);
+            if (k && k->valuetype) {
+                // Arg is an Il2CppObject* of a value type. It needs to be unboxed.
+                return il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(arg));
+            }
+            return arg;
         }
         else {
             return const_cast<Dt*>(&arg);
@@ -413,24 +432,56 @@ namespace il2cpp_utils {
     TOut RunMethodThrow(T* instance, const MethodInfo* method, TArgs&& ...params) {
         return RunMethodThrow<TOut, checkTypes>(instance, method, method->methodPointer, params...);
     }
-    /// @brief Forwards to the RunMethodThrow variant that either runtime_invokes or not.
+
+    /// @brief Runs the provided method and rethrows any exception that occurs. Will throw a RunMethodException.
+    /// If checkTypes is false, does not perform type checking and instead is an unsafe wrapper around runtime_invoke.
     /// @tparam TOut The output to return. Defaults to void.
     /// @tparam checkTypes Whether to check types or not. Defaults to true.
-    /// @tparam T The instance type.
+    /// @tparam T The instance type (an actual instance or nullptr Il2CppClass*, etc.)
     /// @tparam TArgs The argument types.
-    /// @param instance The instance to invoke with. Should almost always be `this`.
-    /// @param method The MethodInfo* to use for type checking and conversions.
-    /// @param mPtr The method pointer to invoke specifically.
+    /// @param instance The instance or nullptr Il2CppClass* to invoke with.
+    /// @param method The MethodInfo* to invoke.
     /// @param params The arguments to pass into the function.
-    /// @param runtimeInvoke Whether to runtime invoke instead of perform optimized method invoking.
+    /// @return The result from the function, or will throw.
     template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
-    TOut RunMethodThrow(T* instance, const MethodInfo* method, Il2CppMethodPointer mPtr, TArgs&&... params, bool runtimeInvoke = false) {
-        if (runtimeInvoke) {
-            return RunMethodThrow<TOut, checkTypes, true>(instance, method, mPtr, params...);
-        } else {
-            return RunMethodThrow<TOut, checkTypes, false>(instance, method, mPtr, params...);
+    TOut RunMethodRethrow(T&& instance, const MethodInfo* method, TArgs&& ...params) {
+        static auto& logger = getLogger();
+        if (!method) {
+            throw RunMethodException("Method cannot be null!", nullptr);
         }
 
+        if constexpr (checkTypes && sizeof...(TArgs) > 0) {
+            std::array<const Il2CppType*, sizeof...(TArgs)> types{ExtractType(params)...};
+            if (!ParameterMatch(method, types)) {
+                throw RunMethodException("Parameters do not match!", method);
+            }
+            auto* outType = ExtractIndependentType<TOut>();
+            if (outType) {
+                if (!IsConvertibleFrom(outType, method->return_type, false)) {
+                    logger.warning("User requested TOut %s does not match the method's return object of type %s!",
+                        TypeGetSimpleName(outType), TypeGetSimpleName(method->return_type));
+                    throw RunMethodException(string_format("Return type of method is not convertible to: %s!", TypeGetSimpleName(outType)), method);
+                }
+            }
+        }
+
+        void* inst = ExtractValue(instance);  // null is allowed (for T = Il2CppType* or Il2CppClass*)
+        Il2CppException* exp = nullptr;
+        std::array<void*, sizeof...(params)> invokeParams{ExtractTypeValue(params)...};
+        il2cpp_functions::Init();
+        auto* ret = il2cpp_functions::runtime_invoke(method, inst, invokeParams.data(), &exp);
+
+        if (exp) {
+            throw RunMethodException(exp, method);
+        }
+
+        if constexpr (!std::is_same_v<TOut, void>) {
+            auto re = FromIl2CppObject<TOut>(ret);
+            if (!re) {
+                throw RunMethodException("Return type not convertible from Il2CppObject!", method);
+            }
+            return *re;
+        }
     }
     #else
     /// @brief Instantiates a generic MethodInfo* from the provided Il2CppClasses.

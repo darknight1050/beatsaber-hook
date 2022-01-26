@@ -644,7 +644,7 @@ public:
         callbacks.clear();
     }
 };
-
+#undef __SAFE_PTR_NULL_HANDLE_CHECK
 
 template<typename Item>
 using default_ordered_set = std::set<Item>;
@@ -655,7 +655,6 @@ using default_unordered_set = std::unordered_set<Item>;
 // Good default for most
 template<typename ...TArgs>
 using EventCallback = BasicEventCallback<default_ordered_set, TArgs...>;
-
 
 template<typename ...TArgs>
 using UnorderedEventCallback = BasicEventCallback<default_unordered_set, TArgs...>;
