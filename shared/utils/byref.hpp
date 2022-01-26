@@ -7,8 +7,8 @@
 template<class T>
 requires (!std::is_reference_v<T>)
 struct ByRef {
-    constexpr ByRef(T& val) : heldRef(val) {}
-    constexpr ByRef(void* val) : heldRef(*reinterpret_cast<T*>(val)) {}
+    constexpr ByRef(T& val) noexcept : heldRef(val) {}
+    constexpr ByRef(void* val) noexcept : heldRef(*reinterpret_cast<T*>(val)) {}
 
     T& heldRef;
     constexpr T* operator->() noexcept {
@@ -28,7 +28,7 @@ struct ByRef {
         return *this;
     }
 
-    constexpr void* convert() const {
+    constexpr void* convert() const noexcept {
         return (void*)&heldRef;
     }
     static_assert(sizeof(T*) == sizeof(void*));
