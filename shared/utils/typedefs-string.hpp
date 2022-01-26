@@ -97,7 +97,8 @@ struct StringW {
     StringW(T str) noexcept : inst(il2cpp_utils::detail::alloc_str(str)) {}
     constexpr StringW(void* ins) noexcept : inst(static_cast<Il2CppString*>(ins)) {}
     constexpr StringW(Il2CppString* ins) noexcept : inst(ins) {}
-    constexpr StringW(const ConstString& conststring) noexcept : inst(conststring) {}
+    template <int sz>
+    constexpr StringW(ConstString<sz>& conststring) noexcept : inst(conststring) {}
     constexpr StringW(std::nullptr_t npt) noexcept : inst(npt) {}
     constexpr StringW() noexcept : inst(nullptr) {}
 
@@ -118,7 +119,6 @@ struct StringW {
     private:
     Il2CppString* inst;
 };
-
 static_assert(sizeof(StringW) == sizeof(void*));
 DEFINE_IL2CPP_DEFAULT_TYPE(StringW, string);
 NEED_NO_BOX(StringW);
