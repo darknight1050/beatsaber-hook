@@ -48,11 +48,35 @@ static void test2() {
     std::wstring w3s(w3);
     std::u16string_view w6s(w6);
     Il2CppString* v2(w1);
-    if (one == w2)
+    
+    if (one == w1)
     ;
-    if (one < w2)
+    if (w1 == one)
+    ;
+    if (w1 < "test1")
+    ;
+    if (w1 == "test1")
     ;
 
+    if (w1 < u"test1")
+    ;
+    if (w1 == u"test1")
+    ;
+
+    if (w2 < "test2")
+    ;
+    if (w2 == "test2")
+    ;
+
+    if (w2 < u"test1")
+    ;
+    if (w2 < u"test1")
+    ;
+
+    w1 + "testappend";
+    w2 += "testappendinplace";
+    
+    w1.starts_with("test");
     using namespace il2cpp_utils;
     RunMethod<bool>((Il2CppString*)w1, "Equals", w2);
 }
