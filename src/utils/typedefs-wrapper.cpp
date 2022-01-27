@@ -3,6 +3,7 @@
 #include "../../shared/utils/il2cpp-functions.hpp"
 #include "../../shared/utils/typedefs.h"
 #include <locale>
+#include <string.h>
 
 std::unordered_map<void*, size_t> Counter::addrRefCount;
 std::shared_mutex Counter::mutex;
@@ -49,21 +50,147 @@ namespace detail {
 }
 }
 
-StringW::operator std::string() {
+StringW::operator std::string() const {
     std::string val(inst->length * 2, '\0');
     auto resSize = il2cpp_utils::detail::convstr(inst->chars, val.data(), inst->length, val.size());
     val.resize(resSize);
     return val;
 }
 
-StringW::operator std::u16string() {
+StringW::operator std::u16string() const {
     return {inst->chars, inst->chars + inst->length};
 }
 
-StringW::operator std::wstring() {
+StringW::operator std::wstring() const {
     return {inst->chars, inst->chars + inst->length};
+}
+
+StringW::operator const std::u16string_view() const {
+    return {inst->chars, static_cast<std::size_t>(inst->length)};
 }
 
 StringW::operator std::u16string_view() {
     return {inst->chars, static_cast<std::size_t>(inst->length)};
 }
+
+bool StringW::operator ==(const StringW& rhs) const {
+    if (inst == rhs.inst) return true;
+    if (!inst || !rhs || inst->length != rhs.inst->length) return false;
+    
+    Il2CppChar* first = inst->chars; 
+    Il2CppChar* second = rhs.inst->chars; 
+    Il2CppChar* firstEnd = first + inst->length; 
+    Il2CppChar* secondEnd = second + rhs.inst->length; 
+    
+    while (first != firstEnd && second != secondEnd)
+    {
+        if (*first != *second) return false;
+        first++; second++;
+    }
+
+    return first == firstEnd && second == secondEnd;
+}
+
+bool StringW::operator ==(const std::string_view rhs) const {
+    if (!inst || inst->length != (int)rhs.size()) return false;
+
+    Il2CppChar* first = inst->chars; 
+    char const* second = rhs.data(); 
+    Il2CppChar* firstEnd = first + inst->length; 
+    char const* secondEnd = second + rhs.size(); 
+    
+    while (first != firstEnd && second != secondEnd)
+    {
+        if (*first != *second) return false;
+        first++; second++;
+    }
+
+    return first == firstEnd && second == secondEnd;
+}
+
+bool StringW::operator ==(const std::u16string_view rhs) const {
+    if (!inst || inst->length != (int)rhs.size()) return false;
+
+    Il2CppChar* first = inst->chars; 
+    char16_t const* second = rhs.data(); 
+    Il2CppChar* firstEnd = inst->chars + inst->length; 
+    char16_t const* secondEnd = second + rhs.size(); 
+    
+    while (first != firstEnd && second != secondEnd)
+    {
+        if (*first != *second) return false;
+        first++; second++;
+    }
+
+    return first == firstEnd && second == secondEnd;
+}
+
+bool StringW::operator <(const StringW& rhs) const {
+    if (!inst && !rhs) return false;
+    if (!inst) return true;
+    if (!rhs) return false;
+    
+    Il2CppChar* first = inst->chars; 
+    Il2CppChar* second = rhs.inst->chars; 
+    Il2CppChar* firstEnd = first + inst->length; 
+    Il2CppChar* secondEnd = second + rhs.inst->length; 
+    
+    while (first != firstEnd && second != secondEnd)
+    {
+        if (*first == *second)
+        {
+            first++; second++;
+            continue;
+        }
+        return *first < *second;
+    }
+    // if we got here, and second is not second end, we had a shorter first, so it should be true
+    // if second is the end, we are longer, so it should be false
+    return second != secondEnd;
+}
+
+bool StringW::operator <(const std::string_view rhs) const {
+    if (!inst) return true;
+
+    Il2CppChar* first = inst->chars; 
+    char const* second = rhs.data(); 
+    Il2CppChar* firstEnd = inst->chars + inst->length; 
+    char const* secondEnd = rhs.data() + rhs.size(); 
+    
+    while (first != firstEnd && second != secondEnd)
+    {
+        if (*first == *second)
+        {
+            first++; second++;
+            continue;
+        }
+        return *first < *second;
+    }
+    // if we got here, and second is not second end, we had a shorter first, so it should be true
+    // if second is the end, we are longer, so it should be false
+    return second != secondEnd;
+}
+
+bool StringW::operator <(const std::u16string_view rhs) const {
+    if (!inst) return true;
+
+    Il2CppChar* first = inst->chars; 
+    char16_t const* second = rhs.data(); 
+    Il2CppChar* firstEnd = first + inst->length; 
+    char16_t const* secondEnd = second + rhs.size(); 
+    
+    while (first != firstEnd && second != secondEnd)
+    {
+        if (*first == *second)
+        {
+            first++; second++;
+            continue;
+        }
+        return *first < *second;
+    }
+    // if we got here, and second is not second end, we had a shorter first, so it should be true
+    // if second is the end, we are longer, so it should be false
+    return second != secondEnd;
+}
+
+

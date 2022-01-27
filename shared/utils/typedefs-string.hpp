@@ -102,19 +102,84 @@ struct StringW {
     constexpr StringW(std::nullptr_t npt) noexcept : inst(npt) {}
     constexpr StringW() noexcept : inst(nullptr) {}
 
-    operator std::string();
+    constexpr void const* convert() const noexcept {
+        return inst;
+    }
     constexpr void* convert() noexcept {
+        return inst;
+    }
+    constexpr operator Il2CppString const*() const noexcept {
         return inst;
     }
     constexpr operator Il2CppString*() noexcept {
         return inst;
     }
+    constexpr Il2CppString const* operator->() const {
+        return inst;
+    }
     constexpr Il2CppString* operator->() noexcept {
         return inst;
     }
-    operator std::u16string();
-    operator std::wstring();
+    constexpr operator bool() const {
+        return inst != nullptr; 
+    }
+    constexpr bool operator ==(std::nullptr_t rhs) const noexcept {
+        return inst == rhs;
+    }
+
+    template<int sz>
+    constexpr bool operator <(ConstString<sz> const& rhs) const {
+        if (!inst) return true;
+
+        Il2CppChar* first = inst->chars; 
+        Il2CppChar* second = rhs->chars; 
+        Il2CppChar* firstEnd = first + inst->length; 
+        Il2CppChar* secondEnd = second + rhs->length - 1; 
+
+        while (first != firstEnd && second != secondEnd)
+        {
+            if (*first == *second)
+            {
+                first++; second++;
+                continue;
+            }
+            return *first < *second;
+        }
+        // if we got here, and second is not second end, we had a shorter first, so it should be true
+        // if second is the end, we are longer, so it should be false
+        return second != secondEnd;
+    }
+
+    bool operator <(StringW const& rhs) const;
+    bool operator <(const std::string_view rhs) const;
+    bool operator <(const std::u16string_view rhs) const;
+
+    template<int sz>
+    constexpr bool operator ==(ConstString<sz> const& rhs) const {
+        Il2CppChar* first = inst->chars; 
+        Il2CppChar* second = rhs.inst->chars; 
+        Il2CppChar* firstEnd = first + inst->length; 
+        Il2CppChar* secondEnd = second + rhs.inst->length; 
+
+        while (first != firstEnd && second != secondEnd)
+        {
+            if (*first != *second) return false;
+            first++; second++;
+        }
+
+        return first == firstEnd && second == secondEnd;
+    }
+
+    bool operator ==(StringW const& rhs) const;
+    bool operator ==(const std::string_view rhs) const;
+    bool operator ==(const std::u16string_view rhs) const;
+
+    
+    operator std::string() const;
+    operator std::u16string() const;
+    operator std::wstring() const;
     operator std::u16string_view();
+    operator const std::u16string_view() const;
 
     private:
     Il2CppString* inst;
