@@ -13,6 +13,10 @@ static_assert(sizeof(StringW) == sizeof(void*));
 static_assert(il2cpp_utils::has_il2cpp_conversion<StringW>);
 static_assert(sizeof(Il2CppString) == sizeof(ConstString<0>));
 
+#pragma clang diagnostic push
+// these warnings are not relevant here because we are causing them "on purpose" so we disable the warnings here
+#pragma clang diagnostic ignored "-Wunused-value"
+#pragma clang diagnostic ignored "-Wunused-variable"
 static void test2() {
     // construction
     ConstString one("one");
@@ -33,6 +37,10 @@ static void test2() {
     std::wstring threeS(copOne);
     std::u16string_view fourS(copOne);
     Il2CppString* v1(one);
+    if (w1 < w2)
+    ;
+    if (w3 == w4)
+    ;
 
     w1->chars;
     std::string w1s(w1);
@@ -40,8 +48,13 @@ static void test2() {
     std::wstring w3s(w3);
     std::u16string_view w6s(w6);
     Il2CppString* v2(w1);
+    if (one == w2)
+    ;
+    if (one < w2)
+    ;
 
     using namespace il2cpp_utils;
     RunMethod<bool>((Il2CppString*)w1, "Equals", w2);
 }
+#pragma clang diagnostic pop
 #endif

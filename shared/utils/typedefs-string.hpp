@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <locale>
 #include <codecvt>
+#include "typedefs.h"
 
 struct UseBeforeInitError : std::runtime_error {
     UseBeforeInitError(const char* v) : std::runtime_error(v) {}
@@ -23,6 +24,8 @@ namespace detail {
     Il2CppString* alloc_str(std::u16string_view str);
 }
 }
+
+struct StringW;
 
 // C# strings can only have 'int' max length.
 template<int sz>
@@ -83,12 +86,14 @@ struct ConstString {
         return {chars, static_cast<std::size_t>(sz)};
     }
 
+    friend StringW;
     private:
     void* klass = nullptr;
     void* monitor;
     int length;
     char16_t chars[sz + 1];
 };
+
 
 struct StringW {
     // Dynamically allocated string
@@ -123,18 +128,23 @@ struct StringW {
     constexpr operator bool() const {
         return inst != nullptr; 
     }
+
+    // the argument here is unused but we don't care. the comparison against nullptr more clearly shows what this operator is for imo
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
     constexpr bool operator ==(std::nullptr_t rhs) const noexcept {
-        return inst == rhs;
+        return inst == nullptr;
     }
+    #pragma clang diagnostic pop
 
     template<int sz>
     constexpr bool operator <(ConstString<sz> const& rhs) const {
         if (!inst) return true;
 
         Il2CppChar* first = inst->chars; 
-        Il2CppChar* second = rhs->chars; 
+        Il2CppChar* second = rhs.chars; 
         Il2CppChar* firstEnd = first + inst->length; 
-        Il2CppChar* secondEnd = second + rhs->length - 1; 
+        Il2CppChar* secondEnd = second + sz; 
 
         while (first != firstEnd && second != secondEnd)
         {
@@ -157,9 +167,9 @@ struct StringW {
     template<int sz>
     constexpr bool operator ==(ConstString<sz> const& rhs) const {
         Il2CppChar* first = inst->chars; 
-        Il2CppChar* second = rhs.inst->chars; 
-        Il2CppChar* firstEnd = first + inst->length; 
-        Il2CppChar* secondEnd = second + rhs.inst->length; 
+        char16_t const* second = rhs.chars; 
+        Il2CppChar* firstEnd = first + inst->length;
+        char16_t const* secondEnd = second + sz; 
 
         while (first != firstEnd && second != secondEnd)
         {
