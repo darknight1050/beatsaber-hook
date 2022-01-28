@@ -8,7 +8,6 @@
 std::unordered_map<void*, size_t> Counter::addrRefCount;
 std::shared_mutex Counter::mutex;
 
-typedef char16_t Il2CppChar;
 namespace il2cpp_utils {
 namespace detail {
     template<class Facet>
