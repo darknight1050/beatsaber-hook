@@ -128,6 +128,145 @@ namespace detail {
         }
     }
 
+    bool strcomp(Il2CppString const* lhs, Il2CppString const* rhs) noexcept {
+        if (lhs == rhs) return true;
+        if (!lhs || !rhs || lhs->length != rhs->length) return false;
+
+        Il2CppChar const* first = lhs->chars; 
+        Il2CppChar const* second = rhs->chars; 
+        Il2CppChar const* firstEnd = first + lhs->length; 
+        Il2CppChar const* secondEnd = second + rhs->length; 
+
+        while (first != firstEnd && second != secondEnd)
+        {
+            if (*first != *second) return false;
+            first++; second++;
+        }
+
+        return first == firstEnd && second == secondEnd;
+    }
+
+    template<typename T>
+    requires(std::is_same_v<T, std::string_view> || std::is_same_v<T, std::u16string_view>)
+    bool strcomp(Il2CppString const* lhs, T const rhs) noexcept
+    {
+        if (!lhs || lhs->length != (int)rhs.size()) return false;
+    
+        Il2CppChar const* first = lhs->chars; 
+        auto const* second = rhs.data(); 
+        Il2CppChar const* firstEnd = first + lhs->length; 
+        auto const* secondEnd = second + (int)rhs.size(); 
+    
+        while (first != firstEnd && second != secondEnd)
+        {
+            if (*first != *second) return false;
+            first++; second++;
+        }
+    
+        return first == firstEnd && second == secondEnd;
+    }
+
+    bool strcomp(Il2CppString const* lhs, std::string_view const rhs) noexcept {
+        return strcomp<std::remove_const_t<decltype(rhs)>>(lhs, rhs);
+    }
+    
+    bool strcomp(Il2CppString const* lhs, std::u16string_view const rhs) noexcept {
+        return strcomp<std::remove_const_t<decltype(rhs)>>(lhs, rhs);
+    }
+
+    template<typename T>
+    requires(std::is_same_v<T, std::string_view> || std::is_same_v<T, std::u16string_view>)
+    bool strless(Il2CppString const* lhs, T const rhs) noexcept {
+        if (!lhs) return true;
+    
+        Il2CppChar const* first = lhs->chars; 
+        auto const* second = rhs.data(); 
+        Il2CppChar const* firstEnd = lhs->chars + lhs->length; 
+        auto const* secondEnd = rhs.data() + rhs.size(); 
+        
+        while (first != firstEnd && second != secondEnd)
+        {
+            if (*first == *second)
+            {
+                first++; second++;
+                continue;
+            }
+            return *first < *second;
+        }
+        // if we got here, and second is not second end, we had a shorter first, so it should be true
+        // if second is the end, we are longer, so it should be false
+        return second != secondEnd;
+    }
+
+    bool strless(Il2CppString const* lhs, std::string_view const rhs) noexcept {
+        return strless<std::remove_const_t<decltype(rhs)>>(lhs, rhs);
+    }
+    
+    bool strless(Il2CppString const* lhs, std::u16string_view const rhs) noexcept {
+        return strless<std::remove_const_t<decltype(rhs)>>(lhs, rhs);
+    }
+
+    template<typename T>
+    requires(std::is_same_v<T, std::string_view> || std::is_same_v<T, std::u16string_view>)
+    bool strstart(Il2CppString const* lhs, T const rhs) noexcept {
+        if (!lhs || lhs->length < (decltype(lhs->length))rhs.size()) return false;
+    
+        Il2CppChar const* first = lhs->chars; 
+        auto const* second = rhs.data(); 
+        auto const* secondEnd = second + rhs.size(); 
+        
+        while (second != secondEnd)
+        {
+            if (*first == *second)
+            {
+                first++; second++;
+                continue;
+            }
+            // we got a mismatch! return false;
+            return false;
+        }
+        // if we got through the entire string it was all equal, return true
+        return true;
+    }
+
+    bool strstart(Il2CppString const* lhs, std::string_view const rhs) noexcept {
+        return strstart<std::remove_const_t<decltype(rhs)>>(lhs, rhs);
+    }
+    
+    bool strstart(Il2CppString const* lhs, std::u16string_view const rhs) noexcept {
+        return strstart<std::remove_const_t<decltype(rhs)>>(lhs, rhs);
+    }
+
+    template<typename T>
+    requires(std::is_same_v<T, std::string_view> || std::is_same_v<T, std::u16string_view>)
+    bool strend(Il2CppString const* lhs, T const rhs) noexcept {
+        if (!lhs || lhs->length < (decltype(lhs->length))rhs.size()) return false;
+    
+        Il2CppChar const* first = lhs->chars + lhs->length - 1;
+        auto const* secondBegin = rhs.data() - 1; 
+        auto const* second = secondBegin + rhs.size(); 
+        
+        while (second != secondBegin)
+        {
+            if (*first == *second)
+            {
+                first--; second--;
+                continue;
+            }
+            // we got a mismatch! return false;
+            return false;
+        }
+        // if we got through the entire string it was all equal, return true
+        return true;
+    }
+
+    bool strend(Il2CppString const* lhs, std::string_view const rhs) noexcept {
+        return strend<std::remove_const_t<decltype(rhs)>>(lhs, rhs);
+    }
+    
+    bool strend(Il2CppString const* lhs, std::u16string_view const rhs) noexcept {
+        return strend<std::remove_const_t<decltype(rhs)>>(lhs, rhs);
+    }
 }
 }
 
@@ -240,3 +379,16 @@ bool StringW::ends_with(StringW const& rhs) const noexcept {
     // if we got through the entire string it was all equal, return true
     return true;
 }
+
+StringW::iterator StringW::begin() { return inst->chars; }
+StringW::const_iterator StringW::begin() const { return inst->chars; }
+StringW::iterator StringW::end() { return inst->chars + inst->length; }
+StringW::const_iterator StringW::end() const { return inst->chars + inst->length; }
+StringW::operator std::span<Il2CppChar>() {
+    return {begin(), end()};
+}
+StringW::operator std::span<Il2CppChar const> const () const {
+    return {begin(), end()};
+}
+Il2CppChar const& StringW::operator [](size_t const& idx) const { return inst->chars[idx]; }
+Il2CppChar& StringW::operator [](size_t const& idx) { return inst->chars[idx]; }
