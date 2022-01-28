@@ -11,8 +11,7 @@ struct ListWrapper {
     
     constexpr ListWrapper(Ptr* p) : ptr(p) {}
 
-    constexpr ListWrapper(std::span<T> const p) {
-        ptr = il2cpp_utils::New<Ptr*>(p.size());
+    constexpr ListWrapper(std::span<T> const p) : ptr(il2cpp_utils::New<Ptr*>(p.size())) {
         memcpy(this->begin(), p.begin(), sizeof(T) * p.size());
     }
 
