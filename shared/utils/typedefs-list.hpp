@@ -1,6 +1,10 @@
 #pragma once
 // This file should only ever be included in typedefs.h
 
+#include <span>
+#include <optional>
+#include "il2cpp-utils-methods.hpp"
+
 template<class T, class Ptr = List<T>>
 struct ListWrapper {
     static_assert(sizeof(Ptr*) == sizeof(void*), "Size of Ptr type must be the same as a void*!");
