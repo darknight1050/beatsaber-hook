@@ -1,11 +1,19 @@
 #pragma once
 // This file should only ever be included in typedefs.h
 
-template<class T, class Ptr = List<T>*>
+#include <span>
+#include <optional>
+#include "il2cpp-utils-methods.hpp"
+
+template<class T, class Ptr = List<T>>
 struct ListWrapper {
-    static_assert(sizeof(Ptr) == sizeof(void*), "Size of Ptr type must be the same as a void*!");
+    static_assert(sizeof(Ptr*) == sizeof(void*), "Size of Ptr type must be the same as a void*!");
     
-    constexpr ListWrapper(Ptr p) : ptr(p) {}
+    constexpr ListWrapper(Ptr* p) : ptr(p) {}
+
+    constexpr ListWrapper(std::span<T> const p) : ptr(il2cpp_utils::New<Ptr*>(p.size())) {
+        memcpy(this->begin(), p.begin(), sizeof(T) * p.size());
+    }
 
     using value_type = T;
     using pointer = T*;
@@ -15,7 +23,7 @@ struct ListWrapper {
     using iterator = pointer;
     using const_iterator = const_pointer;
 
-    constexpr int size() const {
+    [[nodiscard]] constexpr int size() const {
         return ptr->size;
     }
     T& operator[](size_t i) {
@@ -71,6 +79,34 @@ struct ListWrapper {
         return &ptr->items->values[size()];
     }
 
+    operator std::span<T const> const() const {
+        return std::span<T const>(this->begin(), this->end());
+    }
+
+    operator std::span<T>() {
+        return std::span<T>(this->begin(), this->end());
+    }
+
+    operator Ptr() noexcept {
+        return ptr;
+    };
+
+    Ptr* convert() noexcept {
+        return ptr;
+    }
+
+    Ptr* operator ->() noexcept {
+        return ptr;
+    }
+
+    Ptr const* operator ->() const noexcept {
+        return ptr;
+    }
+
     private:
-    Ptr ptr;
+    Ptr* ptr;
 };
+
+// ListW for the win, just implicitly
+template<class T, class Ptr = List<T>>
+using ListW = ListWrapper<T, Ptr>;
