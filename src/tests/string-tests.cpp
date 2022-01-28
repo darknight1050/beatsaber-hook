@@ -82,6 +82,9 @@ static void test2() {
     if (w2 == "test2")
     ;
 
+    if (w2 != "test1")
+    ;
+
     if (w2 < u"test1")
     ;
     if (w2 < u"test1")
@@ -95,6 +98,21 @@ static void test2() {
     w1.starts_with("test");
 
     w1[0] = 'A';
+
+    for (auto c : w1)
+    ;
+
+    for (auto const c : w1)
+    ;
+
+    for (auto c : static_cast<std::span<Il2CppChar>>(w1))
+    ;
+
+    for (auto const c : static_cast<std::span<Il2CppChar const>>(w1))
+    ;
+
+    "testprepend" + w1;
+
     using namespace il2cpp_utils;
     RunMethod<bool>((Il2CppString*)w1, "Equals", w2);
 }

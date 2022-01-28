@@ -50,7 +50,7 @@ namespace detail {
     }
 
     Il2CppString* strappend(Il2CppString const* lhs, Il2CppString const* rhs) noexcept {
-        if (!lhs && !rhs) return il2cpp_functions::string_new_utf16(u"", 0);
+        if (!lhs && !rhs) return nullptr;
 
         if (!lhs && rhs)
             return il2cpp_functions::string_new_utf16(rhs->chars, rhs->length);
@@ -61,7 +61,7 @@ namespace detail {
             size_t fullLength = lhs->length + rhs->length;
             auto result = il2cpp_functions::string_new_utf16(lhs->chars, fullLength);
             Il2CppChar* pastFirstString = result->chars + lhs->length;
-            memcpy(pastFirstString, rhs->chars, rhs->length);
+            memcpy(pastFirstString, rhs->chars, rhs->length * sizeof(*rhs->chars));
             return result;
         }
     }
@@ -72,7 +72,8 @@ namespace detail {
             size_t fullLength = lhs->length + rhs.size();
             auto result = il2cpp_functions::string_new_utf16(lhs->chars, fullLength);
             Il2CppChar* pastFirstString = result->chars + lhs->length;
-            memcpy(pastFirstString, rhs.data(), rhs.size());
+            static_assert(sizeof(*pastFirstString) == sizeof(*rhs.data()));
+            memcpy(pastFirstString, rhs.data(), rhs.size() * sizeof(*rhs.data()));
             return result;
         }
         else
@@ -96,6 +97,39 @@ namespace detail {
             return alloc_str(rhs);
         }
     }
+
+    Il2CppString* strappend(std::string_view const lhs, Il2CppString const* rhs) noexcept {
+        if (rhs)
+        {
+            size_t fullLength = rhs->length + lhs.size();
+            il2cpp_functions::Init();
+            Il2CppString* result = il2cpp_functions::string_new_utf16(rhs->chars, fullLength);
+            Il2CppChar* pastFirstString = result->chars + rhs->length;
+            convstr(lhs.data(), pastFirstString, lhs.size());
+            return result;
+        }
+        else
+        {
+            return alloc_str(lhs);
+        }
+    }
+
+    Il2CppString* strappend(std::u16string_view const lhs, Il2CppString const* rhs) noexcept {
+        if (rhs)
+        {
+            size_t fullLength = rhs->length + lhs.size();
+            auto result = il2cpp_functions::string_new_utf16(rhs->chars, fullLength);
+            Il2CppChar* pastFirstString = result->chars + rhs->length;
+            static_assert(sizeof(*pastFirstString) == sizeof(*lhs.data()));
+            memcpy(pastFirstString, lhs.data(), lhs.size() * sizeof(*lhs.data()));
+            return result;
+        }
+        else
+        {
+            return alloc_str(lhs);
+        }
+    }
+
 }
 }
 
