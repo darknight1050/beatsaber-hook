@@ -26,7 +26,6 @@ namespace detail {
         char const* from_next;
         char16_t* to_next;
         conv.in(state, inp, inp + sz, from_next, outp, outp + sz, to_next);
-        *to_next = '\0';
     }
     std::size_t convstr(char16_t const* inp, char* outp, int isz, int osz) {
         std::mbstate_t state;
@@ -133,7 +132,7 @@ namespace detail {
 }
 
 StringW::operator std::string() const {
-    std::string val(inst->length * 2, '\0');
+    std::string val(inst->length * 2 + 1, '\0');
     auto resSize = il2cpp_utils::detail::convstr(inst->chars, val.data(), inst->length, val.size());
     val.resize(resSize);
     return val;
