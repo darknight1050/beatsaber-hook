@@ -125,14 +125,14 @@ namespace detail {
 template<int sz>
 struct ConstString {
     // Manually allocated string, dtor destructs in place
-    ConstString(const char (&st)[sz]) {
+    ConstString(const char (&st)[sz + 1]) {
         if (il2cpp_functions::initialized) {
             klass = il2cpp_functions::defaults->string_class;
         }
         length = sz;
         il2cpp_utils::detail::convstr(st, chars, sz);
     }
-    constexpr ConstString(const char16_t (&st)[sz]) noexcept {
+    constexpr ConstString(const char16_t (&st)[sz + 1]) noexcept {
         if (il2cpp_functions::initialized) {
             klass = il2cpp_functions::defaults->string_class;
         }
@@ -140,7 +140,6 @@ struct ConstString {
         for (int i = 0; i < sz; i++) {
             chars[i] = st[i];
         }
-        chars[sz] = '\0';
     }
     // Copies allowed? But should probably be avoided.
     ConstString(ConstString const&) = default;
@@ -185,7 +184,7 @@ struct ConstString {
     void* klass = nullptr;
     void* monitor;
     int length;
-    char16_t chars[sz + 1];
+    char16_t chars[sz];
 };
 
 struct StringW {
@@ -272,7 +271,7 @@ struct StringW {
         Il2CppChar* first = inst->chars;
         char16_t const* second = rhs.chars;
         Il2CppChar* firstEnd = first + inst->length;
-        char16_t const* secondEnd = second + sz - 1;
+        char16_t const* secondEnd = second + sz;
 
         while (first != firstEnd && second != secondEnd)
         {
