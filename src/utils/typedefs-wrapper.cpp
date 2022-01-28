@@ -36,8 +36,7 @@ namespace detail {
         if (convOut != std::codecvt_base::ok) {
             throw convOut;
         }
-        *to_next = '\0';
-        return (std::size_t)(to_next - 1 - outp);
+        return (std::size_t)(to_next - outp);
     }
 
     Il2CppString* alloc_str(std::string_view str) {
