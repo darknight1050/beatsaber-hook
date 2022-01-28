@@ -22,10 +22,102 @@ namespace detail {
 
     Il2CppString* alloc_str(std::string_view str);
     Il2CppString* alloc_str(std::u16string_view str);
-}
-}
+    
+    template<typename T>
+    requires(std::is_same_v<T, std::string_view> || std::is_same_v<T, std::u16string_view>)
+    bool strcomp(Il2CppString const* lhs, T const rhs) noexcept
+    {
+        if (!lhs || lhs->length != (int)rhs.size()) return false;
+    
+        Il2CppChar const* first = lhs->chars; 
+        auto const* second = rhs.data(); 
+        Il2CppChar const* firstEnd = first + lhs->length; 
+        auto const* secondEnd = second + (int)rhs.size(); 
+    
+        while (first != firstEnd && second != secondEnd)
+        {
+            if (*first != *second) return false;
+            first++; second++;
+        }
+    
+        return first == firstEnd && second == secondEnd;
+    }
 
-struct StringW;
+    template<typename T>
+    requires(std::is_same_v<T, std::string_view> || std::is_same_v<T, std::u16string_view>)
+    bool strless(Il2CppString const* lhs, T const rhs) noexcept {
+        if (!lhs) return true;
+    
+        Il2CppChar const* first = lhs->chars; 
+        auto const* second = rhs.data(); 
+        Il2CppChar const* firstEnd = lhs->chars + lhs->length; 
+        auto const* secondEnd = rhs.data() + rhs.size(); 
+        
+        while (first != firstEnd && second != secondEnd)
+        {
+            if (*first == *second)
+            {
+                first++; second++;
+                continue;
+            }
+            return *first < *second;
+        }
+        // if we got here, and second is not second end, we had a shorter first, so it should be true
+        // if second is the end, we are longer, so it should be false
+        return second != secondEnd;
+    }
+        
+    Il2CppString* strappend(Il2CppString const* lhs, Il2CppString const* rhs) noexcept;
+    Il2CppString* strappend(Il2CppString const* lhs, std::u16string_view const rhs) noexcept;
+    Il2CppString* strappend(Il2CppString const* lhs, std::string_view const rhs) noexcept;
+    
+    template<typename T>
+    requires(std::is_same_v<T, std::string_view> || std::is_same_v<T, std::u16string_view>)
+    bool strstart(Il2CppString const* lhs, T const rhs) noexcept {
+        if (!lhs || lhs->length < (decltype(lhs->length))rhs.size()) return false;
+    
+        Il2CppChar const* first = lhs->chars; 
+        auto const* second = rhs.data(); 
+        auto const* secondEnd = second + rhs.size(); 
+        
+        while (second != secondEnd)
+        {
+            if (*first == *second)
+            {
+                first++; second++;
+                continue;
+            }
+            // we got a mismatch! return false;
+            return false;
+        }
+        // if we got through the entire string it was all equal, return true
+        return true;
+    }
+    
+    template<typename T>
+    requires(std::is_same_v<T, std::string_view> || std::is_same_v<T, std::u16string_view>)
+    bool strend(Il2CppString const* lhs, T const rhs) noexcept {
+        if (!lhs || lhs->length < (decltype(lhs->length))rhs.size()) return false;
+    
+        Il2CppChar const* first = lhs->chars + lhs->length - 1;
+        auto const* secondBegin = rhs.data() - 1; 
+        auto const* second = secondBegin + rhs.size(); 
+        
+        while (second != secondBegin)
+        {
+            if (*first == *second)
+            {
+                first--; second--;
+                continue;
+            }
+            // we got a mismatch! return false;
+            return false;
+        }
+        // if we got through the entire string it was all equal, return true
+        return true;
+    }
+}
+}
 
 // C# strings can only have 'int' max length.
 template<int sz>
@@ -86,24 +178,13 @@ struct ConstString {
         return {chars, static_cast<std::size_t>(sz)};
     }
 
-    friend StringW;
+    friend struct StringW;
     private:
     void* klass = nullptr;
     void* monitor;
     int length;
     char16_t chars[sz + 1];
 };
-
-bool streq(Il2CppString const* lhs, const std::string_view rhs) noexcept;
-bool streq(Il2CppString const* lhs, const std::u16string_view rhs) noexcept;
-bool strless(Il2CppString const* lhs, const std::string_view rhs) noexcept;
-bool strless(Il2CppString const* lhs, const std::u16string_view rhs) noexcept;
-StringW strappend(Il2CppString const* lhs, const std::string_view rhs) noexcept;
-StringW strappend(Il2CppString const* lhs, const std::u16string_view rhs) noexcept;
-bool strstart(Il2CppString const* lhs, const std::string_view rhs) noexcept;
-bool strstart(Il2CppString const* lhs, const std::u16string_view rhs) noexcept;
-bool strend(Il2CppString const* lhs, const std::string_view rhs) noexcept;
-bool strend(Il2CppString const* lhs, const std::u16string_view rhs) noexcept;
 
 struct StringW {
     // Dynamically allocated string
@@ -139,41 +220,48 @@ struct StringW {
         return inst != nullptr; 
     }
 
-    // the argument here is unused but we don't care. the comparison against nullptr more clearly shows what this operator is for imo
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
     constexpr bool operator ==(std::nullptr_t rhs) const noexcept {
-        return inst == nullptr;
-    }
-    #pragma clang diagnostic pop
-
-    template<typename T>
-    requires (!std::is_convertible_v<T, Il2CppString*> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
-    StringW& operator +=(const T rhs) noexcept {
-        inst = strappend(inst, rhs);
-        return *this;
-    }
-
-    StringW& operator +=(StringW rhs) noexcept {
-        inst = il2cpp_utils::detail::alloc_str(this->operator std::u16string().append(rhs));
-        return *this;
+        return inst == rhs;
     }
 
     template<typename T>
     requires (!std::is_convertible_v<T, Il2CppString*> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
-    StringW operator +(const T rhs) const noexcept {
-        return strappend(inst, rhs);
+    StringW& operator +=(T const rhs) noexcept {
+        if constexpr (std::is_constructible_v<std::u16string_view, T> && !std::is_same_v<T, std::u16string_view>)
+            inst = StringW(il2cpp_utils::detail::strappend(inst, std::u16string_view(rhs)));
+        else if constexpr (std::is_constructible_v<std::string_view, T> && !std::is_same_v<T, std::string_view>)
+            inst = StringW(il2cpp_utils::detail::strappend(inst, std::string_view(rhs)));
+        else inst = StringW(il2cpp_utils::detail::strappend(inst, rhs));
+        return *this;
     }
 
-    StringW operator +(StringW rhs) const noexcept {
+    StringW& operator +=(StringW const& rhs) noexcept {
+        inst = il2cpp_utils::detail::strappend(inst, rhs.inst);
+        return *this;
+    }
+
+    StringW operator +(StringW const& rhs) const noexcept {
         return this->operator std::u16string().append(rhs);
     }
-
-    bool operator <(StringW rhs) const noexcept;
     template<typename T>
     requires (!std::is_convertible_v<T, Il2CppString*> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
-    bool operator <(const T rhs) const noexcept {
-        return strless(inst, rhs);
+    StringW operator +(T const rhs) const noexcept {
+        if constexpr (std::is_constructible_v<std::u16string_view, T> && !std::is_same_v<T, std::u16string_view>)
+            return il2cpp_utils::detail::strappend(inst, std::u16string_view(rhs));
+        else if constexpr (std::is_constructible_v<std::string_view, T> && !std::is_same_v<T, std::string_view>)
+            return il2cpp_utils::detail::strappend(inst, std::string_view(rhs));
+        else return il2cpp_utils::detail::strappend(inst, rhs);
+    }
+
+    bool operator <(StringW const& rhs) const noexcept;
+    template<typename T>
+    requires (!std::is_constructible_v<T, StringW> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
+    bool operator <(T const rhs) const noexcept {
+        if constexpr (std::is_constructible_v<std::u16string_view, T> && !std::is_same_v<T, std::u16string_view>)
+            return il2cpp_utils::detail::strless(inst, std::u16string_view(rhs));
+        else if constexpr (std::is_constructible_v<std::string_view, T> && !std::is_same_v<T, std::string_view>)
+            return il2cpp_utils::detail::strless(inst, std::string_view(rhs));
+        else return il2cpp_utils::detail::strless(inst, rhs);
     }
 
     template<int sz>
@@ -181,7 +269,7 @@ struct StringW {
         Il2CppChar* first = inst->chars;
         char16_t const* second = rhs.chars;
         Il2CppChar* firstEnd = first + inst->length;
-        char16_t const* secondEnd = second + sz;
+        char16_t const* secondEnd = second + sz - 1;
 
         while (first != firstEnd && second != secondEnd)
         {
@@ -192,35 +280,47 @@ struct StringW {
         return first == firstEnd && second == secondEnd;
     }
     
-    bool operator ==(StringW rhs) const noexcept;
-
+    bool operator ==(StringW const& rhs) const noexcept;
     template<typename T>
-    requires (!std::is_convertible_v<T, Il2CppString*> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
-    bool operator ==(const T rhs) const noexcept {
-        return streq(inst, rhs);
+    requires (!std::is_constructible_v<T, StringW> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
+    bool operator ==(T const rhs) const noexcept {
+        if constexpr (std::is_constructible_v<std::u16string_view, T> && !std::is_same_v<T, std::u16string_view>)
+            return il2cpp_utils::detail::strcomp(inst, std::u16string_view(rhs));
+        else if constexpr (std::is_constructible_v<std::string_view, T> && !std::is_same_v<T, std::string_view>)
+            return il2cpp_utils::detail::strcomp(inst, std::string_view(rhs));
+        else return il2cpp_utils::detail::strcomp(inst, rhs);
     }
 
-    bool starts_with(StringW rhs) const noexcept;
+    bool starts_with(StringW const& rhs) const noexcept;
     template<typename T>
-    requires (!std::is_convertible_v<T, Il2CppString*> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
-    bool starts_with(const T rhs) const noexcept {
-        return strstart(inst, rhs);
+    requires (!std::is_constructible_v<T, StringW> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
+    bool starts_with(T const rhs) const noexcept {
+        if constexpr (std::is_constructible_v<std::u16string_view, T> && !std::is_same_v<T, std::u16string_view>)
+            return il2cpp_utils::detail::strstart(inst, std::u16string_view(rhs));
+        else if constexpr (std::is_constructible_v<std::string_view, T> && !std::is_same_v<T, std::string_view>)
+            return il2cpp_utils::detail::strstart(inst, std::string_view(rhs));
+        else return il2cpp_utils::detail::strstart(inst, rhs);
     }
     
-    bool ends_with(StringW rhs) const noexcept;
+    bool ends_with(StringW const& rhs) const noexcept;
     template<typename T>
-    requires (!std::is_convertible_v<T, Il2CppString*> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
-    bool ends_with(const T rhs) const noexcept {
-        return strend(inst, rhs);
+    requires (!std::is_constructible_v<T, StringW> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
+    bool ends_with(T const rhs) const noexcept {
+        if constexpr (std::is_constructible_v<std::u16string_view, T> && !std::is_same_v<T, std::u16string_view>)
+            return il2cpp_utils::detail::strend(inst, std::u16string_view(rhs));
+        else if constexpr (std::is_constructible_v<std::string_view, T> && !std::is_same_v<T, std::string_view>)
+            return il2cpp_utils::detail::strend(inst, std::string_view(rhs));
+        else return il2cpp_utils::detail::strend(inst, rhs);
     }
     
     // who needs bounds checking amiright
-    constexpr const Il2CppChar& operator [](size_t idx) const { return inst->chars[idx]; }
+    constexpr const Il2CppChar& operator [](size_t const& idx) const { return inst->chars[idx]; }
+    constexpr Il2CppChar& operator [](size_t const& idx) { return inst->chars[idx]; }
     operator std::string() const;
     operator std::u16string() const;
     operator std::wstring() const;
     operator std::u16string_view();
-    operator const std::u16string_view() const;
+    operator std::u16string_view const() const;
 
     private:
     Il2CppString* inst;
