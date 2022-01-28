@@ -79,7 +79,6 @@ struct ListWrapper {
         return &ptr->items->values[size()];
     }
 
-    // TODO: T const*?
     operator std::span<T const> const() const {
         return std::span<T const>(this->begin(), this->end());
     }
