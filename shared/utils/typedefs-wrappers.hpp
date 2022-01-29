@@ -637,7 +637,7 @@ public:
             }
         }
     }
-    auto size() {
+    auto size() const {
         return callbacks.size();
     }
     void clear() {
