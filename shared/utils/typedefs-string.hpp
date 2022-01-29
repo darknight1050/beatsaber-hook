@@ -167,25 +167,18 @@ struct StringW {
     }
 
     template<typename T>
-    requires (!std::is_constructible_v<T, StringW> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
+    requires (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T> || std::is_same_v<T, StringW>)
     StringW& operator +=(T const& rhs) noexcept {
-        inst = il2cpp_utils::detail::strappend(inst, rhs);
+        if constexpr (std::is_same_v<T, StringW>) inst = il2cpp_utils::detail::strappend(inst, rhs.inst);
+        else inst = il2cpp_utils::detail::strappend(inst, rhs);
         return *this;
-    }
-
-    StringW& operator +=(StringW const& rhs) noexcept {
-        inst = il2cpp_utils::detail::strappend(inst, rhs.inst);
-        return *this;
-    }
-
-    StringW operator +(StringW const& rhs) const noexcept {
-        return il2cpp_utils::detail::strappend(inst, rhs.inst);
     }
 
     template<typename T>
-    requires (!std::is_constructible_v<T, StringW> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
+    requires (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T> || std::is_same_v<T, StringW>)
     StringW operator +(T const& rhs) const noexcept {
-        return il2cpp_utils::detail::strappend(inst, rhs);
+        if constexpr (std::is_same_v<T, StringW>) return il2cpp_utils::detail::strappend(inst, rhs.inst);
+        else return il2cpp_utils::detail::strappend(inst, rhs);
     }
 
     template<typename T>
