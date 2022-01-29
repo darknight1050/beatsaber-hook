@@ -168,7 +168,7 @@ struct StringW {
 
     template<typename T>
     requires (!std::is_constructible_v<T, StringW> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
-    StringW& operator +=(T const rhs) noexcept {
+    StringW& operator +=(T const& rhs) noexcept {
         inst = il2cpp_utils::detail::strappend(inst, rhs);
         return *this;
     }
@@ -184,13 +184,13 @@ struct StringW {
 
     template<typename T>
     requires (!std::is_constructible_v<T, StringW> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))
-    StringW operator +(T const rhs) const noexcept {
+    StringW operator +(T const& rhs) const noexcept {
         return il2cpp_utils::detail::strappend(inst, rhs);
     }
 
     template<typename T>
     requires (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T> || std::is_same_v<T, StringW>)
-    bool operator <(T const rhs) const noexcept {
+    bool operator <(T const& rhs) const noexcept {
         if constexpr (std::is_same_v<T, StringW>) return il2cpp_utils::detail::strless(inst, rhs.inst);
         else return il2cpp_utils::detail::strless(inst, rhs);
     }
@@ -209,14 +209,14 @@ struct StringW {
 
     template<typename T>
     requires (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T> || std::is_same_v<T, StringW>)
-    bool starts_with(T const rhs) const noexcept {
+    bool starts_with(T const& rhs) const noexcept {
         if constexpr (std::is_same_v<T, StringW>) return il2cpp_utils::detail::strstart(inst, rhs.inst);
         else return il2cpp_utils::detail::strstart(inst, rhs);
     }
     
     template<typename T>
     requires (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T> || std::is_same_v<T, StringW>)
-    bool ends_with(T const rhs) const noexcept {
+    bool ends_with(T const& rhs) const noexcept {
         if constexpr (std::is_same_v<T, StringW>) return il2cpp_utils::detail::strend(inst, rhs.inst);
         else return il2cpp_utils::detail::strend(inst, rhs);
     }
