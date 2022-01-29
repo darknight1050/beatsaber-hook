@@ -49,6 +49,7 @@ namespace detail {
     Il2CppString* strappend(Il2CppString const* lhs, Il2CppString const* rhs) noexcept {
         if (!lhs && !rhs) return nullptr;
 
+        il2cpp_functions::Init();
         if (!lhs && rhs)
             return il2cpp_functions::string_new_utf16(rhs->chars, rhs->length);
         else if (lhs && !rhs)
@@ -56,7 +57,8 @@ namespace detail {
         else
         {
             size_t fullLength = lhs->length + rhs->length;
-            auto result = il2cpp_functions::string_new_utf16(lhs->chars, fullLength);
+            Il2CppString* result = CRASH_UNLESS(il2cpp_utils::NewUnsafe<Il2CppString*>(classof(Il2CppString*), Il2CppChar('\0'), fullLength));
+            memcpy(result->chars, lhs->chars, lhs->length * sizeof(Il2CppChar));
             Il2CppChar* pastFirstString = result->chars + lhs->length;
             memcpy(pastFirstString, rhs->chars, rhs->length * sizeof(*rhs->chars));
             return result;
@@ -66,8 +68,9 @@ namespace detail {
     Il2CppString* strappend(Il2CppString const* lhs, std::u16string_view const rhs) noexcept {
         if (lhs)
         {
-            size_t fullLength = lhs->length + rhs.size();
-            auto result = il2cpp_functions::string_new_utf16(lhs->chars, fullLength);
+            int fullLength = lhs->length + rhs.size();
+            Il2CppString* result = CRASH_UNLESS(il2cpp_utils::NewUnsafe<Il2CppString*>(classof(Il2CppString*), Il2CppChar('\0'), fullLength));
+            memcpy(result->chars, lhs->chars, lhs->length * sizeof(Il2CppChar));
             Il2CppChar* pastFirstString = result->chars + lhs->length;
             static_assert(sizeof(*pastFirstString) == sizeof(*rhs.data()));
             memcpy(pastFirstString, rhs.data(), rhs.size() * sizeof(*rhs.data()));
@@ -82,9 +85,9 @@ namespace detail {
     Il2CppString* strappend(Il2CppString const* lhs, std::string_view const rhs) noexcept {
         if (lhs)
         {
-            size_t fullLength = lhs->length + rhs.size();
-            il2cpp_functions::Init();
-            Il2CppString* result = il2cpp_functions::string_new_utf16(lhs->chars, fullLength);
+            int fullLength = lhs->length + rhs.size();
+            Il2CppString* result = CRASH_UNLESS(il2cpp_utils::NewUnsafe<Il2CppString*>(classof(Il2CppString*), Il2CppChar('\0'), fullLength));
+            memcpy(result->chars, lhs->chars, lhs->length * sizeof(Il2CppChar));
             Il2CppChar* pastFirstString = result->chars + lhs->length;
             convstr(rhs.data(), pastFirstString, rhs.size());
             return result;
@@ -98,11 +101,11 @@ namespace detail {
     Il2CppString* strappend(std::string_view const lhs, Il2CppString const* rhs) noexcept {
         if (rhs)
         {
-            size_t fullLength = rhs->length + lhs.size();
-            il2cpp_functions::Init();
-            Il2CppString* result = il2cpp_functions::string_new_utf16(rhs->chars, fullLength);
-            Il2CppChar* pastFirstString = result->chars + rhs->length;
-            convstr(lhs.data(), pastFirstString, lhs.size());
+            int fullLength = rhs->length + lhs.size();
+            Il2CppString* result = CRASH_UNLESS(il2cpp_utils::NewUnsafe<Il2CppString*>(classof(Il2CppString*), Il2CppChar('\0'), fullLength));
+            convstr(lhs.data(), result->chars, lhs.size());
+            Il2CppChar* pastFirstString = result->chars + lhs.size();
+            memcpy(pastFirstString, rhs->chars, rhs->length * sizeof(*pastFirstString));
             return result;
         }
         else
@@ -114,11 +117,12 @@ namespace detail {
     Il2CppString* strappend(std::u16string_view const lhs, Il2CppString const* rhs) noexcept {
         if (rhs)
         {
-            size_t fullLength = rhs->length + lhs.size();
-            auto result = il2cpp_functions::string_new_utf16(rhs->chars, fullLength);
+            int fullLength = rhs->length + lhs.size();
+            Il2CppString* result = CRASH_UNLESS(il2cpp_utils::NewUnsafe<Il2CppString*>(classof(Il2CppString*), Il2CppChar('\0'), fullLength));
+            static_assert(sizeof(Il2CppChar) == sizeof(*lhs.data()));
+            memcpy(result->chars, lhs.data(), lhs.size() * sizeof(*lhs.data()));
             Il2CppChar* pastFirstString = result->chars + rhs->length;
-            static_assert(sizeof(*pastFirstString) == sizeof(*lhs.data()));
-            memcpy(pastFirstString, lhs.data(), lhs.size() * sizeof(*lhs.data()));
+            memcpy(pastFirstString, rhs->chars, rhs->length * sizeof(*pastFirstString));
             return result;
         }
         else
