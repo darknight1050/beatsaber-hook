@@ -46,6 +46,11 @@ namespace detail {
         return il2cpp_functions::string_new_utf16((Il2CppChar const*) str.data(), str.size());
     }
 
+    Il2CppString* CreateString(int length) {
+        static MethodInfo const* methodInfo = il2cpp_utils::FindMethod(classof(Il2CppString*), "CreateString", std::vector<Il2CppType const*>{ il2cpp_utils::ExtractIndependentType<Il2CppChar>(), il2cpp_utils::ExtractIndependentType<int>()});
+        return CRASH_UNLESS(il2cpp_utils::RunStaticMethodUnsafe<Il2CppString*>(methodInfo, Il2CppChar('\0'), length));
+    }
+
     Il2CppString* strappend(Il2CppString const* lhs, Il2CppString const* rhs) noexcept {
         if (!lhs && !rhs) return nullptr;
 
@@ -57,7 +62,7 @@ namespace detail {
         else
         {
             size_t fullLength = lhs->length + rhs->length;
-            Il2CppString* result = CRASH_UNLESS(il2cpp_utils::NewUnsafe<Il2CppString*>(classof(Il2CppString*), Il2CppChar('\0'), fullLength));
+            Il2CppString* result = CreateString(fullLength);
             memcpy(result->chars, lhs->chars, lhs->length * sizeof(Il2CppChar));
             Il2CppChar* pastFirstString = result->chars + lhs->length;
             memcpy(pastFirstString, rhs->chars, rhs->length * sizeof(*rhs->chars));
@@ -69,7 +74,7 @@ namespace detail {
         if (lhs)
         {
             int fullLength = lhs->length + rhs.size();
-            Il2CppString* result = CRASH_UNLESS(il2cpp_utils::NewUnsafe<Il2CppString*>(classof(Il2CppString*), Il2CppChar('\0'), fullLength));
+            Il2CppString* result = CreateString(fullLength);
             memcpy(result->chars, lhs->chars, lhs->length * sizeof(Il2CppChar));
             Il2CppChar* pastFirstString = result->chars + lhs->length;
             static_assert(sizeof(*pastFirstString) == sizeof(*rhs.data()));
@@ -86,7 +91,7 @@ namespace detail {
         if (lhs)
         {
             int fullLength = lhs->length + rhs.size();
-            Il2CppString* result = CRASH_UNLESS(il2cpp_utils::NewUnsafe<Il2CppString*>(classof(Il2CppString*), Il2CppChar('\0'), fullLength));
+            Il2CppString* result = CreateString(fullLength);
             memcpy(result->chars, lhs->chars, lhs->length * sizeof(Il2CppChar));
             Il2CppChar* pastFirstString = result->chars + lhs->length;
             convstr(rhs.data(), pastFirstString, rhs.size());
@@ -102,7 +107,7 @@ namespace detail {
         if (rhs)
         {
             int fullLength = rhs->length + lhs.size();
-            Il2CppString* result = CRASH_UNLESS(il2cpp_utils::NewUnsafe<Il2CppString*>(classof(Il2CppString*), Il2CppChar('\0'), fullLength));
+            Il2CppString* result = CreateString(fullLength);
             convstr(lhs.data(), result->chars, lhs.size());
             Il2CppChar* pastFirstString = result->chars + lhs.size();
             memcpy(pastFirstString, rhs->chars, rhs->length * sizeof(*pastFirstString));
@@ -118,10 +123,10 @@ namespace detail {
         if (rhs)
         {
             int fullLength = rhs->length + lhs.size();
-            Il2CppString* result = CRASH_UNLESS(il2cpp_utils::NewUnsafe<Il2CppString*>(classof(Il2CppString*), Il2CppChar('\0'), fullLength));
+            Il2CppString* result = CreateString(fullLength);
             static_assert(sizeof(Il2CppChar) == sizeof(*lhs.data()));
             memcpy(result->chars, lhs.data(), lhs.size() * sizeof(*lhs.data()));
-            Il2CppChar* pastFirstString = result->chars + rhs->length;
+            Il2CppChar* pastFirstString = result->chars + lhs.size();
             memcpy(pastFirstString, rhs->chars, rhs->length * sizeof(*pastFirstString));
             return result;
         }
@@ -129,24 +134,6 @@ namespace detail {
         {
             return alloc_str(lhs);
         }
-    }
-
-    bool strcomp(Il2CppString const* lhs, Il2CppString const* rhs) noexcept {
-        if (lhs == rhs) return true;
-        if (!lhs || !rhs || lhs->length != rhs->length) return false;
-
-        Il2CppChar const* first = lhs->chars; 
-        Il2CppChar const* second = rhs->chars; 
-        Il2CppChar const* firstEnd = first + lhs->length; 
-        Il2CppChar const* secondEnd = second + rhs->length; 
-
-        while (first != firstEnd && second != secondEnd)
-        {
-            if (*first != *second) return false;
-            first++; second++;
-        }
-
-        return first == firstEnd && second == secondEnd;
     }
 
     template<typename T>
@@ -175,6 +162,24 @@ namespace detail {
     
     bool strcomp(Il2CppString const* lhs, std::u16string_view const rhs) noexcept {
         return strcomp<std::remove_const_t<decltype(rhs)>>(lhs, rhs);
+    }
+
+    bool strcomp(Il2CppString const* lhs, Il2CppString const* rhs) noexcept {
+        if (lhs == rhs) return true;
+        if (!lhs || !rhs || lhs->length != rhs->length) return false;
+
+        Il2CppChar const* first = lhs->chars; 
+        Il2CppChar const* second = rhs->chars; 
+        Il2CppChar const* firstEnd = first + lhs->length; 
+        Il2CppChar const* secondEnd = second + rhs->length; 
+
+        while (first != firstEnd && second != secondEnd)
+        {
+            if (*first != *second) return false;
+            first++; second++;
+        }
+
+        return first == firstEnd && second == secondEnd;
     }
 
     template<typename T>
@@ -208,6 +213,30 @@ namespace detail {
     bool strless(Il2CppString const* lhs, std::u16string_view const rhs) noexcept {
         return strless<std::remove_const_t<decltype(rhs)>>(lhs, rhs);
     }
+    
+    bool strless(Il2CppString const* lhs, Il2CppString const* rhs) noexcept {
+        if (!lhs && !rhs) return false;
+        if (!lhs) return true;
+        if (!rhs) return false;
+
+        Il2CppChar const* first = lhs->chars; 
+        Il2CppChar const* second = rhs->chars; 
+        Il2CppChar const* firstEnd = first + lhs->length; 
+        Il2CppChar const* secondEnd = second + rhs->length; 
+
+        while (first != firstEnd && second != secondEnd)
+        {
+            if (*first == *second)
+            {
+                first++; second++;
+                continue;
+            }
+            return *first < *second;
+        }
+        // if we got here, and second is not second end, we had a shorter first, so it should be true
+        // if second is the end, we are longer, so it should be false
+        return second != secondEnd;
+    }
 
     template<typename T>
     requires(std::is_same_v<T, std::string_view> || std::is_same_v<T, std::u16string_view>)
@@ -240,6 +269,29 @@ namespace detail {
         return strstart<std::remove_const_t<decltype(rhs)>>(lhs, rhs);
     }
 
+    bool strstart(Il2CppString const* lhs, Il2CppString const* rhs) noexcept {
+        // if either instance is nullptr, return false, if our length is smaller than prefix length, also return false
+        if (!lhs || !rhs || lhs->length < rhs->length) return false;
+
+        Il2CppChar const* first = lhs->chars; 
+        Il2CppChar const* second = rhs->chars; 
+        Il2CppChar const* secondEnd = second + lhs->length; 
+
+        while (second != secondEnd)
+        {
+            if (*first == *second)
+            {
+                first++; second++;
+                continue;
+            }
+            // we got a mismatch! return false;
+            return false;
+        }
+        // if we got through the entire string it was all equal, return true
+        return true;
+    }
+
+
     template<typename T>
     requires(std::is_same_v<T, std::string_view> || std::is_same_v<T, std::u16string_view>)
     bool strend(Il2CppString const* lhs, T const rhs) noexcept {
@@ -270,11 +322,33 @@ namespace detail {
     bool strend(Il2CppString const* lhs, std::u16string_view const rhs) noexcept {
         return strend<std::remove_const_t<decltype(rhs)>>(lhs, rhs);
     }
+
+    bool strend(Il2CppString const* lhs, Il2CppString const* rhs) noexcept {
+        if (!lhs || !rhs || lhs->length < rhs->length) return false;
+
+        Il2CppChar const* first = lhs->chars + lhs->length - 1;
+        Il2CppChar const* secondBegin = rhs->chars - 1; 
+        Il2CppChar const* second = secondBegin + rhs->length; 
+
+        while (second != secondBegin)
+        {
+            if (*first == *second)
+            {
+                first--; second--;
+                continue;
+            }
+            // we got a mismatch! return false;
+            return false;
+        }
+        // if we got through the entire string it was all equal, return true
+        return true;
+    }
+
 }
 }
 
 StringW::operator std::string() const {
-    std::string val(inst->length * 2 + 1, '\0');
+    std::string val(inst->length * sizeof(wchar_t) + 1, '\0');
     auto resSize = il2cpp_utils::detail::convstr(inst->chars, val.data(), inst->length, val.size());
     val.resize(resSize);
     return val;
@@ -294,93 +368,6 @@ StringW::operator std::u16string_view const() const {
 
 StringW::operator std::u16string_view() {
     return {inst->chars, static_cast<std::size_t>(inst->length)};
-}
-
-bool StringW::operator ==(StringW const& rhs) const noexcept {
-    if (inst == rhs.inst) return true;
-    if (!inst || !rhs || inst->length != rhs->length) return false;
-    
-    Il2CppChar const* first = inst->chars; 
-    Il2CppChar const* second = rhs->chars; 
-    Il2CppChar const* firstEnd = first + inst->length; 
-    Il2CppChar const* secondEnd = second + rhs->length; 
-    
-    while (first != firstEnd && second != secondEnd)
-    {
-        if (*first != *second) return false;
-        first++; second++;
-    }
-
-    return first == firstEnd && second == secondEnd;
-}
-
-bool StringW::operator <(StringW const& rhs) const noexcept {
-    if (!inst && !rhs) return false;
-    if (!inst) return true;
-    if (!rhs) return false;
-    
-    Il2CppChar const* first = inst->chars; 
-    Il2CppChar const* second = rhs->chars; 
-    Il2CppChar const* firstEnd = first + inst->length; 
-    Il2CppChar const* secondEnd = second + rhs->length; 
-    
-    while (first != firstEnd && second != secondEnd)
-    {
-        if (*first == *second)
-        {
-            first++; second++;
-            continue;
-        }
-        return *first < *second;
-    }
-    // if we got here, and second is not second end, we had a shorter first, so it should be true
-    // if second is the end, we are longer, so it should be false
-    return second != secondEnd;
-}
-
-
-bool StringW::starts_with(StringW const& rhs) const noexcept {
-    // if either instance is nullptr, return false, if our length is smaller than prefix length, also return false
-    if (!inst || !rhs || inst->length < rhs->length) return false;
-
-    Il2CppChar const* first = inst->chars; 
-    Il2CppChar const* second = rhs->chars; 
-    Il2CppChar const* secondEnd = second + rhs.inst->length; 
-    
-    while (second != secondEnd)
-    {
-        if (*first == *second)
-        {
-            first++; second++;
-            continue;
-        }
-        // we got a mismatch! return false;
-        return false;
-    }
-    // if we got through the entire string it was all equal, return true
-    return true;
-}
-
-
-bool StringW::ends_with(StringW const& rhs) const noexcept {
-    if (!inst || !rhs || inst->length < rhs->length) return false;
-
-    Il2CppChar const* first = inst->chars + inst->length - 1;
-    Il2CppChar const* secondBegin = rhs->chars - 1; 
-    Il2CppChar const* second = secondBegin + rhs->length; 
-    
-    while (second != secondBegin)
-    {
-        if (*first == *second)
-        {
-            first--; second--;
-            continue;
-        }
-        // we got a mismatch! return false;
-        return false;
-    }
-    // if we got through the entire string it was all equal, return true
-    return true;
 }
 
 StringW::iterator StringW::begin() { return inst->chars; }
