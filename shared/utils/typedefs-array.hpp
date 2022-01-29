@@ -328,8 +328,8 @@ struct ArrayW {
     template<class U = Il2CppObject*>
     U GetEnumerator() {
         static auto* method = CRASH_UNLESS(il2cpp_utils::FindMethodUnsafe(
-            this, "System.Collections.Generic.IEnumerable`1.GetEnumerator", 0));
-        return il2cpp_utils::RunMethodRethrow<U, false>(this, method);
+            val, "System.Collections.Generic.IEnumerable`1.GetEnumerator", 0));
+        return il2cpp_utils::RunMethodRethrow<U, false>(val, method);
     }
     bool Contains(T item) {
         // TODO: find a better way around the existence of 2 methods with this name (the 2nd not being generic at all)
@@ -374,13 +374,25 @@ struct ArrayW {
         return val->values;
     }
     iterator end() {
-        return &val->values[Length()];
+        return val->values + Length();
+    }
+    auto rbegin() {
+        return std::reverse_iterator(val->values + Length());
+    }
+    auto rend() {
+        return std::reverse_iterator(val->values);
     }
     const_iterator begin() const {
         return val->values;
     }
     const_iterator end() const {
-        return &val->values[Length()];
+        return val->values + Length();
+    }
+    auto rbegin() const {
+        return std::reverse_iterator(val->values + Length());
+    }
+    auto rend() const {
+        return std::reverse_iterator(val->values);
     }
     explicit operator const Ptr() const {
         return val;
@@ -406,6 +418,72 @@ struct ArrayW {
     }
     operator bool() const noexcept {
         return val != nullptr;
+    }
+
+    template<typename D = T>
+    T First() {
+        if (Length() > 0)
+            return val->values[0];
+        else 
+            throw std::runtime_error("First called on empty array!");
+    }
+
+    template<typename D = T>
+    requires(std::is_default_constructible_v<T>)
+    T FirstOrDefault() {
+        if (Length() > 0)
+            return val->values[0];
+        else return {};
+    }
+
+    template<typename D = T>
+    T Last() {
+        if (Length() > 0)
+            return val->values[Length() - 1];
+        else 
+            throw std::runtime_error("Last called on empty array!");
+    }
+
+    template<typename D = T>
+    requires(std::is_default_constructible_v<T>)
+    T LastOrDefault() {
+        if (Length() > 0)
+            return val->values[Length() - 1];
+        else return {};
+    }
+
+    template<class Predicate>
+    T First(Predicate pred) {
+        for (iterator it = begin(); it != end(); it++) {
+            if (pred(*it)) return *it;
+        }
+        throw std::runtime_error("First on array found no value that matched predicate");
+    }
+
+    template<class Predicate>
+    requires(std::is_default_constructible_v<T>)
+    T FirstOrDefault(Predicate pred) {
+        for (iterator it = begin(); it != end(); it++) {
+            if (pred(*it)) return *it;
+        }
+        return {};
+    }
+
+    template<class Predicate>
+    T Last(Predicate pred) {
+        for (auto it = rbegin(); it != rend(); it++) {
+            if (pred(*it)) return *it;
+        }
+        throw std::runtime_error("Last on array found no value that matched predicate");
+    }
+
+    template<class Predicate>
+    requires(std::is_default_constructible_v<T>)
+    T LastOrDefault(Predicate pred) {
+        for (auto it = rbegin(); it != rend(); it++) {
+            if (pred(*it)) return *it;
+        }
+        return {};
     }
 
     constexpr void* convert() const noexcept {
