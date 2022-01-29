@@ -46,6 +46,11 @@ namespace detail {
         return il2cpp_functions::string_new_utf16((Il2CppChar const*) str.data(), str.size());
     }
 
+    Il2CppString* CreateString(int length) {
+        static MethodInfo const* methodInfo = il2cpp_utils::FindMethod(classof(Il2CppString*), "CreateString", std::vector<Il2CppType const*>{ il2cpp_utils::ExtractIndependentType<Il2CppChar>(), il2cpp_utils::ExtractIndependentType<int>()});
+        return CRASH_UNLESS(il2cpp_utils::RunStaticMethodUnsafe<Il2CppString*>(methodInfo, Il2CppChar('\0'), length));
+    }
+
     Il2CppString* strappend(Il2CppString const* lhs, Il2CppString const* rhs) noexcept {
         if (!lhs && !rhs) return nullptr;
 
@@ -57,7 +62,7 @@ namespace detail {
         else
         {
             size_t fullLength = lhs->length + rhs->length;
-            Il2CppString* result = CRASH_UNLESS(il2cpp_utils::NewUnsafe<Il2CppString*>(classof(Il2CppString*), Il2CppChar('\0'), fullLength));
+            Il2CppString* result = CreateString(fullLength);
             memcpy(result->chars, lhs->chars, lhs->length * sizeof(Il2CppChar));
             Il2CppChar* pastFirstString = result->chars + lhs->length;
             memcpy(pastFirstString, rhs->chars, rhs->length * sizeof(*rhs->chars));
@@ -69,7 +74,7 @@ namespace detail {
         if (lhs)
         {
             int fullLength = lhs->length + rhs.size();
-            Il2CppString* result = CRASH_UNLESS(il2cpp_utils::NewUnsafe<Il2CppString*>(classof(Il2CppString*), Il2CppChar('\0'), fullLength));
+            Il2CppString* result = CreateString(fullLength);
             memcpy(result->chars, lhs->chars, lhs->length * sizeof(Il2CppChar));
             Il2CppChar* pastFirstString = result->chars + lhs->length;
             static_assert(sizeof(*pastFirstString) == sizeof(*rhs.data()));
@@ -86,7 +91,7 @@ namespace detail {
         if (lhs)
         {
             int fullLength = lhs->length + rhs.size();
-            Il2CppString* result = CRASH_UNLESS(il2cpp_utils::NewUnsafe<Il2CppString*>(classof(Il2CppString*), Il2CppChar('\0'), fullLength));
+            Il2CppString* result = CreateString(fullLength);
             memcpy(result->chars, lhs->chars, lhs->length * sizeof(Il2CppChar));
             Il2CppChar* pastFirstString = result->chars + lhs->length;
             convstr(rhs.data(), pastFirstString, rhs.size());
@@ -102,7 +107,7 @@ namespace detail {
         if (rhs)
         {
             int fullLength = rhs->length + lhs.size();
-            Il2CppString* result = CRASH_UNLESS(il2cpp_utils::NewUnsafe<Il2CppString*>(classof(Il2CppString*), Il2CppChar('\0'), fullLength));
+            Il2CppString* result = CreateString(fullLength);
             convstr(lhs.data(), result->chars, lhs.size());
             Il2CppChar* pastFirstString = result->chars + lhs.size();
             memcpy(pastFirstString, rhs->chars, rhs->length * sizeof(*pastFirstString));
@@ -118,10 +123,10 @@ namespace detail {
         if (rhs)
         {
             int fullLength = rhs->length + lhs.size();
-            Il2CppString* result = CRASH_UNLESS(il2cpp_utils::NewUnsafe<Il2CppString*>(classof(Il2CppString*), Il2CppChar('\0'), fullLength));
+            Il2CppString* result = CreateString(fullLength);
             static_assert(sizeof(Il2CppChar) == sizeof(*lhs.data()));
             memcpy(result->chars, lhs.data(), lhs.size() * sizeof(*lhs.data()));
-            Il2CppChar* pastFirstString = result->chars + rhs->length;
+            Il2CppChar* pastFirstString = result->chars + lhs.size();
             memcpy(pastFirstString, rhs->chars, rhs->length * sizeof(*pastFirstString));
             return result;
         }
@@ -274,7 +279,7 @@ namespace detail {
 }
 
 StringW::operator std::string() const {
-    std::string val(inst->length * 2 + 1, '\0');
+    std::string val(inst->length * 8 + 1, '\0');
     auto resSize = il2cpp_utils::detail::convstr(inst->chars, val.data(), inst->length, val.size());
     val.resize(resSize);
     return val;
