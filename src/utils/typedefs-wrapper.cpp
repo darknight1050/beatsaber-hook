@@ -348,7 +348,7 @@ namespace detail {
 }
 
 StringW::operator std::string() const {
-    std::string val(inst->length * 4 + 1, '\0');
+    std::string val(inst->length * sizeof(wchar_t) + 1, '\0');
     auto resSize = il2cpp_utils::detail::convstr(inst->chars, val.data(), inst->length, val.size());
     val.resize(resSize);
     return val;
