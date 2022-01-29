@@ -420,7 +420,6 @@ struct ArrayW {
         return val != nullptr;
     }
 
-    template<typename D = T>
     T First() {
         if (Length() > 0)
             return val->values[0];
@@ -436,7 +435,6 @@ struct ArrayW {
         else return {};
     }
 
-    template<typename D = T>
     T Last() {
         if (Length() > 0)
             return val->values[Length() - 1];
