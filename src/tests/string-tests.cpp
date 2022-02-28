@@ -115,6 +115,7 @@ static void test2() {
 
     using namespace il2cpp_utils;
     RunMethod<bool>((Il2CppString*)w1, "Equals", w2);
+    RunMethod<bool>((Il2CppString*)w1, "Equals", one);
 }
 #pragma clang diagnostic pop
 #endif
