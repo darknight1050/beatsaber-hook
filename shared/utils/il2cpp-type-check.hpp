@@ -351,7 +351,8 @@ namespace il2cpp_utils {
         template<> \
         struct ::il2cpp_utils::il2cpp_type_check::il2cpp_gen_struct_no_arg_class<templateType> { \
             static inline Il2CppClass* get() { \
-                return il2cpp_utils::GetClassFromName(nameSpace, className); \
+                static auto klass = il2cpp_utils::GetClassFromName(nameSpace, className); \
+                return klass; \
             } \
         }
 
