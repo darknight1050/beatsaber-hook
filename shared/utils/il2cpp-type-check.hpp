@@ -326,6 +326,66 @@ namespace il2cpp_utils {
         };
 
         template<typename... TArgs, template<typename... ST> class S>
+        requires (S<TArgs...>::IS_VALUE_TYPE && has_get<il2cpp_no_arg_class<typename S<TArgs...>::declaring_type>>)
+        struct il2cpp_no_arg_class<S<TArgs...>> {
+            static inline Il2CppClass* get() {
+                // Resolve our declaring type
+                Il2CppClass* declaring = il2cpp_no_arg_class<typename S<TArgs...>::declaring_type>::get();
+                Il2CppClass* classWithNested = declaring;
+                if (declaring->generic_class) {
+                    // Class::GetNestedTypes refuses to work on generic instances, so get the generic template instead
+                    classWithNested = CRASH_UNLESS(il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex(declaring->generic_class->typeDefinitionIndex));
+                }
+                std::string typeName(S<TArgs...>::NESTED_NAME);
+
+                void* myIter = nullptr;
+                Il2CppClass* found = nullptr;
+                while (Il2CppClass* nested = il2cpp_functions::class_get_nested_types(classWithNested, &myIter)) {
+                    if (typeName == nested->name) {
+                        found = nested;
+                        break;
+                    }
+                }
+                CRASH_UNLESS(found);
+                if (declaring->generic_class) {
+                    const Il2CppGenericInst* genInst = declaring->generic_class->context.class_inst;
+                    found = CRASH_UNLESS(il2cpp_utils::MakeGeneric(found, genInst->type_argv, genInst->type_argc));
+                }
+                return found;
+            }
+        };
+
+        template<typename... TArgs, template<typename... ST> class S>
+        requires (!S<TArgs...>::IS_VALUE_TYPE && has_get<il2cpp_no_arg_class<typename S<TArgs...>::declaring_type>>)
+        struct il2cpp_no_arg_class<S<TArgs...>*> {
+            static inline Il2CppClass* get() {
+                // Resolve our declaring type
+                Il2CppClass* declaring = il2cpp_no_arg_class<typename S<TArgs...>::declaring_type>::get();
+                Il2CppClass* classWithNested = declaring;
+                if (declaring->generic_class) {
+                    // Class::GetNestedTypes refuses to work on generic instances, so get the generic template instead
+                    classWithNested = CRASH_UNLESS(il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex(declaring->generic_class->typeDefinitionIndex));
+                }
+                std::string typeName(S<TArgs...>::NESTED_NAME);
+
+                void* myIter = nullptr;
+                Il2CppClass* found = nullptr;
+                while (Il2CppClass* nested = il2cpp_functions::class_get_nested_types(classWithNested, &myIter)) {
+                    if (typeName == nested->name) {
+                        found = nested;
+                        break;
+                    }
+                }
+                CRASH_UNLESS(found);
+                if (declaring->generic_class) {
+                    const Il2CppGenericInst* genInst = declaring->generic_class->context.class_inst;
+                    found = CRASH_UNLESS(il2cpp_utils::MakeGeneric(found, genInst->type_argv, genInst->type_argc));
+                }
+                return found;
+            }
+        };
+
+        template<typename... TArgs, template<typename... ST> class S>
         struct il2cpp_no_arg_class<S<TArgs...>*> {
             static inline Il2CppClass* get() {
                 Il2CppClass* genTemplate;
