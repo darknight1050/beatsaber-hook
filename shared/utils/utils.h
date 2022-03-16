@@ -23,9 +23,9 @@ namespace std {
 // For use in SAFE_ABORT/CRASH_UNLESS (& RET_UNLESS if possible)
 // And also logging
 #if __has_include(<source_location>)
-#error please alert sc2ad/beatsaber-hook that "std::source_location is live" (sharing your Android NDK version) then comment this out!
+// #error please alert sc2ad/beatsaber-hook that "std::source_location is live" (sharing your Android NDK version) then comment this out!
 #elif __has_include(<experimental/source_location>)
-#warning please alert sc2ad/beatsaber-hook that "std::experimental::source_location is live" (sharing your Android NDK version) then comment this out!
+// #warning please alert sc2ad/beatsaber-hook that "std::experimental::source_location is live" (sharing your Android NDK version) then comment this out!
 #endif
 
 // For use in ClassOrInstance concept
@@ -42,6 +42,8 @@ template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type
 #define MACRO_WRAP(...) do { \
     __VA_ARGS__; \
 } while(0)
+
+#define IDENTITY(...) __VA_ARGS__
 
 template <class, template <class, class...> class>
 struct is_instance : public std::false_type {};

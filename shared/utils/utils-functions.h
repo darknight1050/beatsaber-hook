@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <unwind.h>
 
 // logs the function, file and line, sleeps to allow logs to flush, then terminates program
 __attribute__((noreturn)) void safeAbort(const char* func, const char* file, int line);
@@ -60,5 +61,15 @@ __attribute__((format(printf, 1, 2))) std::string string_format(const char* form
 /// @brief Get the size of the libil2cpp.so file
 /// @returns The size of the .so
 uintptr_t getLibil2cppSize();
+
+namespace backtrace_helpers {
+    struct BacktraceState {
+        void **current;
+        void **end;
+        uint16_t skip;
+    };
+    _Unwind_Reason_Code unwindCallback(struct _Unwind_Context *context, void *arg);
+    size_t captureBacktrace(void **buffer, uint16_t max, uint16_t skip = 0);
+}
 
 #endif /* UTILS_FUNCTIONS_H */

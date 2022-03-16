@@ -20,6 +20,7 @@ add_compile_definitions(VERSION=\"${MOD_VERSION}\")
 add_compile_definitions(ID=\"${MOD_ID}\")
 add_compile_definitions(UNITY_2019)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if (DEFINED TEST_BUILD)
     MESSAGE(STATUS "Compiling with test defines")

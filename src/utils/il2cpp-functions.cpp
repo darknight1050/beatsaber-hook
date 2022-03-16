@@ -7,7 +7,6 @@
 #include "../../shared/utils/capstone-utils.hpp"
 #include "modloader/shared/modloader.hpp"
 
-
 #define API_INIT(rt, name, ...) rt (*il2cpp_functions::il2cpp_##name)__VA_ARGS__
 // All the fields...
 #ifdef UNITY_2019

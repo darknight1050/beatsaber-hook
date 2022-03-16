@@ -19,10 +19,38 @@ namespace il2cpp_utils {
     }
 
     #ifdef UNITY_2019
-    [[noreturn]] void raise(Il2CppException* exp) {
-        il2cpp_functions::raise_exception(exp);
+    [[noreturn]] void raise(const Il2CppException* exp) {
+        assert(exp);
+        il2cpp_functions::raise_exception(const_cast<Il2CppException*>(exp));
         // Should never get here, since the exception raise should happen and thus we should no longer be the caller.
-        std::terminate();
+        __builtin_unreachable();
     }
     #endif
+
+    void RunMethodException::log_backtrace() const {
+        auto& logger = Logger::get();
+        logger.log(Logging::ERROR, "Logging backtrace for RunMethodException...");
+        logger.error("*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***");
+        logger.error("pid: %i, tid: %i", getpid(), gettid());
+        for (uint16_t i = 0; i < stacktrace_size; ++i) {
+            Dl_info info;
+            if (dladdr(stacktrace_buffer[i], &info)) {
+                // Buffer points to 1 instruction ahead
+                long addr = reinterpret_cast<char*>(stacktrace_buffer[i]) - reinterpret_cast<char*>(info.dli_fbase) - 4;
+                if (info.dli_sname) {
+                    int status;
+                    const char *demangled = abi::__cxa_demangle(info.dli_sname, nullptr, nullptr, &status);
+                    if (status) {
+                        demangled = info.dli_sname;
+                    }
+                    logger.error("        #%02i  pc %016lx  %s (%s)\n", i, addr, info.dli_fname, demangled);
+                    if (!status) {
+                        free(const_cast<char*>(demangled));
+                    }
+                } else {
+                    logger.error("        #%02i  pc %016lx  %s\n", i, addr, info.dli_fname);
+                }
+            }
+        }
+    }
 }

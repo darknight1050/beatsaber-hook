@@ -446,9 +446,7 @@ namespace il2cpp_utils {
     template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
     TOut RunMethodRethrow(T&& instance, const MethodInfo* method, TArgs&& ...params) {
         static auto& logger = getLogger();
-        if (!method) {
-            throw RunMethodException("Method cannot be null!", nullptr);
-        }
+        CRASH_UNLESS(method);
 
         if constexpr (checkTypes && sizeof...(TArgs) > 0) {
             std::array<const Il2CppType*, sizeof...(TArgs)> types{ExtractType(params)...};
@@ -477,9 +475,8 @@ namespace il2cpp_utils {
 
         if constexpr (!std::is_same_v<TOut, void>) {
             auto re = FromIl2CppObject<TOut>(ret);
-            if (!re) {
-                throw RunMethodException("Return type not convertible from Il2CppObject!", method);
-            }
+            // Return type must be convertible from an Il2CppObject to TOut!
+            CRASH_UNLESS(re);
             return *re;
         }
     }

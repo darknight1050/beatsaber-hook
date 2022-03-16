@@ -14,8 +14,6 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
-#include <unwind.h>
-#include <cxxabi.h>
 
 #ifndef VERSION
 #define VERSION "0.0.0"
@@ -208,44 +206,18 @@ void Logger::startConsumer() {
     }
 }
 
-// Backtrace stuff largely written by StackDoubleFlow
-namespace {
-    struct BacktraceState {
-        void **current;
-        void **end;
-    };
-    static _Unwind_Reason_Code unwindCallback(struct _Unwind_Context *context, void *arg) {
-        BacktraceState *state = static_cast<BacktraceState *>(arg);
-        uintptr_t pc = _Unwind_GetIP(context);
-        if (pc) {
-            if (state->current == state->end) {
-                return _URC_END_OF_STACK;
-            } else {
-                *state->current++ = reinterpret_cast<void *>(pc);
-            }
-        }
-        return _URC_NO_REASON;
-    }
-    size_t captureBacktrace(void **buffer, uint16_t max) {
-        BacktraceState state{buffer, buffer + max};
-        _Unwind_Backtrace(unwindCallback, &state);
-
-        return state.current - buffer;
-    }
-}
-
 void Logger::Backtrace(uint16_t frameCount) {
     if (options.silent) return;
-    void* buffer[frameCount + 1];
-    captureBacktrace(buffer, frameCount + 1);
+    void* buffer[frameCount];
+    backtrace_helpers::captureBacktrace(buffer, frameCount, 1);
     debug("Printing backtrace with: %u max lines:", frameCount);
     log(Logging::DEBUG, "*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***");
     debug("pid: %i, tid: %i", getpid(), gettid());
     for (uint16_t i = 0; i < frameCount; ++i) {
         Dl_info info;
-        if (dladdr(buffer[i + 1], &info)) {
+        if (dladdr(buffer[i], &info)) {
             // Buffer points to 1 instruction ahead
-            long addr = reinterpret_cast<char*>(buffer[i + 1]) - reinterpret_cast<char*>(info.dli_fbase) - 4;
+            long addr = reinterpret_cast<char*>(buffer[i]) - reinterpret_cast<char*>(info.dli_fbase) - 4;
             if (info.dli_sname) {
                 int status;
                 const char *demangled = abi::__cxa_demangle(info.dli_sname, nullptr, nullptr, &status);
@@ -253,7 +225,9 @@ void Logger::Backtrace(uint16_t frameCount) {
                     demangled = info.dli_sname;
                 }
                 debug("        #%02i  pc %016lx  %s (%s)", i, addr, info.dli_fname, demangled);
-                free(const_cast<char*>(demangled));
+                if (!status) {
+                    free(const_cast<char*>(demangled));
+                }
             } else {
                 debug("        #%02i  pc %016lx  %s", i, addr, info.dli_fname);
             }
@@ -263,16 +237,16 @@ void Logger::Backtrace(uint16_t frameCount) {
 
 void LoggerContextObject::Backtrace(uint16_t frameCount) {
     if (!enabled) return;
-    void* buffer[frameCount + 1];
-    captureBacktrace(buffer, frameCount + 1);
+    void* buffer[frameCount];
+    backtrace_helpers::captureBacktrace(buffer, frameCount, 1);
     debug("Printing backtrace with: %u max lines:", frameCount);
     log(Logging::DEBUG, "*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***");
     debug("pid: %i, tid: %i", getpid(), gettid());
     for (uint16_t i = 0; i < frameCount; ++i) {
         Dl_info info;
-        if (dladdr(buffer[i + 1], &info)) {
+        if (dladdr(buffer[i], &info)) {
             // Buffer points to 1 instruction ahead
-            long addr = reinterpret_cast<char*>(buffer[i + 1]) - reinterpret_cast<char*>(info.dli_fbase) - 4;
+            long addr = reinterpret_cast<char*>(buffer[i]) - reinterpret_cast<char*>(info.dli_fbase) - 4;
             if (info.dli_sname) {
                 int status;
                 const char *demangled = abi::__cxa_demangle(info.dli_sname, nullptr, nullptr, &status);
@@ -280,7 +254,9 @@ void LoggerContextObject::Backtrace(uint16_t frameCount) {
                     demangled = info.dli_sname;
                 }
                 debug("        #%02i  pc %016lx  %s (%s)", i, addr, info.dli_fname, demangled);
-                free(const_cast<char*>(demangled));
+                if (!status) {
+                    free(const_cast<char*>(demangled));
+                }
             } else {
                 debug("        #%02i  pc %016lx  %s", i, addr, info.dli_fname);
             }
