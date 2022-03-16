@@ -28,7 +28,6 @@ namespace backtrace_helpers {
                 state->skip--;
             }
         }
-        printf("pc: 0x%lx skip: %u\n", pc, state->skip);
         return _URC_NO_REASON;
     }
     size_t captureBacktrace(void **buffer, uint16_t max, uint16_t skip) {

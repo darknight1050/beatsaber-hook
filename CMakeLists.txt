@@ -30,6 +30,7 @@ if (DEFINED TEST_BUILD)
     add_compile_definitions(TEST_ARRAY)
     add_compile_definitions(TEST_LIST)
     add_compile_definitions(TEST_STRING)
+    add_compile_definitions(TEST_HOOK)
 endif()
 
 add_library(

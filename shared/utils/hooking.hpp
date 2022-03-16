@@ -111,7 +111,7 @@ struct Hook_##name_ { \
     using funcType = retval (*)(__VA_ARGS__); \
     static funcType* trampoline() { return &name_; } \
     static inline retval (*name_)(__VA_ARGS__) = nullptr; \
-    static funcType hook() { return &HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
+    static funcType hook() { return &::Hooking::HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
     static retval hook_##name_(__VA_ARGS__); \
 }; \
 retval Hook_##name_::hook_##name_(__VA_ARGS__)
@@ -137,7 +137,7 @@ struct Hook_##name_ { \
     using funcType = retval (*)(__VA_ARGS__); \
     static funcType* trampoline() { return &name_; } \
     static inline retval (*name_)(__VA_ARGS__) = nullptr; \
-    static funcType hook() { return &HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
+    static funcType hook() { return &::Hooking::HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
     static retval hook_##name_(__VA_ARGS__); \
 }; \
 retval Hook_##name_::hook_##name_(__VA_ARGS__)
@@ -163,7 +163,7 @@ struct Hook_##name_ { \
     using funcType = retval (*)(__VA_ARGS__); \
     static funcType* trampoline() { return &name_; } \
     static inline retval (*name_)(__VA_ARGS__) = nullptr; \
-    static funcType hook() { return &HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
+    static funcType hook() { return &::Hooking::HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
     static retval hook_##name_(__VA_ARGS__); \
 }; \
 retval Hook_##name_::hook_##name_(__VA_ARGS__)
@@ -189,7 +189,7 @@ struct Hook_##name_ { \
     using funcType = retval (*)(__VA_ARGS__); \
     static funcType* trampoline() { return &name_; } \
     static inline retval (*name_)(__VA_ARGS__) = nullptr; \
-    static funcType hook() { return &HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
+    static funcType hook() { return &::Hooking::HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
     static retval hook_##name_(__VA_ARGS__); \
 }; \
 retval Hook_##name_::hook_##name_(__VA_ARGS__)
@@ -217,7 +217,7 @@ struct Hook_##name_ { \
     static const MethodInfo* getInfo() { return ::il2cpp_utils::MethodTypeCheck<typename ::il2cpp_utils::InstanceMethodConverter<funcType>::fType>::find(klass, mName); } \
     static funcType* trampoline() { return &name_; } \
     static inline retval (*name_)(__VA_ARGS__) = nullptr; \
-    static funcType hook() { return &HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
+    static funcType hook() { return &::Hooking::HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
     static retval hook_##name_(__VA_ARGS__); \
 }; \
 retval Hook_##name_::hook_##name_(__VA_ARGS__)
@@ -246,7 +246,7 @@ struct Hook_##name_ { \
     static const MethodInfo* getInfo() { return ::il2cpp_utils::MethodTypeCheck<typename ::il2cpp_utils::InstanceMethodConverter<funcType>::fType>::find(namespaze, klassName, mName); } \
     static funcType* trampoline() { return &name_; } \
     static inline retval (*name_)(__VA_ARGS__) = nullptr; \
-    static funcType hook() { return &HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
+    static funcType hook() { return &::Hooking::HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
     static retval hook_##name_(__VA_ARGS__); \
 }; \
 retval Hook_##name_::hook_##name_(__VA_ARGS__)
@@ -275,7 +275,7 @@ struct Hook_##name_ { \
     using funcType = retval (*)(__VA_ARGS__); \
     static funcType* trampoline() { return &name_; } \
     static inline retval (*name_)(__VA_ARGS__) = nullptr; \
-    static funcType hook() { return &HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
+    static funcType hook() { return &::Hooking::HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
     static retval hook_##name_(__VA_ARGS__); \
 }; \
 retval Hook_##name_::hook_##name_(__VA_ARGS__)
@@ -304,7 +304,7 @@ struct Hook_##name_ { \
     using funcType = retval (*)(__VA_ARGS__); \
     static funcType* trampoline() { return &name_; } \
     static inline retval (*name_)(__VA_ARGS__) = nullptr; \
-    static funcType hook() { return &HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
+    static funcType hook() { return &::Hooking::HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
     static retval hook_##name_(__VA_ARGS__); \
 }; \
 retval Hook_##name_::hook_##name_(__VA_ARGS__)
@@ -333,7 +333,7 @@ struct Hook_##name_ { \
     constexpr static void* addr() { return addr_; } \
     static funcType* trampoline() { return &name_; } \
     static inline retval (*name_)(__VA_ARGS__) = nullptr; \
-    static funcType hook() { return &HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
+    static funcType hook() { return &::Hooking::HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
     static retval hook_##name_(__VA_ARGS__); \
 }; \
 retval Hook_##name_::hook_##name_(__VA_ARGS__)
@@ -362,7 +362,7 @@ struct Hook_##name_ { \
     static const MethodInfo* getInfo() { return ::il2cpp_utils::MethodTypeCheck<funcType>::find(klass, mName); } \
     static funcType* trampoline() { return &name_; } \
     static inline retval (*name_)(__VA_ARGS__) = nullptr; \
-    static funcType hook() { return &HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
+    static funcType hook() { return &::Hooking::HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
     static retval hook_##name_(__VA_ARGS__); \
 }; \
 retval Hook_##name_::hook_##name_(__VA_ARGS__)
@@ -391,7 +391,7 @@ struct Hook_##name_ { \
     static const MethodInfo* getInfo() { return ::il2cpp_utils::MethodTypeCheck<funcType>::find(namespaze, klassName, mName); } \
     static funcType* trampoline() { return &name_; } \
     static inline retval (*name_)(__VA_ARGS__) = nullptr; \
-    static funcType hook() { return &HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
+    static funcType hook() { return &::Hooking::HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
     static retval hook_##name_(__VA_ARGS__); \
 }; \
 retval Hook_##name_::hook_##name_(__VA_ARGS__)
@@ -422,7 +422,7 @@ struct Hook_##name_ { \
     static const MethodInfo* getInfo() { return ::il2cpp_utils::MethodTypeCheck<funcType>::find(classof(classType), mName); } \
     static funcType* trampoline() { return &name_; } \
     static inline retval (*name_)(__VA_ARGS__) = nullptr; \
-    static funcType hook() { return &HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
+    static funcType hook() { return &::Hooking::HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
     static retval hook_##name_(__VA_ARGS__); \
 }; \
 retval Hook_##name_::hook_##name_(__VA_ARGS__)
@@ -454,7 +454,7 @@ struct Hook_##name_ { \
     static const MethodInfo* getInfo() { return ::il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get(); } \
     static funcType* trampoline() { return &name_; } \
     static inline retval (*name_)(__VA_ARGS__) = nullptr; \
-    static funcType hook() { return &HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
+    static funcType hook() { return &::Hooking::HookCatchWrapper<&hook_##name_, funcType>::wrapper; } \
     static retval hook_##name_(__VA_ARGS__); \
 }; \
 retval Hook_##name_::hook_##name_(__VA_ARGS__)

@@ -20,7 +20,7 @@ namespace il2cpp_utils {
 
     #ifdef UNITY_2019
     [[noreturn]] void raise(const Il2CppException* exp) {
-        assert(exp);
+        CRASH_UNLESS(exp);
         il2cpp_functions::raise_exception(const_cast<Il2CppException*>(exp));
         // Should never get here, since the exception raise should happen and thus we should no longer be the caller.
         __builtin_unreachable();
@@ -28,8 +28,8 @@ namespace il2cpp_utils {
     #endif
 
     void RunMethodException::log_backtrace() const {
-        auto& logger = Logger::get();
-        logger.log(Logging::ERROR, "Logging backtrace for RunMethodException...");
+        static auto logger = Logger::get().WithContext("UNCAUGHT-EXCEPTION");
+        logger.error("Logging backtrace for RunMethodException with size: %u...", stacktrace_size);
         logger.error("*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***");
         logger.error("pid: %i, tid: %i", getpid(), gettid());
         for (uint16_t i = 0; i < stacktrace_size; ++i) {
