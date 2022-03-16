@@ -209,7 +209,8 @@ void Logger::startConsumer() {
 void Logger::Backtrace(uint16_t frameCount) {
     if (options.silent) return;
     void* buffer[frameCount];
-    backtrace_helpers::captureBacktrace(buffer, frameCount, 1);
+    // Skip the captureBacktrace method AND this method
+    backtrace_helpers::captureBacktrace(buffer, frameCount, 2);
     debug("Printing backtrace with: %u max lines:", frameCount);
     log(Logging::DEBUG, "*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***");
     debug("pid: %i, tid: %i", getpid(), gettid());
@@ -238,7 +239,8 @@ void Logger::Backtrace(uint16_t frameCount) {
 void LoggerContextObject::Backtrace(uint16_t frameCount) {
     if (!enabled) return;
     void* buffer[frameCount];
-    backtrace_helpers::captureBacktrace(buffer, frameCount, 1);
+    // Skip the captureBacktrace method AND this method
+    backtrace_helpers::captureBacktrace(buffer, frameCount, 2);
     debug("Printing backtrace with: %u max lines:", frameCount);
     log(Logging::DEBUG, "*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***");
     debug("pid: %i, tid: %i", getpid(), gettid());
