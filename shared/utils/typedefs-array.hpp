@@ -406,6 +406,12 @@ struct ArrayW {
     explicit operator Il2CppArray* const() const {
         return reinterpret_cast<Il2CppArray* const>(val);
     }
+    constexpr const Ptr operator -> () const noexcept {
+        return val;
+    }
+    constexpr Ptr operator -> () noexcept {
+        return val;
+    }
     template<class U>
     requires (std::is_convertible_v<U, T> || std::is_convertible_v<T, U>)
     operator ArrayW<U>() noexcept {
