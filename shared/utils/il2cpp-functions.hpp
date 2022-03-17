@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "logging.hpp"
+#include "utils.h"
 
 #if !defined(UNITY_2019) && __has_include("il2cpp-runtime-stats.h")
 #define UNITY_2019
