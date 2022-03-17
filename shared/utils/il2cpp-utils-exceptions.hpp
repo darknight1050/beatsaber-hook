@@ -46,11 +46,11 @@ namespace il2cpp_utils {
         void* stacktrace_buffer[STACK_TRACE_SIZE];
         uint16_t stacktrace_size;
 
-        RunMethodException(std::string_view msg, const MethodInfo* inf) : std::runtime_error(msg.data()), ex(nullptr), info(inf) {
+        RunMethodException(std::string_view msg, const MethodInfo* inf) __attribute__((noinline)) : std::runtime_error(msg.data()), ex(nullptr), info(inf) {
             // Skip 2 frames because we don't want to include this constructor
             stacktrace_size = backtrace_helpers::captureBacktrace(stacktrace_buffer, STACK_TRACE_SIZE, 2);
         }
-        RunMethodException(Il2CppException* exp, const MethodInfo* inf) : std::runtime_error(ExceptionToString(exp).c_str()), ex(exp), info(inf) {
+        RunMethodException(Il2CppException* exp, const MethodInfo* inf) __attribute__((noinline)) : std::runtime_error(ExceptionToString(exp).c_str()), ex(exp), info(inf) {
             // Skip 2 frames because we don't want to include this constructor
             stacktrace_size = backtrace_helpers::captureBacktrace(stacktrace_buffer, STACK_TRACE_SIZE, 2);
         }
