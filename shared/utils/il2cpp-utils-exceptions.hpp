@@ -47,12 +47,12 @@ namespace il2cpp_utils {
         uint16_t stacktrace_size;
 
         RunMethodException(std::string_view msg, const MethodInfo* inf) __attribute__((noinline)) : std::runtime_error(msg.data()), ex(nullptr), info(inf) {
-            // Skip 2 frames because we don't want to include this constructor
-            stacktrace_size = backtrace_helpers::captureBacktrace(stacktrace_buffer, STACK_TRACE_SIZE, 2);
+            // TODO: Eventually skip two frames (assuming no inlined methods) for this constructor and the captured backtrace call.
+            stacktrace_size = backtrace_helpers::captureBacktrace(stacktrace_buffer, STACK_TRACE_SIZE, 0);
         }
         RunMethodException(Il2CppException* exp, const MethodInfo* inf) __attribute__((noinline)) : std::runtime_error(ExceptionToString(exp).c_str()), ex(exp), info(inf) {
-            // Skip 2 frames because we don't want to include this constructor
-            stacktrace_size = backtrace_helpers::captureBacktrace(stacktrace_buffer, STACK_TRACE_SIZE, 2);
+            // TODO: Eventually skip two frames (assuming no inlined methods) for this constructor and the captured backtrace call.
+            stacktrace_size = backtrace_helpers::captureBacktrace(stacktrace_buffer, STACK_TRACE_SIZE, 0);
         }
         // TODO: Add a logger argument here so we could better write out to a targetted buffer.
         // For now, we will stick to using the UtilsLogger.
