@@ -265,10 +265,12 @@ namespace il2cpp_utils {
         return MakeDelegate<T>(delegateType, arg1, arg2);
     }
 
+    Array<T>* vectorToArray(::std::vector<T>& vec);
+
     void RemoveDelegate(MulticastDelegate* delegateInstance, Delegate* comparePointer) {
         auto arrPtr = delegateInstance->delegates;
         std::vector<Delegate*> newPtrs(arrPtr->Length());
-        for (int i = 0; i < arrPtr->Length(); i++) {
+        for (il2cpp_array_size_t i = 0; i < arrPtr->Length(); i++) {
             if (arrPtr->values[i] != comparePointer) {
                 newPtrs.push_back(arrPtr->values[i]);
             }
