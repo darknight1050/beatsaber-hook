@@ -268,7 +268,7 @@ namespace il2cpp_utils {
     void RemoveDelegate(MulticastDelegate* delegateInstance, Delegate* comparePointer) {
         auto arrPtr = delegateInstance->delegates;
         std::vector<Delegate*> newPtrs(arrPtr->Length());
-        if (int i = 0; i < arrPtr->Length(); i++) {
+        for (int i = 0; i < arrPtr->Length(); i++) {
             if (arrPtr->values[i] != comparePointer) {
                 newPtrs.push_back(arrPtr->values[i]);
             }
