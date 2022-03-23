@@ -265,6 +265,7 @@ namespace il2cpp_utils {
         return MakeDelegate<T>(delegateType, arg1, arg2);
     }
 
+    template<class T>
     Array<T>* vectorToArray(::std::vector<T>& vec);
 
     void RemoveDelegate(MulticastDelegate* delegateInstance, Delegate* comparePointer) {
