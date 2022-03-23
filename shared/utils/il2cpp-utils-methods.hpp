@@ -126,6 +126,11 @@ namespace il2cpp_utils {
             : FindMethodInfo(GetClassFromName(namespaceName, className), args...) { }
     };
 
+    VirtualInvokeData const& ResolveVtableSlot(Il2CppClass* klass, uint16_t slot) noexcept;
+
+    // TODO: We might have to do something interesting if the instance is a struct pointer, or a boxed struct.
+    VirtualInvokeData const& ResolveVtableSlot(Il2CppObject* instance, uint16_t slot) noexcept;
+
     template<class T>
     Il2CppObject* ToIl2CppObject(T&& arg) {
         il2cpp_functions::Init();
@@ -671,6 +676,22 @@ namespace il2cpp_utils {
         static auto& logger = getLogger();
         auto* klass = RET_NULLOPT_UNLESS(logger, GetClassFromName(nameSpace, klassName));
         return RunMethodUnsafe<TOut>(klass, methodName, params...);
+    }
+
+    template<class R, bool checkTypes = false, class T, class... TArgs>
+    R InvokeVirtual(T* self, uint16_t slot, TArgs&&... args) {
+        VirtualInvokeData const& vtableEntry = ResolveVtableSlot(self, slot);
+        // This method slot can only be invoked with InvokeVirtualGeneric
+        CRASH_UNLESS(!vtableEntry.method->is_generic, "This method slot can only be invoked with InvokeVirtualGeneric!");
+        return RunMethodRethrow<R, checkTypes, T, TArgs...>(self, vtableEntry.method, args...);
+    }
+
+    template<class R, bool checkTypes = false, class T, class... TArgs>
+    R InvokeVirtualGeneric(T* self, uint16_t slot, std::vector<Il2CppClass*> genArgs, TArgs&&... args) {
+        VirtualInvokeData const& vtableEntry = ResolveVtableSlot(self, slot);
+        CRASH_UNLESS(vtableEntry.method->is_generic, "This method slot cannot be invoked with InvokeVirtualGeneric!");
+        auto instantiatedMethod = MakeGenericMethod(vtableEntry.method, genArgs);
+        return RunMethodRethrow<R, checkTypes, T, TArgs...>(self, instantiatedMethod, args...);
     }
 
     template<typename TOut = Il2CppObject*, CreationType creationType = CreationType::Temporary, typename... TArgs>

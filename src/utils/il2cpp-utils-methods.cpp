@@ -35,9 +35,9 @@ namespace il2cpp_utils {
     std::mutex classTypesMethodsLock;
 
     #if __has_feature(cxx_exceptions)
-    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::vector<Il2CppClass*> types)
+    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::vector<Il2CppClass*>& types)
     #else
-    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::vector<Il2CppClass*> types) noexcept
+    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::vector<Il2CppClass*>& types) noexcept
     #endif
     {
         static auto logger = getLogger().WithContext("MakeGenericMethod");
@@ -84,6 +84,15 @@ namespace il2cpp_utils {
         }
         // Return method to be invoked by caller
         return inflatedInfo;
+    }
+
+    VirtualInvokeData const& ResolveVtableSlot(Il2CppClass* klass, uint16_t slot) noexcept {
+        CRASH_UNLESS(slot < klass->vtable_count);
+        return klass->vtable[slot];
+    }
+
+    VirtualInvokeData const& ResolveVtableSlot(Il2CppObject* instance, uint16_t slot) noexcept {
+        return ResolveVtableSlot(instance->klass, slot);
     }
 
     #if __has_feature(cxx_exceptions)

@@ -5,6 +5,7 @@
 #include <string_view>
 #include <string>
 #include <stdexcept>
+#include <typeinfo>
 #include "utils-functions.h"
 
 struct Il2CppException;
@@ -88,10 +89,10 @@ namespace il2cpp_utils {
     } \
     SAFE_ABORT(); \
 } catch (::std::exception const& exc) { \
-    ::Logger::get().error("Uncaught C++ exception! what(): %s", exc.what()); \
+    ::Logger::get().error("Uncaught C++ exception! type name: %s, what(): %s", typeid(exc).name(), exc.what()); \
     ::il2cpp_utils::raise(exc); \
 } catch (...) { \
-    ::Logger::get().error("Uncaught, unknown C++ exception with no what()!"); \
+    ::Logger::get().error("Uncaught, unknown C++ exception (not std::exception) with no known what() method!"); \
     SAFE_ABORT(); \
 }
 
