@@ -86,13 +86,22 @@ namespace il2cpp_utils {
         return inflatedInfo;
     }
 
-    VirtualInvokeData const& ResolveVtableSlot(Il2CppClass* klass, uint16_t slot) noexcept {
-        CRASH_UNLESS(slot < klass->vtable_count);
-        return klass->vtable[slot];
+    const MethodInfo* ResolveVtableSlot(Il2CppClass* klass, Il2CppClass* declaringClass, uint16_t slot) noexcept {
+        static auto logger = getLogger().WithContext("ResolveVtableSlot");
+        RET_DEFAULT_UNLESS(logger, slot < declaringClass->vtable_count);
+        for (uint16_t i = 0; i < klass->interface_offsets_count; i++) {
+            if(klass->interfaceOffsets[i].interfaceType == declaringClass) {
+                int32_t offset = klass->interfaceOffsets[i].offset;
+                RET_DEFAULT_UNLESS(logger, offset + slot < klass->vtable_count);
+                return klass->vtable[offset + slot].method;
+            }
+        }
+        logger.error("could not find method in slot %i of interface '%s' in class '%s'!", slot, ClassStandardName(declaringClass).c_str(), ClassStandardName(klass).c_str());
+        return nullptr;
     }
-
-    VirtualInvokeData const& ResolveVtableSlot(Il2CppObject* instance, uint16_t slot) noexcept {
-        return ResolveVtableSlot(instance->klass, slot);
+    
+    const MethodInfo* ResolveVtableSlot(Il2CppClass* klass, std::string_view declaringNamespace, std::string_view declaringClassName, uint16_t slot) noexcept {
+        return ResolveVtableSlot(klass, GetClassFromName(declaringNamespace, declaringClassName), slot);
     }
 
     #if __has_feature(cxx_exceptions)
