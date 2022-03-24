@@ -126,10 +126,20 @@ namespace il2cpp_utils {
             : FindMethodInfo(GetClassFromName(namespaceName, className), args...) { }
     };
 
-    VirtualInvokeData const& ResolveVtableSlot(Il2CppClass* klass, uint16_t slot) noexcept;
+    const MethodInfo* ResolveVtableSlot(Il2CppClass* klass, Il2CppClass* declaringClass, uint16_t slot) noexcept;
 
-    // TODO: We might have to do something interesting if the instance is a struct pointer, or a boxed struct.
-    VirtualInvokeData const& ResolveVtableSlot(Il2CppObject* instance, uint16_t slot) noexcept;
+    const MethodInfo* ResolveVtableSlot(Il2CppClass* klass, ::std::string_view declaringNamespace, ::std::string_view declaringClassName, uint16_t slot) noexcept;
+
+    #ifndef BS_HOOK_USE_CONCEPTS
+    template<typename T, typename... TArgs,
+        ::std::enable_if_t<!::std::is_same_v<T, Il2CppClass*>, int> = 0>
+    #else
+    template<typename T, typename... TArgs>
+    requires (!::std::is_same_v<T, Il2CppClass*>)
+    #endif
+    const MethodInfo* ResolveVtableSlot(T&& instance, TArgs&&... args) noexcept {
+        return ResolveVtableSlot(ExtractClass(instance), args...);
+    }
 
     template<class T>
     Il2CppObject* ToIl2CppObject(T&& arg) {
@@ -225,10 +235,11 @@ namespace il2cpp_utils {
     /// @param methodName The il2cpp name of the method to find
     /// @param argsCount The number of arguments to match (or -1 to not match at all)
     const MethodInfo* FindMethodUnsafe(Il2CppObject* instance, ::std::string_view methodName, int argsCount);
-    /// @brief Find the first MethodInfo* on the given instance, described by the methodName, and argument count.
+    /// @brief Find the first MethodInfo* of the class described by the namespace and className, described by the methodName, and argument count.
     /// Throws an Il2CppUtilException when: the Il2CppClass* could not be found, or the method could not be found.
     /// @return The found MethodInfo*
-    /// @param instance The Il2CppObject* to search for the method
+    /// @param nameSpace The namespace in which to search for the class
+    /// @param className The il2cpp name of the class to find
     /// @param methodName The il2cpp name of the method to find
     /// @param argsCount The number of arguments to match (or -1 to not match at all)
     const MethodInfo* FindMethodUnsafe(::std::string_view nameSpace, ::std::string_view className, ::std::string_view methodName, int argsCount);
@@ -676,22 +687,6 @@ namespace il2cpp_utils {
         static auto& logger = getLogger();
         auto* klass = RET_NULLOPT_UNLESS(logger, GetClassFromName(nameSpace, klassName));
         return RunMethodUnsafe<TOut>(klass, methodName, params...);
-    }
-
-    template<class R, bool checkTypes = false, class T, class... TArgs>
-    R InvokeVirtual(T* self, uint16_t slot, TArgs&&... args) {
-        VirtualInvokeData const& vtableEntry = ResolveVtableSlot(self, slot);
-        // This method slot can only be invoked with InvokeVirtualGeneric
-        CRASH_UNLESS(!vtableEntry.method->is_generic, "This method slot can only be invoked with InvokeVirtualGeneric!");
-        return RunMethodRethrow<R, checkTypes, T, TArgs...>(self, vtableEntry.method, args...);
-    }
-
-    template<class R, bool checkTypes = false, class T, class... TArgs>
-    R InvokeVirtualGeneric(T* self, uint16_t slot, std::vector<Il2CppClass*> genArgs, TArgs&&... args) {
-        VirtualInvokeData const& vtableEntry = ResolveVtableSlot(self, slot);
-        CRASH_UNLESS(vtableEntry.method->is_generic, "This method slot cannot be invoked with InvokeVirtualGeneric!");
-        auto instantiatedMethod = MakeGenericMethod(vtableEntry.method, genArgs);
-        return RunMethodRethrow<R, checkTypes, T, TArgs...>(self, instantiatedMethod, args...);
     }
 
     template<typename TOut = Il2CppObject*, CreationType creationType = CreationType::Temporary, typename... TArgs>
