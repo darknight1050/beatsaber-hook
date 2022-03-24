@@ -164,7 +164,7 @@ namespace il2cpp_utils {
         // In the event that a function is static, this will behave as normal
         // Yes, we mutate the held one as well. This is okay because we will ALWAYS mutate it.
         auto* delegate = RET_DEFAULT_UNLESS(logger, il2cpp_utils::NewUnsafe<T>(delegateClass, obj, &method));
-        auto* asDelegate = reinterpret_cast<Delegate*>(delegate);
+        auto* asDelegate = reinterpret_cast<Il2CppDelegate*>(delegate);
         if ((void*)asDelegate->method_ptr != (void*)callback) {
             logger.error("Created Delegate's method_ptr (%p) is incorrect (should be %p)!", (void*)asDelegate->method_ptr, callback);
             return nullptr;
@@ -265,7 +265,7 @@ namespace il2cpp_utils {
         return MakeDelegate<T>(delegateType, arg1, arg2);
     }
 
-    void RemoveDelegate(MulticastDelegate* delegateInstance, Delegate* comparePointer) noexcept;
+    void RemoveDelegate(MulticastDelegate* delegateInstance, Il2CppDelegate* comparePointer) noexcept;
 
     /// @brief The wrapper for an invokable delegate with a context.
     /// @tparam I The instance type, which must be move-constructible.

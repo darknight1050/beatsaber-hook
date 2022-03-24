@@ -199,9 +199,9 @@ namespace il2cpp_utils {
         }
     }
 
-    void RemoveDelegate(MulticastDelegate* delegateInstance, Delegate* comparePointer) noexcept {
+    void RemoveDelegate(MulticastDelegate* delegateInstance, Il2CppDelegate* comparePointer) noexcept {
         auto arrPtr = delegateInstance->delegates;
-        std::vector<Delegate*> newPtrs(arrPtr->Length());
+        std::vector<Il2CppDelegate*> newPtrs(arrPtr->Length());
         for (il2cpp_array_size_t i = 0; i < arrPtr->Length(); i++) {
             if (arrPtr->values[i] != comparePointer) {
                 newPtrs.push_back(arrPtr->values[i]);
