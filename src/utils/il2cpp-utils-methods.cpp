@@ -87,16 +87,23 @@ namespace il2cpp_utils {
     }
 
     const MethodInfo* ResolveVtableSlot(Il2CppClass* klass, Il2CppClass* declaringClass, uint16_t slot) noexcept {
+        il2cpp_functions::Init();
         static auto logger = getLogger().WithContext("ResolveVtableSlot");
-        RET_DEFAULT_UNLESS(logger, slot < declaringClass->vtable_count);
-        for (uint16_t i = 0; i < klass->interface_offsets_count; i++) {
-            if(klass->interfaceOffsets[i].interfaceType == declaringClass) {
-                int32_t offset = klass->interfaceOffsets[i].offset;
-                RET_DEFAULT_UNLESS(logger, offset + slot < klass->vtable_count);
-                return klass->vtable[offset + slot].method;
+        if(il2cpp_functions::class_is_interface(declaringClass)) {
+            RET_DEFAULT_UNLESS(logger, slot < declaringClass->vtable_count);
+            for (uint16_t i = 0; i < klass->interface_offsets_count; i++) {
+                if(klass->interfaceOffsets[i].interfaceType == declaringClass) {
+                    int32_t offset = klass->interfaceOffsets[i].offset;
+                    RET_DEFAULT_UNLESS(logger, offset + slot < klass->vtable_count);
+                    return klass->vtable[offset + slot].method;
+                }
             }
+            logger.error("could not find method in slot %i of interface '%s' in class '%s'!", slot, ClassStandardName(declaringClass).c_str(), ClassStandardName(klass).c_str());
         }
-        logger.error("could not find method in slot %i of interface '%s' in class '%s'!", slot, ClassStandardName(declaringClass).c_str(), ClassStandardName(klass).c_str());
+        else {
+            RET_DEFAULT_UNLESS(logger, slot < klass->vtable_count);
+            return klass->vtable[slot].method;
+        }
         return nullptr;
     }
     
