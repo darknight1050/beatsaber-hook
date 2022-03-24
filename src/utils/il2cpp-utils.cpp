@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <sstream>
+#include <vector>
 
 // Please see comments in il2cpp-utils.hpp
 // TODO: Make this into a static class
@@ -196,6 +197,17 @@ namespace il2cpp_utils {
         } else {
             logger.warning("context->class_inst missing for genClass!");
         }
+    }
+
+    void RemoveDelegate(MulticastDelegate* delegateInstance, Delegate* comparePointer) noexcept {
+        auto arrPtr = delegateInstance->delegates;
+        std::vector<Delegate*> newPtrs(arrPtr->Length());
+        for (il2cpp_array_size_t i = 0; i < arrPtr->Length(); i++) {
+            if (arrPtr->values[i] != comparePointer) {
+                newPtrs.push_back(arrPtr->values[i]);
+            }
+        }
+        delegateInstance->delegates = il2cpp_utils::vectorToArray(newPtrs);
     }
 
     std::string ClassStandardName(const Il2CppClass* klass, bool generics) {

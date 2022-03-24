@@ -265,19 +265,7 @@ namespace il2cpp_utils {
         return MakeDelegate<T>(delegateType, arg1, arg2);
     }
 
-    template<class T>
-    Array<T>* vectorToArray(::std::vector<T>& vec);
-
-    void RemoveDelegate(MulticastDelegate* delegateInstance, Delegate* comparePointer) {
-        auto arrPtr = delegateInstance->delegates;
-        std::vector<Delegate*> newPtrs(arrPtr->Length());
-        for (il2cpp_array_size_t i = 0; i < arrPtr->Length(); i++) {
-            if (arrPtr->values[i] != comparePointer) {
-                newPtrs.push_back(arrPtr->values[i]);
-            }
-        }
-        delegateInstance->delegates = il2cpp_utils::vectorToArray(newPtrs);
-    }
+    void RemoveDelegate(MulticastDelegate* delegateInstance, Delegate* comparePointer) noexcept;
 
     /// @brief The wrapper for an invokable delegate with a context.
     /// @tparam I The instance type, which must be move-constructible.
