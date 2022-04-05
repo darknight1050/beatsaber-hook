@@ -35,9 +35,9 @@ namespace il2cpp_utils {
     std::mutex classTypesMethodsLock;
 
     #if __has_feature(cxx_exceptions)
-    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::vector<Il2CppClass*>& types)
+    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::vector<Il2CppClass*> types)
     #else
-    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::vector<Il2CppClass*>& types) noexcept
+    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::vector<Il2CppClass*> types) noexcept
     #endif
     {
         static auto logger = getLogger().WithContext("MakeGenericMethod");
