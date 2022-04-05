@@ -9,7 +9,7 @@
 #include <unwind.h>
 
 // logs the function, file and line, sleeps to allow logs to flush, then terminates program
-__attribute__((noreturn)) void safeAbort(const char* func, const char* file, int line);
+__attribute__((noreturn)) void safeAbort(const char* func, const char* file, int line, uint16_t frameCount = 512);
 // logs the function, file and line, and provided message, sleeps to allow logs to flush, then terminates program
 __attribute__((noreturn)) __attribute__((format(printf, 4, 5))) void safeAbortMsg(const char* func, const char* file, int line, const char* fmt, ...);
 // sets "file" and "line" to the file and line you call this macro from

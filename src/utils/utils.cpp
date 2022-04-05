@@ -38,7 +38,7 @@ namespace backtrace_helpers {
     }
 }
 
-void safeAbort(const char* func, const char* file, int line) {
+void safeAbort(const char* func, const char* file, int line, uint16_t frameCount) {
     static auto logger = Logger::get().WithContext("CRASH_UNLESS");
     // we REALLY want this to appear at least once in the log (for fastest fixing)
     for (int i = 0; i < 2; i++) {
@@ -46,6 +46,7 @@ void safeAbort(const char* func, const char* file, int line) {
         // TODO: Make this eventually have a passed in context
         logger.critical("Aborting in %s at %s:%i", func, file, line);
     }
+    logger.Backtrace(frameCount);
     Logger::closeAll();
     usleep(100000L);  // 0.1s
     std::terminate();  // cleans things up and then calls abort
@@ -63,6 +64,7 @@ __attribute__((format(printf, 4, 5))) void safeAbortMsg(const char* func, const 
         logger.log_v(Logging::CRITICAL, fmt, lst);
         va_end(lst);
     }
+    logger.Backtrace(512);
     Logger::closeAll();
     usleep(100000L);  // 0.1s
     std::terminate();  // cleans things up and then calls abort
