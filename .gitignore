@@ -27,3 +27,12 @@ qpm.shared.json
 extern.cmake
 qpm_defines.cmake
 build/
+*.log
+
+CMakeCache.txt
+
+*.cmake
+
+compile_commands.json
+
+*.ninja

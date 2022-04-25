@@ -12,14 +12,11 @@ function Clean-Build-Folder {
 $NDKPath = Get-Content $PSScriptRoot/ndkpath.txt
 
 Clean-Build-Folder
-# build tests
-cd build
 
-& cmake -G "Ninja" -DCMAKE_BUILD_TYPE="RelWithDebInfo" -DTEST_BUILD=a ../
-& cmake --build .
+& cmake -G "Ninja" -DCMAKE_BUILD_TYPE="RelWithDebInfo" -DTEST_BUILD=1 . -B build
+& cmake --build ./build
 
 $ExitCode = $LastExitCode
-cd ..
 
 if (-not ($ExitCode -eq 0)) {
     $msg = "ExitCode: " + $ExitCode
@@ -30,12 +27,10 @@ if (-not ($ExitCode -eq 0)) {
 # clean folder
 Clean-Build-Folder
 # build mod
-cd build
 
-& cmake -G "Ninja" -DCMAKE_BUILD_TYPE="RelWithDebInfo" ../
-& cmake --build .
+& cmake -G "Ninja" -DCMAKE_BUILD_TYPE="RelWithDebInfo" . -B build
+& cmake --build ./build
 
 $ExitCode = $LastExitCode
-cd ..
 
 exit $ExitCode

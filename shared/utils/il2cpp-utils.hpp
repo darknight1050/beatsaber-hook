@@ -265,7 +265,7 @@ namespace il2cpp_utils {
         return MakeDelegate<T>(delegateType, arg1, arg2);
     }
 
-    void RemoveDelegate(MulticastDelegate* delegateInstance, Il2CppDelegate* comparePointer) noexcept;
+    void RemoveDelegate(Il2CppDelegate* delegateInstance, Il2CppDelegate* comparePointer) noexcept;
 
     /// @brief The wrapper for an invokable delegate with a context.
     /// @tparam I The instance type, which must be move-constructible.
