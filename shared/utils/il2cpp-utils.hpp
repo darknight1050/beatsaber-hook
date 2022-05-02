@@ -632,13 +632,30 @@ namespace il2cpp_utils {
         }
     };
 
+    /// @brief Resolves the provided icall, throwing an il2cpp_utils::RunMethodException with backtrace information if failed.
+    /// Does NOT cache the resolved method pointer.
+    /// Also does NOT perform any type checking of parameters, so make sure you check your parameters and return types!
+    /// @tparam R The return type of the function to resolve
+    /// @tparam TArgs The arguments of the function to resolve
+    /// @param icallName The name of the icall to resolve
+    /// @return The resolved function pointer, will always be valid or throws an il2cpp_utils::RunMethodException.
+    template<class R, class... TArgs>
+    function_ptr_t<R, TArgs...> resolve_icall(std::string_view icallName) {
+        il2cpp_functions::Init();
+        auto out = reinterpret_cast<function_ptr_t<R, TArgs...>>(il2cpp_functions::resolve_icall(icallName.data()));
+        if (!out) {
+            throw il2cpp_utils::RunMethodException(string_format("Failed to resolve_icall for icall: %s!", icallName.data()), nullptr);
+        }
+        return out;
+    }
+
     template<class T>
     concept what_able = requires (T t) {
         {t.what()} -> std::same_as<const char*>;
     };
 
     /// @brief Attempts to raise the provided type as if it were an Il2CppException* in the il2cpp domain.
-    /// @tparam The exception type to throw
+    /// @tparam T The exception type to throw
     /// @param arg The exception instance to throw
     template<class T>
     requires (!std::is_convertible_v<std::remove_cvref_t<T>, Il2CppException*>)
