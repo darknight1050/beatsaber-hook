@@ -718,14 +718,14 @@ namespace il2cpp_utils {
     }
 
     // TODO: Rename to New, rename existing New to NewObject or equivalent
-    /// @brief Allocates a new instance of a particular Il2CppClass* allocating on either the GC heap or on the manual heap.
+    /// @brief Allocates a new instance of a particular Il2CppClass*, either allowing it to be GC'd normally or manually controlled.
     /// The Il2CppClass* is derived from the TOut template parameter.
     /// The found constructor method will be cached.
     /// Will throw either an il2cpp_utils::exceptions::StackTraceException or il2cpp_utils::RunMethodException if errors occur.
-    /// @tparam TOut The type to create
-    /// @tparam creationType The way to create the instance
-    /// @tparam TArgs The arguments to call the constructor with
-    /// @param args The arguments to call the constructor with
+    /// @tparam TOut The type to create.
+    /// @tparam creationType The way to create the instance.
+    /// @tparam TArgs The arguments to call the constructor with.
+    /// @param args The arguments to call the constructor with.
     template<class TOut, CreationType creationType = CreationType::Temporary, typename... TArgs>
     TOut NewSpecific(TArgs&&... args) {
         auto* klass = classof(TOut);
