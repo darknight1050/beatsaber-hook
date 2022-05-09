@@ -235,12 +235,19 @@ namespace il2cpp_utils {
 
     Il2CppObject* createManual(const Il2CppClass* klass) noexcept {
         static auto logger = getLogger().WithContext("createManual");
+        if (!klass) {
+            logger.error("Cannot create a manual object on a null class!");
+            return nullptr;
+        }
         if (!klass->initialized) {
             logger.error("Cannot create an object that does not have an initialized class: %p", klass);
             return nullptr;
         }
-        // Allocate GC Specific object
         auto* obj = reinterpret_cast<Il2CppObject*>(gc_alloc_specific(klass->instance_size));
+        if (!obj) {
+            logger.error("Failed to allocate GC specific area for instance size: %u", klass->instance_size);
+            return nullptr;
+        }
         obj->klass = const_cast<Il2CppClass*>(klass);
         // Call cctor, we don't bother making a new thread for the type initializer. BE WARNED!
         if (klass->has_cctor && !klass->cctor_finished && !klass->cctor_started) {
@@ -249,10 +256,30 @@ namespace il2cpp_utils {
             RET_0_UNLESS(logger, il2cpp_utils::RunStaticMethodUnsafe(m));
             obj->klass->cctor_finished = true;
         }
-        // This really has the weirdest syntax ever, I swear...
-        // First param is unused, second param is dereferenced and is set to third param.
-        // Second param is write barrier'd
-        // This takes advantage of the fact that the first field of an Il2CppObject is a klass.
+        return obj;
+    }
+
+    Il2CppObject* createManualThrow(Il2CppClass* const klass) {
+        if (!klass->initialized) {
+            throw exceptions::StackTraceException(string_format("Cannot create an object that does not have an initialized class: %p", klass));
+        }
+        auto* obj = reinterpret_cast<Il2CppObject*>(gc_alloc_specific(klass->instance_size));
+        if (!obj) {
+            throw exceptions::StackTraceException(string_format("Failed to allocate GC specific area for instance size: %u", klass->instance_size));
+        }
+        obj->klass = const_cast<Il2CppClass*>(klass);
+        // Call cctor, we don't bother making a new thread for the type initializer. BE WARNED!
+        if (klass->has_cctor && !klass->cctor_finished && !klass->cctor_started) {
+            obj->klass->cctor_started = true;
+            auto* m = FindMethodUnsafe(klass, ".cctor", 0);
+            if (!m) {
+                throw exceptions::StackTraceException("Failed to find .cctor method!");
+            }
+            if (!il2cpp_utils::RunStaticMethodUnsafe(m)) {
+                throw exceptions::StackTraceException("Failed to run .cctor method!");
+            }
+            obj->klass->cctor_finished = true;
+        }
         return obj;
     }
 

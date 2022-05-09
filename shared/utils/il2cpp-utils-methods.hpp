@@ -50,9 +50,17 @@ namespace il2cpp_utils {
 
     /// @brief Manually creates an instance of the provided Il2CppClass*.
     /// The created instance's type initializer will NOT execute on another thread! Be warned!
+    /// Must be freed using gc_free_specific!
     /// @param klass The Il2CppClass* to create an instance of.
     /// @return The created instance, or nullptr if it failed for any reason.
     Il2CppObject* createManual(const Il2CppClass* klass) noexcept;
+    /// @brief Manually creates an instance of the provided Il2CppClass*.
+    /// The created instance's type initializer will NOT execute on another thread! Be warned!
+    /// Must be freed using gc_free_specific!
+    /// This function will throw a exceptions::StackTraceException on failure.
+    /// @param klass The Il2CppClass* to create an instance of.
+    /// @return The created instance.
+    Il2CppObject* createManualThrow(Il2CppClass* const klass);
 
     ::std::vector<Il2CppClass*> ClassesFrom(::std::vector<Il2CppClass*> classes);
     ::std::vector<Il2CppClass*> ClassesFrom(::std::vector<::std::string_view> strings);
@@ -704,8 +712,39 @@ namespace il2cpp_utils {
             obj = RET_NULLOPT_UNLESS(logger, createManual(klass));
         }
         // runtime_invoke constructor with right type(s) of arguments, return null if constructor errors
-        RET_NULLOPT_UNLESS(logger, RunMethod(obj, ".ctor", args...));
+        auto* method = RET_NULLOPT_UNLESS(logger, FindMethod(klass, ".ctor", std::forward<TArgs>(args)...));
+        RET_NULLOPT_UNLESS(logger, RunMethod(obj, method, args...));
         return FromIl2CppObject<TOut>(obj);
+    }
+
+    // TODO: Rename to New, rename existing New to NewObject or equivalent
+    /// @brief Allocates a new instance of a particular Il2CppClass* allocating on either the GC heap or on the manual heap.
+    /// The Il2CppClass* is derived from the TOut template parameter.
+    /// The found constructor method will be cached.
+    /// Will throw either an il2cpp_utils::exceptions::StackTraceException or il2cpp_utils::RunMethodException if errors occur.
+    /// @tparam TOut The type to create
+    /// @tparam creationType The way to create the instance
+    /// @tparam TArgs The arguments to call the constructor with
+    /// @param args The arguments to call the constructor with
+    template<class TOut, CreationType creationType = CreationType::Temporary, typename... TArgs>
+    TOut NewSpecific(TArgs&&... args) {
+        auto* klass = classof(TOut);
+        Il2CppObject* obj;
+        if constexpr (creationType == CreationType::Temporary) {
+            // object_new call
+            obj = il2cpp_functions::object_new(klass);
+            if (!obj) {
+                throw exceptions::StackTraceException("Failed to allocate new object via object_new!");
+            }
+        } else {
+            obj = createManualThrow(klass);
+        }
+        static auto ctorMethod = FindMethod(klass, ".ctor", std::forward<TArgs>(args)...);
+        if (!ctorMethod) {
+            throw exceptions::StackTraceException(string_format("Failed to find a matching .ctor method during construction of type: %s", ClassStandardName(klass).c_str()));
+        }
+        RunMethodRethrow<void, false>(obj, ctorMethod, args...);
+        return reinterpret_cast<TOut>(obj);
     }
 
     template<typename TOut = Il2CppObject*, CreationType creationType = CreationType::Temporary, typename... TArgs>

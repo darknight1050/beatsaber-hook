@@ -12,6 +12,21 @@ struct Il2CppException;
 struct MethodInfo;
 
 namespace il2cpp_utils {
+    namespace exceptions {
+        // TODO: Move all custom exceptions to this namespace?
+        struct StackTraceException : std::runtime_error {
+            constexpr static uint16_t STACK_TRACE_SIZE = 256;
+
+            void* stacktrace_buffer[STACK_TRACE_SIZE];
+            uint16_t stacktrace_size;
+
+            StackTraceException(std::string_view msg) : std::runtime_error(msg.data()) {
+                // TODO: Eventually skip two frames (assuming no inlined methods) for this constructor and the captured backtrace call.
+                stacktrace_size = backtrace_helpers::captureBacktrace(stacktrace_buffer, STACK_TRACE_SIZE, 0);
+            }
+            void log_backtrace() const;
+        };
+    }
     // Returns a legible string from an Il2CppException*
     ::std::string ExceptionToString(Il2CppException* exp) noexcept;
 
@@ -87,6 +102,10 @@ namespace il2cpp_utils {
     if (exc.ex) { \
         exc.rethrow(); \
     } \
+    SAFE_ABORT(); \
+} catch (::il2cpp_utils::exceptions::StackTraceException const& exc) { \
+    ::Logger::get().error("Uncaught StackTraceException! what(): %s", exc.what()); \
+    exc.log_backtrace(); \
     SAFE_ABORT(); \
 } catch (::std::exception const& exc) { \
     ::Logger::get().error("Uncaught C++ exception! type name: %s, what(): %s", typeid(exc).name(), exc.what()); \

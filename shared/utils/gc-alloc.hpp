@@ -1,5 +1,5 @@
 #pragma once
-#include <stddef.h>
+#include <cstddef>
 #include <new> // bad_alloc, bad_array_new_length
 #include <memory>
 

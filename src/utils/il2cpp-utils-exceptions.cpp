@@ -27,7 +27,11 @@ namespace il2cpp_utils {
     }
     #endif
 
-    void RunMethodException::log_backtrace() const {
+    // TODO: Add a logger argument here so we could better write out to a targetted buffer.
+    // For now, we will stick to using the UtilsLogger.
+    // It will be our caller's responsibility to determine what to do AFTER the backtrace is logged-- whether it be to terminate or rethrow.
+    // Logs the backtrace with the Logging::ERROR level, using the global logger instance.
+    static void log_backtrace_full(void* const* stacktrace_buffer, uint16_t stacktrace_size) {
         static auto logger = Logger::get().WithContext("UNCAUGHT-EXCEPTION");
         logger.error("Logging backtrace for RunMethodException with size: %u...", stacktrace_size);
         logger.error("*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***");
@@ -52,5 +56,13 @@ namespace il2cpp_utils {
                 }
             }
         }
+    }
+
+    void exceptions::StackTraceException::log_backtrace() const {
+        log_backtrace_full(stacktrace_buffer, stacktrace_size);
+    }
+
+    void RunMethodException::log_backtrace() const {
+        log_backtrace_full(stacktrace_buffer, stacktrace_size);
     }
 }
