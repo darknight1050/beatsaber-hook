@@ -739,12 +739,20 @@ namespace il2cpp_utils {
         } else {
             obj = createManualThrow(klass);
         }
-        static auto ctorMethod = FindMethod(klass, ".ctor", std::forward<TArgs>(args)...);
+        // Only need to extract based off of types, since we are asusming our TOut is classof-able already
+        static auto ctorMethod = FindMethod(klass, ".ctor", std::array<Il2CppType const*, sizeof...(TArgs)>{ExtractIndependentType<TArgs>()...});
         if (!ctorMethod) {
             throw exceptions::StackTraceException(string_format("Failed to find a matching .ctor method during construction of type: %s", ClassStandardName(klass).c_str()));
         }
         RunMethodRethrow<void, false>(obj, ctorMethod, args...);
-        return reinterpret_cast<TOut>(obj);
+        if constexpr (std::is_pointer_v<TOut>) {
+            return reinterpret_cast<TOut>(obj);
+        } else if constexpr (has_il2cpp_conversion<TOut>) {
+            // Handle construction for wrapper types, construct from void*s
+            return TOut(reinterpret_cast<void*>(obj));
+        } else {
+            static_assert(false_t<TOut>, "Cannot C# construct the provided value type that is not a wrapper type!");
+        }
     }
 
     template<typename TOut = Il2CppObject*, CreationType creationType = CreationType::Temporary, typename... TArgs>
