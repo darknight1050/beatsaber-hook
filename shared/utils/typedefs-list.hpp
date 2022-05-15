@@ -15,7 +15,7 @@ struct ListWrapper {
     
     template<class V = void>
     requires (std::is_pointer_v<Ptr> && !il2cpp_utils::has_il2cpp_conversion<Ptr>)
-    constexpr ListWrapper(void* alterInit) noexcept : val(reinterpret_cast<Ptr>(alterInit)) {}
+    constexpr ListWrapper(void* alterInit) noexcept : ptr(reinterpret_cast<Ptr>(alterInit)) {}
 
     constexpr ListWrapper(std::span<T> const p) : ptr(il2cpp_utils::NewSpecific<Ptr>(p.size())) {
         std::copy(p.begin(), p.end(), begin());
@@ -99,9 +99,9 @@ struct ListWrapper {
 
     constexpr void* convert() const noexcept {
         if constexpr (std::is_pointer_v<Ptr>) {
-            return val;
+            return ptr;
         } else if constexpr (il2cpp_utils::has_il2cpp_conversion<Ptr>) {
-            return val.convert();
+            return ptr.convert();
         }
     }
 
