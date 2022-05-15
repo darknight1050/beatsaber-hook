@@ -25,6 +25,7 @@ static void doThing() {
         assert(itr == i);
         std::cout << itr << std::endl;
     }
+    il2cpp_utils::NewSpecific<ListWrapper<Il2CppObject*>>(1, 2, 3);
     std::cout << i << std::endl;
 }
 
