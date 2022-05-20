@@ -136,8 +136,8 @@ namespace il2cpp_utils {
     /// @returns The created delegate
     template<typename T = MulticastDelegate*, typename TObj = Il2CppObject*, typename R, typename... TArgs>
     T MakeDelegate(const Il2CppClass* delegateClass, TObj obj, function_ptr_t<R, TArgs...> callback) {
-        static_assert(std::is_pointer_v<TObj>, "TObj must be a pointer!");
-        static_assert(std::is_pointer_v<T>, "T must be a pointer!");
+        static_assert(sizeof(TObj) == sizeof(void*), "TObj must have the same size as a pointer!");
+        static_assert(sizeof(T) == sizeof(void*), "T must have the same size as a pointer!");
         static auto& logger = getLogger();
         auto callbackPtr = reinterpret_cast<Il2CppMethodPointer>(callback);
         /*
@@ -154,7 +154,11 @@ namespace il2cpp_utils {
             method = reinterpret_cast<MethodInfo*>(calloc(1, sizeof(MethodInfo)));
             // Add the allocated delegate so we can free it later.
             method->methodPointer = callbackPtr;
-            method->invoker_method = NULL;
+            method->invoker_method = invoke->invoker_method;
+            method->name = "NativeDelegateMethod";
+            method->klass = il2cpp_functions::defaults->object_class;
+            method->parameters = invoke->parameters;
+            method->return_type = invoke->return_type;
             method->parameters_count = invoke->parameters_count;
             method->slot = kInvalidIl2CppMethodSlot;
             method->is_marshaled_from_native = true;  // "a fake MethodInfo wrapping a native function pointer"
@@ -179,7 +183,6 @@ namespace il2cpp_utils {
     /// @param callback The callback function_ptr_t
     /// @returns The created delegate
     template<typename T = MulticastDelegate*, typename TObj = Il2CppObject*, typename R, typename... TArgs>
-    requires (std::is_pointer_v<TObj> && std::is_pointer_v<T>)
     T MakeDelegate(TObj obj, function_ptr_t<R, TArgs...> callback) {
         return MakeDelegate<T, TObj>(classof(T), obj, callback);
     }
@@ -193,7 +196,6 @@ namespace il2cpp_utils {
     /// @param callback The callback function_ptr_t
     /// @returns The created delegate
     template<typename T = MulticastDelegate*, typename TObj = Il2CppObject*>
-    requires (std::is_pointer_v<T>)
     T MakeDelegate(const Il2CppClass* delegateClass, TObj obj, void* callback) {
         auto tmp = reinterpret_cast<function_ptr_t<void>>(callback);
         return MakeDelegate<T>(delegateClass, obj, tmp);
@@ -208,7 +210,6 @@ namespace il2cpp_utils {
     /// @param callback The callback function_ptr_t
     /// @returns The created delegate
     template<typename T = MulticastDelegate*, typename TObj = Il2CppObject*, typename R, typename... TArgs>
-    requires (std::is_pointer_v<T>)
     T MakeDelegate(const Il2CppType* actionType, TObj obj, function_ptr_t<R, TArgs...> callback) {
         il2cpp_functions::Init();
         Il2CppClass* delegateClass = il2cpp_functions::class_from_il2cpp_type(actionType);
@@ -224,7 +225,6 @@ namespace il2cpp_utils {
     /// @param callback The callback function
     /// @returns The created delegate
     template<typename T = MulticastDelegate*, typename TObj = Il2CppObject*>
-    requires (std::is_pointer_v<T>)
     T MakeDelegate(const Il2CppType* delegateType, TObj obj, void* callback) {
         auto tmp = reinterpret_cast<function_ptr_t<void>>(callback);
         return MakeDelegate<T>(delegateType, obj, tmp);
@@ -240,7 +240,6 @@ namespace il2cpp_utils {
     /// @param arg2 Forwarded to another MakeDelegate
     /// @returns The created delegate
     template<typename T = MulticastDelegate*, typename T1, typename T2>
-    requires (std::is_pointer_v<T>)
     T MakeDelegate(const MethodInfo* method, int paramIdx, T1&& arg1, T2&& arg2) {
         il2cpp_functions::Init();
         static auto& logger = getLogger();
@@ -257,7 +256,6 @@ namespace il2cpp_utils {
     /// @param arg2 Forwarded to another MakeDelegate
     /// @returns The created delegate
     template<typename T = MulticastDelegate*, typename T1, typename T2>
-    requires (std::is_pointer_v<T>)
     T MakeDelegate(FieldInfo* field, T1&& arg1, T2&& arg2) {
         il2cpp_functions::Init();
         static auto& logger = getLogger();
@@ -294,11 +292,13 @@ namespace il2cpp_utils {
     /// @return The return from the wrapped function.
     template<class I, class R, class... TArgs>
     R __attribute__((noinline)) invoker_func_instance(WrapperInstance<I, R, TArgs...>* instance, TArgs... args) {
-        if constexpr (std::is_same_v<R, void>) {
-            instance->wrappedFunc(&instance->rawInstance, args...);
-        } else {
-            return instance->wrappedFunc(&instance->rawInstance, args...);
-        }
+        IL2CPP_CATCH_HANDLER(
+            if constexpr (std::is_same_v<R, void>) {
+                instance->wrappedFunc(&instance->rawInstance, args...);
+            } else {
+                return instance->wrappedFunc(&instance->rawInstance, args...);
+            }
+        )
     }
 
     /// @brief The invoker function for a delegate with a wrapped type.
@@ -309,17 +309,19 @@ namespace il2cpp_utils {
     /// @return The return from the wrapped function.
     template<class R, class... TArgs>
     R __attribute__((noinline)) invoker_func_static(WrapperStatic<R, TArgs...>* instance, TArgs... args) {
-        if constexpr (std::is_same_v<R, void>) {
-            instance->wrappedFunc(args...);
-        } else {
-            return instance->wrappedFunc(args...);
-        }
+        IL2CPP_CATCH_HANDLER(
+            if constexpr (std::is_same_v<R, void>) {
+                instance->wrappedFunc(args...);
+            } else {
+                return instance->wrappedFunc(args...);
+            }
+        )
     }
 
     /// @brief EXTREMEMLY UNSAFE ALLOCATION! THIS SHOULD BE AVOIDED UNLESS YOU KNOW WHAT YOU ARE DOING!
     /// This function allocates a GC-able object of the size provided by manipulating an existing Il2CppClass' instance_size.
     /// This is VERY DANGEROUS (and NOT THREAD SAFE!) and may cause all sorts of race conditions. Use at your own risk.
-    /// @param size The size to allocat the unsafe object with.
+    /// @param size The size to allocate the unsafe object with.
     /// @return The returned GC-allocated instance.
     void* __AllocateUnsafe(std::size_t size);
 
@@ -333,7 +335,6 @@ namespace il2cpp_utils {
     /// @param f The function to invoke with the delegate.
     /// @return The created delegate.
     template<typename T = MulticastDelegate*, class I, class R, class... TArgs>
-    requires (std::is_pointer_v<T>)
     T MakeDelegate(const Il2CppClass* delegateClass, I& instance, std::function<R(I*, TArgs...)> f) {
         auto* wrapperInstance = reinterpret_cast<WrapperInstance<I, R, TArgs...>*>(__AllocateUnsafe(sizeof(WrapperInstance<I, R, TArgs...>)));
 
@@ -351,7 +352,6 @@ namespace il2cpp_utils {
     /// @param f The function to invoke with the delegate.
     /// @return The created delegate.
     template<typename T = MulticastDelegate*, class I, class R, class... TArgs>
-    requires (std::is_pointer_v<T>)
     T MakeDelegate(I& instance, std::function<R(I*, TArgs...)> f) {
         return MakeDelegate<T>(classof(T), instance, f);
     }
@@ -369,7 +369,6 @@ namespace il2cpp_utils {
     T MakeDelegate(const Il2CppClass* delegateClass, std::function<R(TArgs...)> f) {
         auto* wrapperInstance = reinterpret_cast<WrapperStatic<R, TArgs...>*>(__AllocateUnsafe(sizeof(WrapperStatic<R, TArgs...>)));
         wrapperInstance->wrappedFunc = f;
-        wrapperInstance->klass = GetClassFromName("System", "Object");
         return MakeDelegate<T>(delegateClass, wrapperInstance, &invoker_func_static<R, TArgs...>);
     }
 
@@ -382,7 +381,6 @@ namespace il2cpp_utils {
     /// @param f The function to invoke with the delegate.
     /// @return The created delegate.
     template<typename T = MulticastDelegate*, class R, class... TArgs>
-    requires (std::is_pointer_v<T>)
     T MakeDelegate(std::function<R(TArgs...)> f) {
         return MakeDelegate<T>(classof(T), f);
     }
@@ -397,7 +395,6 @@ namespace il2cpp_utils {
     /// @param memberFunc A pointer to the member function on the provided instance to invoke for this delegate.
     /// @return The created delegate. 
     template<typename T = MulticastDelegate*, class I, class R, class... TArgs>
-    requires (std::is_pointer_v<T>)
     inline T MakeDelegate(const Il2CppClass* delegateClass, I& instance, R (I::*memberFunc)(TArgs...)) {
         return MakeDelegate<T>(delegateClass, instance, std::function<R(I*, TArgs...)>(memberFunc));
     }
@@ -411,7 +408,6 @@ namespace il2cpp_utils {
     /// @param memberFunc A pointer to the member function on the provided instance to invoke for this delegate.
     /// @return The created delegate. 
     template<typename T = MulticastDelegate*, class I, class R, class... TArgs>
-    requires (std::is_pointer_v<T>)
     inline T MakeDelegate(I& instance, R (I::*memberFunc)(TArgs...)) {
         return MakeDelegate<T>(classof(T), instance, std::function<R(I*, TArgs...)>(memberFunc));
     }

@@ -288,7 +288,7 @@ namespace il2cpp_utils {
         // Because we want to allocate this object using C# GC, we will do a bit of a hack here.
         // Essentially, we take advantage of the instance size of System.Object, and then IMMEDIATELY revert it.
         // If we fail for ANY REASON in here, VERY BAD THINGS can happen.
-        static auto* objKlass = CRASH_UNLESS(GetClassFromName("System", "Object"));
+        static auto* objKlass = CRASH_UNLESS(il2cpp_functions::defaults->object_class);
         // Ideally, we make this atomic, but because we aren't using locks anywhere, we hope for the best...
         // TODO: Acquire object class special lock
         auto origSize = objKlass->instance_size;
