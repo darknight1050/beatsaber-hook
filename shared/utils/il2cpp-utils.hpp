@@ -127,6 +127,43 @@ namespace il2cpp_utils {
         }
     }
 
+    template<class T>
+    concept what_able = requires (T t) {
+        {t.what()} -> std::same_as<const char*>;
+    };
+
+    /// @brief Attempts to raise the provided type as if it were an Il2CppException* in the il2cpp domain.
+    /// @tparam T The exception type to throw
+    /// @param arg The exception instance to throw
+    template<class T>
+    requires (!std::is_convertible_v<std::remove_cvref_t<T>, Il2CppException*>)
+    [[noreturn]] void raise(T&& arg) {
+        // Already cached in defaults, no need to re-cache
+        Il2CppException* allocEx = CRASH_UNLESS(New<Il2CppException*>(classof(Il2CppException*)));
+        #if __has_feature(cxx_rtti)
+        const char* tName = typeid(T).name();
+        int status;
+        char *demangled_name = abi::__cxa_demangle(tName, NULL, NULL, &status);
+        if (!status) {
+            allocEx->className = newcsstr(demangled_name);
+            std::free(demangled_name);
+        } else {
+            allocEx->className = newcsstr(tName);
+        }
+        #else
+        #warning "Do not raise C++ exceptions without rtti!"
+        #endif
+        if constexpr (what_able<T>) {
+            allocEx->message = newcsstr(arg.what());
+        }
+        #ifdef UNITY_2019
+        raise(allocEx);
+        #else
+        #warning "Raising C++ exceptions without il2cpp_functions::raise is undefined behavior!"
+        throw Il2CppExceptionWrapper(allocEx);
+        #endif
+    }
+
     /// @brief Creates a delegate of return type T, with target TObj, using the provided Il2CppClass*
     /// @tparam T The type to return
     /// @tparam TObj The type of the target object
@@ -643,43 +680,6 @@ namespace il2cpp_utils {
             throw il2cpp_utils::RunMethodException(string_format("Failed to resolve_icall for icall: %s!", icallName.data()), nullptr);
         }
         return out;
-    }
-
-    template<class T>
-    concept what_able = requires (T t) {
-        {t.what()} -> std::same_as<const char*>;
-    };
-
-    /// @brief Attempts to raise the provided type as if it were an Il2CppException* in the il2cpp domain.
-    /// @tparam T The exception type to throw
-    /// @param arg The exception instance to throw
-    template<class T>
-    requires (!std::is_convertible_v<std::remove_cvref_t<T>, Il2CppException*>)
-    [[noreturn]] void raise(T&& arg) {
-        // Already cached in defaults, no need to re-cache
-        Il2CppException* allocEx = CRASH_UNLESS(New<Il2CppException*>(classof(Il2CppException*)));
-        #if __has_feature(cxx_rtti)
-        const char* tName = typeid(T).name();
-        int status;
-        char *demangled_name = abi::__cxa_demangle(tName, NULL, NULL, &status);
-        if (!status) {
-            allocEx->className = newcsstr(demangled_name);
-            std::free(demangled_name);
-        } else {
-            allocEx->className = newcsstr(tName);
-        }
-        #else
-        #warning "Do not raise C++ exceptions without rtti!"
-        #endif
-        if constexpr (what_able<T>) {
-            allocEx->message = newcsstr(arg.what());
-        }
-        #ifdef UNITY_2019
-        raise(allocEx);
-        #else
-        #warning "Raising C++ exceptions without il2cpp_functions::raise is undefined behavior!"
-        throw Il2CppExceptionWrapper(allocEx);
-        #endif
     }
 }
 
