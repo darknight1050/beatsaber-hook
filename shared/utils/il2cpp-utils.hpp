@@ -604,12 +604,12 @@ namespace il2cpp_utils {
         /// @brief Finds a MethodInfo* that matches the template types.
         static const MethodInfo* find(::std::string_view nameSpace, ::std::string_view className, ::std::string_view methodName) {
             il2cpp_functions::Init();
-            return ::il2cpp_utils::FindMethod(nameSpace, className, methodName, ::std::vector<Il2CppClass*>{}, ::std::vector<const Il2CppType*>{ExtractIndependentType<TArgs>()...});
+            return ::il2cpp_utils::FindMethod(nameSpace, className, methodName, ::std::vector<Il2CppClass*>{}, ::std::array<const Il2CppType*, sizeof...(TArgs)>{ExtractIndependentType<TArgs>()...});
         }
         /// @brief Finds a MethodInfo* that matches the template types.
         static const MethodInfo* find(Il2CppClass* klass, ::std::string_view methodName) {
             il2cpp_functions::Init();
-            return ::il2cpp_utils::FindMethod(klass, methodName, ::std::vector<Il2CppClass*>{}, ::std::vector<const Il2CppType*>{ExtractIndependentType<TArgs>()...});
+            return ::il2cpp_utils::FindMethod(klass, methodName, ::std::vector<Il2CppClass*>{}, ::std::array<const Il2CppType*, sizeof...(TArgs)>{ExtractIndependentType<TArgs>()...});
         }
         /// @brief Finds a MethodInfo* that matches the template types.
         static const MethodInfo* find_unsafe(::std::string_view nameSpace, ::std::string_view className, ::std::string_view methodName, bool instance = false) {
@@ -656,12 +656,12 @@ namespace il2cpp_utils {
         /// @brief Finds a MethodInfo* that matches the template types.
         static const MethodInfo* find(::std::string_view nameSpace, ::std::string_view className, ::std::string_view methodName) {
             il2cpp_functions::Init();
-            return ::il2cpp_utils::FindMethod(nameSpace, className, methodName, ::std::vector<Il2CppClass*>{}, ::std::vector<const Il2CppType*>{ExtractIndependentType<TArgs>()...});
+            return ::il2cpp_utils::FindMethod(nameSpace, className, methodName, ::std::vector<Il2CppClass*>{}, ::std::array<const Il2CppType*, sizeof...(TArgs)>{ExtractIndependentType<TArgs>()...});
         }
         /// @brief Finds a MethodInfo* that matches the template types.
         static const MethodInfo* find(Il2CppClass* klass, ::std::string_view methodName) {
             il2cpp_functions::Init();
-            return ::il2cpp_utils::FindMethod(klass, methodName, ::std::vector<Il2CppClass*>{}, ::std::vector<const Il2CppType*>{ExtractIndependentType<TArgs>()...});
+            return ::il2cpp_utils::FindMethod(klass, methodName, ::std::vector<Il2CppClass*>{}, ::std::array<const Il2CppType*, sizeof...(TArgs)>{ExtractIndependentType<TArgs>()...});
         }
     };
 

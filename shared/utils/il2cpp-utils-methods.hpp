@@ -712,7 +712,8 @@ namespace il2cpp_utils {
             obj = RET_NULLOPT_UNLESS(logger, createManual(klass));
         }
         // runtime_invoke constructor with right type(s) of arguments, return null if constructor errors
-        auto* method = RET_NULLOPT_UNLESS(logger, FindMethod(klass, ".ctor", std::forward<TArgs>(args)...));
+        std::array<const Il2CppType*, sizeof...(TArgs)> types{ExtractType(args)...};
+        auto* method = RET_NULLOPT_UNLESS(logger, FindMethod(klass, ".ctor", types));
         RET_NULLOPT_UNLESS(logger, RunMethod(obj, method, args...));
         return FromIl2CppObject<TOut>(obj);
     }

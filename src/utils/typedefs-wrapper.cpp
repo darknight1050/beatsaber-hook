@@ -47,7 +47,7 @@ namespace detail {
     }
 
     Il2CppString* CreateString(int length) {
-        static MethodInfo const* methodInfo = il2cpp_utils::FindMethod(classof(Il2CppString*), "CreateString", std::vector<Il2CppType const*>{ il2cpp_utils::ExtractIndependentType<Il2CppChar>(), il2cpp_utils::ExtractIndependentType<int>()});
+        static MethodInfo const* methodInfo = il2cpp_utils::FindMethod(classof(Il2CppString*), "CreateString", std::array<Il2CppType const*, 2>{ il2cpp_utils::ExtractIndependentType<Il2CppChar>(), il2cpp_utils::ExtractIndependentType<int>()});
         return CRASH_UNLESS(il2cpp_utils::RunStaticMethodUnsafe<Il2CppString*>(methodInfo, Il2CppChar('\0'), length));
     }
 
