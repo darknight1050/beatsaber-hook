@@ -2,6 +2,7 @@
 
 #include "utils-functions.h"
 #include "il2cpp-type-check.hpp"
+#include "il2cpp-utils-exceptions.hpp"
 #include <string_view>
 #include <string>
 #include <stdexcept>
@@ -9,8 +10,8 @@
 #include <codecvt>
 #include <span>
 
-struct UseBeforeInitError : std::runtime_error {
-    UseBeforeInitError(const char* v) : std::runtime_error(v) {}
+struct UseBeforeInitError : il2cpp_utils::exceptions::StackTraceException {
+    UseBeforeInitError(const char* v) : il2cpp_utils::exceptions::StackTraceException(v) {}
 };
 
 struct Il2CppString;

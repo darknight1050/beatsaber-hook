@@ -37,18 +37,18 @@ namespace il2cpp_utils {
     #endif
 
     #if __has_feature(cxx_exceptions)
-    struct Il2CppUtilsException : std::runtime_error {
+    struct Il2CppUtilsException : exceptions::StackTraceException {
         std::string context;
         std::string msg;
         std::string func = "unknown";
         std::string file = "unknown";
         int line = -1;
-        Il2CppUtilsException(std::string_view msg_) : std::runtime_error(CreateMessage(msg_.data())), msg(msg_.data()) {}
-        Il2CppUtilsException(std::string_view context_, std::string_view msg_) : std::runtime_error(CreateMessage(msg_.data(), context_.data())), context(context_.data()), msg(msg_.data()) {}
+        Il2CppUtilsException(std::string_view msg_) : exceptions::StackTraceException(CreateMessage(msg_.data())), msg(msg_.data()) {}
+        Il2CppUtilsException(std::string_view context_, std::string_view msg_) : exceptions::StackTraceException(CreateMessage(msg_.data(), context_.data())), context(context_.data()), msg(msg_.data()) {}
         Il2CppUtilsException(std::string_view msg_, std::string_view func_, std::string_view file_, int line_)
-            : std::runtime_error(CreateMessage(msg_.data(), "", func_.data(), file_.data(), line_)), msg(msg_.data()), func(func_.data()), file(file_.data()), line(line_) {}
+            : exceptions::StackTraceException(CreateMessage(msg_.data(), "", func_.data(), file_.data(), line_)), msg(msg_.data()), func(func_.data()), file(file_.data()), line(line_) {}
         Il2CppUtilsException(std::string_view context_, std::string_view msg_, std::string_view func_, std::string_view file_, int line_)
-            : std::runtime_error(CreateMessage(msg_.data(), context_.data(), func_.data(), file_.data(), line_)), context(context_.data()), msg(msg_.data()), func(func_.data()), file(file_.data()), line(line_) {}
+            : exceptions::StackTraceException(CreateMessage(msg_.data(), context_.data(), func_.data(), file_.data(), line_)), context(context_.data()), msg(msg_.data()), func(func_.data()), file(file_.data()), line(line_) {}
 
         std::string CreateMessage(std::string msg, std::string context = "", std::string func = "unknown", std::string file = "unknown", int line = -1) {
             return ((context.size() > 0 ? ("(" + context + ") ") : "") + msg + " in: " + func + " " + file + ":" + std::to_string(line));
@@ -87,6 +87,12 @@ namespace il2cpp_utils {
     #endif
 }
 
+#ifdef MOD_ID
+#define _CATCH_HANDLER_ID MOD_ID
+#else
+#define _CATCH_HANDLER_ID "UNKNOWN"
+#endif
+
 // Implements a try-catch handler which will first attempt to run the provided body.
 // If there is an uncaught RunMethodException, it will first attempt to log the backtrace.
 // If it holds a valid C# exception, it will attempt to raise it, such that it is caught in the il2cpp domain.
@@ -97,21 +103,21 @@ namespace il2cpp_utils {
 #define IL2CPP_CATCH_HANDLER(...) try { \
     __VA_ARGS__ \
 } catch (::il2cpp_utils::RunMethodException const& exc) { \
-    ::Logger::get().error("Uncaught RunMethodException! what(): %s", exc.what()); \
+    ::Logger::get().error("Caught in mod ID: " _CATCH_HANDLER_ID ": Uncaught RunMethodException! what(): %s", exc.what()); \
     exc.log_backtrace(); \
     if (exc.ex) { \
         exc.rethrow(); \
     } \
     SAFE_ABORT(); \
 } catch (::il2cpp_utils::exceptions::StackTraceException const& exc) { \
-    ::Logger::get().error("Uncaught StackTraceException! what(): %s", exc.what()); \
+    ::Logger::get().error("Caught in mod ID: " _CATCH_HANDLER_ID ": Uncaught StackTraceException! what(): %s", exc.what()); \
     exc.log_backtrace(); \
     SAFE_ABORT(); \
 } catch (::std::exception const& exc) { \
-    ::Logger::get().error("Uncaught C++ exception! type name: %s, what(): %s", typeid(exc).name(), exc.what()); \
+    ::Logger::get().error("Caught in mod ID: " _CATCH_HANDLER_ID ": Uncaught C++ exception! type name: %s, what(): %s", typeid(exc).name(), exc.what()); \
     ::il2cpp_utils::raise(exc); \
 } catch (...) { \
-    ::Logger::get().error("Uncaught, unknown C++ exception (not std::exception) with no known what() method!"); \
+    ::Logger::get().error("Caught in mod ID: " _CATCH_HANDLER_ID ": Uncaught, unknown C++ exception (not std::exception) with no known what() method!"); \
     SAFE_ABORT(); \
 }
 

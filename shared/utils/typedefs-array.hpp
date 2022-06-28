@@ -112,9 +112,9 @@ static const size_t kIl2CppOffsetOfArrayLength = (offsetof(Il2CppArray, max_leng
 #include <initializer_list>
 
 /// @brief Represents an exception thrown from usage of an Array.
-struct ArrayException : std::runtime_error {
+struct ArrayException : il2cpp_utils::exceptions::StackTraceException {
     void* arrayInstance;
-    ArrayException(void* instance, std::string_view msg) : std::runtime_error(msg.data()), arrayInstance(instance) {}
+    ArrayException(void* instance, std::string_view msg) : il2cpp_utils::exceptions::StackTraceException(msg.data()), arrayInstance(instance) {}
 };
 
 template<class T>
@@ -430,7 +430,7 @@ struct ArrayW {
         if (Length() > 0)
             return val->values[0];
         else 
-            throw std::runtime_error("First called on empty array!");
+            throw ArrayException(this, "First called on empty array!");
     }
 
     template<typename D = T>
@@ -445,7 +445,7 @@ struct ArrayW {
         if (Length() > 0)
             return val->values[Length() - 1];
         else 
-            throw std::runtime_error("Last called on empty array!");
+            throw ArrayException(this, "Last called on empty array!");
     }
 
     template<typename D = T>
@@ -461,7 +461,7 @@ struct ArrayW {
         for (iterator it = begin(); it != end(); it++) {
             if (pred(*it)) return *it;
         }
-        throw std::runtime_error("First on array found no value that matched predicate");
+        throw ArrayException(this, "First on array found no value that matched predicate");
     }
 
     template<class Predicate>
@@ -478,7 +478,7 @@ struct ArrayW {
         for (auto it = rbegin(); it != rend(); it++) {
             if (pred(*it)) return *it;
         }
-        throw std::runtime_error("Last on array found no value that matched predicate");
+        throw ArrayException(this, "Last on array found no value that matched predicate");
     }
 
     template<class Predicate>

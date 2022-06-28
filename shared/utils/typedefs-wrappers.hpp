@@ -11,16 +11,17 @@
 #include <concepts>
 #include <type_traits>
 #include <memory>
+#include "il2cpp-utils-exceptions.hpp"
 
 #if __has_feature(cxx_exceptions)
-struct CreatedTooEarlyException : std::runtime_error {
-    CreatedTooEarlyException() : std::runtime_error("A SafePtr<T> instance was created too early or a necessary GC function was not found!") {}
+struct CreatedTooEarlyException : il2cpp_utils::exceptions::StackTraceException {
+    CreatedTooEarlyException() : il2cpp_utils::exceptions::StackTraceException("A SafePtr<T> instance was created too early or a necessary GC function was not found!") {}
 };
-struct NullHandleException : std::runtime_error {
-    NullHandleException() : std::runtime_error("A SafePtr<T> instance is holding a null handle!") {}
+struct NullHandleException : il2cpp_utils::exceptions::StackTraceException {
+    NullHandleException() : il2cpp_utils::exceptions::StackTraceException("A SafePtr<T> instance is holding a null handle!") {}
 };
-struct TypeCastException : std::runtime_error {
-    TypeCastException() : std::runtime_error("The type could not be cast safely! Check your SafePtr/CountPointer cast calls!") {}
+struct TypeCastException : il2cpp_utils::exceptions::StackTraceException {
+    TypeCastException() : il2cpp_utils::exceptions::StackTraceException("The type could not be cast safely! Check your SafePtr/CountPointer cast calls!") {}
 };
 #define __SAFE_PTR_NULL_HANDLE_CHECK(handle, ...) \
 if (handle) \
