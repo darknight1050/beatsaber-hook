@@ -118,7 +118,7 @@ struct ListWrapper {
 };
 
 // ListW for the win, just implicitly
-template<class T, class Ptr = List<T>>
+template<class T, class Ptr = List<T>*>
 using ListW = ListWrapper<T, Ptr>;
 
 static_assert(il2cpp_utils::has_il2cpp_conversion<ListWrapper<int, List<int>*>>);
