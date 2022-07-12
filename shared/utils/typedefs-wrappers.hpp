@@ -513,7 +513,7 @@ struct SafePtrUnity : public SafePtr<T, true> {
         // offset yay
         // the offset as specified in the codegen header of [m_cachedPtr] is 0x10
         // which is also the first field of the instance UnityEngine.Object
-      return ((bool)Parent::internalHandle) && (static_cast<T*>(Parent::internalHandle)) && *reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(Parent::internalHandle) + 0x10));
+      return ((bool)Parent::internalHandle) && (static_cast<T*>(Parent::internalHandle)) && *reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(Parent::internalHandle) + 0x10);
 #endif
     }
 
