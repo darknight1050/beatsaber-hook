@@ -483,6 +483,16 @@ struct SafePtrUnity : public SafePtr<T, true> {
         __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(Parent::internalHandle->instancePointer);
     }
 
+    inline SafePtrUnity<T>& operator=(T* other) {
+        emplace(other);
+        return *this;
+    }
+
+    inline SafePtrUnity<T>& operator=(T& other) {
+        emplace(other);
+        return *this;
+    }
+
     /// @brief Explicitly cast this instance to a T*.
     /// Note, however, that the lifetime of this returned T* is not longer than the lifetime of this instance.
     /// Consider passing a SafePtrUnity reference or copy instead.
