@@ -377,11 +377,11 @@ struct SafePtr {
     } 
 
     T* ptr() {
-        return __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
+        __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
     }
 
     T const* ptr() const{
-        return __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
+        __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
     }
 
     /// @brief Returns false if this is a defaultly constructed SafePtr, true otherwise.
