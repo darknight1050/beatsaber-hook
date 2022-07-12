@@ -531,10 +531,10 @@ struct SafePtrUnity : public SafePtr<T, true> {
 
     inline bool isAlive() const {
 #ifdef HAS_CODEGEN
-        return static_cast<bool>(Parent::internalHandle) && (Parent::ptr()) && Parent::ptr()->m_cachedPtr.m_value;
+        return static_cast<bool>(Parent::internalHandle) && (Parent::ptr()) && Parent::ptr()->m_CachedPtr.m_value;
 #else
         // offset yay
-        // the offset as specified in the codegen header of [m_cachedPtr] is 0x10
+        // the offset as specified in the codegen header of [m_CachedPtr] is 0x10
         // which is also the first field of the instance UnityEngine.Object
       return static_cast<bool>(Parent::internalHandle) && (Parent::ptr()) && *reinterpret_cast<void* const*>(reinterpret_cast<uint8_t const*>(Parent::ptr()) + 0x10);
 #endif
