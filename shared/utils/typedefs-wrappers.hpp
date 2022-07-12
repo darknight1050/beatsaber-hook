@@ -481,12 +481,37 @@ struct SafePtrUnity : public SafePtr<T, true> {
         __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(*Parent::internalHandle->instancePointer);
     }
 
+    operator bool() const {
+        return isAlive();
+    }
+
+    template<typename U = T>
+    requires(std::is_assignable_v<T, U> || std::is_same_v<T, U>)
+    bool operator ==(SafePtrUnity<U> const& other) const {
+        if (!other.isAlive() || !isAlive()) {
+            return other.isAlive() == isAlive();
+        }
+
+        return static_cast<T*>(other.internalHandle) == static_cast<T*>(Parent::internalHandle);
+    }
+
+    template<typename U = T>
+    bool operator ==(U const* other) const {
+        if (!other || !isAlive()) {
+            return static_cast<bool>(other) == isAlive();
+        }
+
+        return static_cast<T*>(other) == static_cast<T*>(Parent::internalHandle);
+    }
+
+
+
     inline bool isAlive() {
 #ifdef HAS_CODEGEN
-        return Parent::internalHandle && Parent::internalHandle.m_cachedPtr.m_value;
+        return ((bool)Parent::internalHandle) && (static_cast<T*>(Parent::internalHandle)) && Parent::internalHandle.m_cachedPtr.m_value;
 #else
         // offset yay
-      return Parent::internalHandle && (Parent::internalHandle + 0x10)
+      return ((bool)Parent::internalHandle) && (static_cast<T*>(Parent::internalHandle)) && (Parent::internalHandle + 0x10)
 #endif
     }
 
