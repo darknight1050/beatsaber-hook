@@ -238,6 +238,7 @@ struct SafePtrUnity;
 /// @brief Represents a C++ type that wraps a C# pointer that will be valid for the entire lifetime of this instance.
 /// This instance must be created at a time such that il2cpp_functions::Init is valid, or else it will throw a CreatedTooEarlyException
 /// @tparam T The type of the instance to wrap.
+/// @tparam AllowUnity Whether to permit convertible Unity Object types to be wrapped.
 template<class T, bool AllowUnity = false>
 struct SafePtr {
 #ifdef HAS_CODEGEN
@@ -321,9 +322,10 @@ struct SafePtr {
     /// This function may throw TypeCastException or NullHandleException or otherwise abort.
     /// See try_cast for a version that does not.
     /// @tparam U The type to cast to.
+    /// @tparam AllowUnityPrime Whether the casted SafePtr should allow unity conversions.
     /// @return A new SafePtr of the cast value.
-    template<class U>
-    [[nodiscard]] inline SafePtr<U, AllowUnity> cast() const {
+    template<class U, bool AllowUnityPrime = AllowUnity>
+    [[nodiscard]] inline SafePtr<U, AllowUnityPrime> cast() const {
         // TODO: We currently assume that the first sizeof(void*) bytes of ptr is the klass field.
         // This should hold true for everything except value types.
         if (!internalHandle) {
@@ -331,29 +333,30 @@ struct SafePtr {
             throw NullHandleException();
 #else
             SAFE_ABORT();
-            return SafePtr<U, AllowUnity>();
+            return SafePtr<U, AllowUnityPrime>();
 #endif
         }
         auto* k1 = CRASH_UNLESS(classof(U*));
         auto* k2 = *CRASH_UNLESS(reinterpret_cast<Il2CppClass**>(internalHandle->instancePointer));
         il2cpp_functions::Init();
         if (il2cpp_functions::class_is_assignable_from(k1, k2)) {
-            return SafePtr<U, AllowUnity>(reinterpret_cast<U*>(internalHandle->instancePointer));
+            return SafePtr<U, AllowUnityPrime>(reinterpret_cast<U*>(internalHandle->instancePointer));
         }
 #if __has_feature(cxx_exceptions)
         throw TypeCastException();
 #else
         SAFE_ABORT();
-        return SafePtr<U, AllowUnity>();
+        return SafePtr<U, AllowUnityPrime>();
 #endif
     }
     /// @brief Performs an il2cpp type checked cast from T to U.
     /// This should only be done if both T and U are reference types
     /// Currently assumes the `klass` field is the first pointer in T.
     /// @tparam U The type to cast to.
+    /// @tparam AllowUnityPrime Whether the casted SafePtr should allow unity conversions.
     /// @return A new SafePtr of the cast value, if successful.
-    template<class U>
-    [[nodiscard]] inline std::optional<SafePtr<U, AllowUnity>> try_cast() const noexcept {
+    template<class U, bool AllowUnityPrime = AllowUnity>
+    [[nodiscard]] inline std::optional<SafePtr<U, AllowUnityPrime>> try_cast() const noexcept {
         auto* k1 = classof(U*);
         if (!internalHandle || !internalHandle->instancePointer || k1) {
             return std::nullopt;
@@ -364,7 +367,7 @@ struct SafePtr {
         }
         il2cpp_functions::Init();
         if (il2cpp_functions::class_is_assignable_from(k1, k2)) {
-            return SafePtr<U, AllowUnity>(reinterpret_cast<U*>(internalHandle->instancePointer));
+            return SafePtr<U, AllowUnityPrime>(reinterpret_cast<U*>(internalHandle->instancePointer));
         }
         return std::nullopt;
     }
@@ -372,15 +375,15 @@ struct SafePtr {
     /// @brief Returns false if this is a defaultly constructed SafePtr, true otherwise.
     /// Note that this means that it will return true if it holds a nullptr value explicitly!
     /// This means that you should check yourself before calling anything using the held T*.
-    inline bool isHandleValid() const {
-        return (bool) internalHandle;
+    inline bool isHandleValid() const noexcept {
+        return static_cast<bool>(internalHandle);
     } 
 
     T* ptr() {
         __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
     }
 
-    T const* ptr() const{
+    T const* ptr() const {
         __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
     }
 
@@ -388,28 +391,28 @@ struct SafePtr {
     /// Note that this means that it will return true if it holds a nullptr value explicitly!
     /// This means that you should check yourself before calling anything using the held T*.
     operator bool() const noexcept {
-        return (bool)internalHandle;
+        return isHandleValid();
     }
 
     /// @brief Dereferences the instance pointer to a reference type of the held instance.
     /// Throws a NullHandleException if there is no internal handle.
     T& operator *() {
-        __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, *internalHandle->instancePointer);
+        return *ptr();
     }
 
     const T& operator *() const {
-        __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, *internalHandle->instancePointer);
+        return *ptr();
     }
 
     T* const operator ->() const {
-        __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
+        return const_cast<T*>(ptr());
     }
 
     /// @brief Explicitly cast this instance to a T*.
     /// Note, however, that the lifetime of this returned T* is not longer than the lifetime of this instance.
     /// Consider passing a SafePtr reference or copy instead.
     explicit operator T* const() const {
-        __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
+        return const_cast<T*>(ptr());
     }
 
 private:
@@ -458,8 +461,9 @@ template <typename T>
 requires(std::is_assignable_v<UnityEngine::Object, T>)
 #endif
 struct SafePtrUnity : public SafePtr<T, true> {
-
+    private:
     using Parent = SafePtr<T, true>;
+    public:
 
     SafePtrUnity() = default;
 
@@ -471,29 +475,35 @@ struct SafePtrUnity : public SafePtr<T, true> {
     SafePtrUnity(SafePtrUnity&& p) : Parent(p) {}
     SafePtrUnity(SafePtrUnity const& p) : Parent(p) {}
 
-
-    operator T*() {
+    T* ptr() {
         __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(Parent::internalHandle->instancePointer);
     }
 
-    operator T const*() const {
+    T const* ptr() const {
         __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(Parent::internalHandle->instancePointer);
+    }
+
+    /// @brief Explicitly cast this instance to a T*.
+    /// Note, however, that the lifetime of this returned T* is not longer than the lifetime of this instance.
+    /// Consider passing a SafePtrUnity reference or copy instead.
+    explicit operator T* const() const {
+        return const_cast<T*>(ptr());
     }
 
     T* const operator ->() {
-        __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(Parent::internalHandle->instancePointer);
+        return const_cast<T*>(ptr());
     }
 
     T* const operator ->() const {
-        __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(Parent::internalHandle->instancePointer);
+        return ptr();
     }
 
     T& operator *() {
-        __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(*Parent::internalHandle->instancePointer);
+        return *ptr();
     }
 
     T const& operator *() const {
-        __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(*Parent::internalHandle->instancePointer);
+        return *ptr();
     }
 
     operator bool() const {
@@ -519,16 +529,14 @@ struct SafePtrUnity : public SafePtr<T, true> {
         return static_cast<T*>(other) == static_cast<T*>(Parent::ptr());
     }
 
-
-
-    inline bool isAlive() {
+    inline bool isAlive() const {
 #ifdef HAS_CODEGEN
-        return ((bool)Parent::internalHandle) && (Parent::ptr()) && Parent::ptr()->m_cachedPtr.m_value;
+        return static_cast<bool>(Parent::internalHandle) && (Parent::ptr()) && Parent::ptr()->m_cachedPtr.m_value;
 #else
         // offset yay
         // the offset as specified in the codegen header of [m_cachedPtr] is 0x10
         // which is also the first field of the instance UnityEngine.Object
-      return ((bool)Parent::internalHandle) && (Parent::ptr()) && *reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(Parent::ptr()) + 0x10);
+      return static_cast<bool>(Parent::internalHandle) && (Parent::ptr()) && *reinterpret_cast<void* const*>(reinterpret_cast<uint8_t const*>(Parent::ptr()) + 0x10);
 #endif
     }
 
