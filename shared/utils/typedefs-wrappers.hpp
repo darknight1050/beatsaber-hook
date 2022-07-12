@@ -72,7 +72,7 @@ struct Counter {
             return 0;
         }
     }
-    private:
+private:
     static std::unordered_map<void*, size_t> addrRefCount;
     static std::shared_mutex mutex;
 };
@@ -180,12 +180,12 @@ struct CountPointer {
         if (il2cpp_functions::class_is_assignable_from(k1, k2)) {
             return CountPointer<U>(reinterpret_cast<U*>(ptr));
         }
-        #if __has_feature(cxx_exceptions)
+#if __has_feature(cxx_exceptions)
         throw TypeCastException();
-        #else
+#else
         SAFE_ABORT();
         return CountPointer<U>();
-        #endif
+#endif
     }
     /// @brief Performs an il2cpp type checked cast from T to U.
     /// This should only be done if both T and U are reference types
@@ -214,18 +214,35 @@ struct CountPointer {
     constexpr T* const __internal_get() const noexcept {
         return ptr;
     }
-    private:
+private:
     T* ptr;
 };
 
 // TODO: Make an overall Ptr interface type, virtual destructor and *, -> operators
 // TODO: Remove all conversion operators? (Basically force people to guarantee lifetime of held instance?)
 
+#ifdef HAS_CODEGEN
+
+namespace UnityEngine {
+    class Object;
+}
+
+template <typename T>
+requires(std::is_assignable_v<UnityEngine::Object, T>)
+struct SafePtrUnity;
+#else
+template <typename T>
+struct SafePtrUnity;
+#endif
+
 /// @brief Represents a C++ type that wraps a C# pointer that will be valid for the entire lifetime of this instance.
 /// This instance must be created at a time such that il2cpp_functions::Init is valid, or else it will throw a CreatedTooEarlyException
 /// @tparam T The type of the instance to wrap.
-template<class T>
+template<class T, bool AllowUnity = false>
 struct SafePtr {
+#ifdef HAS_CODEGEN
+    static_assert(!std::is_assignable_v<UnityEngine::Object, T> || AllowUnity, "Don't use Unity types with SafePtr. Ignore this warning by specifying SafePtr<T, true>");
+#endif
     /// @brief Default constructor. Should be paired with emplace or = to ensure validity.
     SafePtr() {}
     /// @brief Construct a SafePtr<T> with the provided instance pointer (which may be nullptr).
@@ -310,12 +327,12 @@ struct SafePtr {
         // TODO: We currently assume that the first sizeof(void*) bytes of ptr is the klass field.
         // This should hold true for everything except value types.
         if (!internalHandle) {
-            #if __has_feature(cxx_exceptions)
+#if __has_feature(cxx_exceptions)
             throw NullHandleException();
-            #else
+#else
             SAFE_ABORT();
             return SafePtr<U>();
-            #endif
+#endif
         }
         auto* k1 = CRASH_UNLESS(classof(U*));
         auto* k2 = *CRASH_UNLESS(reinterpret_cast<Il2CppClass**>(internalHandle->instancePointer));
@@ -323,12 +340,12 @@ struct SafePtr {
         if (il2cpp_functions::class_is_assignable_from(k1, k2)) {
             return SafePtr<U>(reinterpret_cast<U*>(internalHandle->instancePointer));
         }
-        #if __has_feature(cxx_exceptions)
+#if __has_feature(cxx_exceptions)
         throw TypeCastException();
-        #else
+#else
         SAFE_ABORT();
         return SafePtr<U>();
-        #endif
+#endif
     }
     /// @brief Performs an il2cpp type checked cast from T to U.
     /// This should only be done if both T and U are reference types
@@ -380,16 +397,18 @@ struct SafePtr {
         __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
     }
 
-    private:
+private:
+    friend class SafePtrUnity<T>;
+
     struct SafePointerWrapper {
         static SafePointerWrapper* New(T* instance) {
             il2cpp_functions::Init();
             if (!il2cpp_functions::hasGCFuncs) {
-                #if __has_feature(cxx_exceptions)
+#if __has_feature(cxx_exceptions)
                 throw CreatedTooEarlyException();
-                #else
+#else
                 SAFE_ABORT_MSG("Cannot use a SafePtr this early/without GC functions!");
-                #endif
+#endif
             }
             // It should be safe to assume that GC_AllocateFixed returns a non-null pointer. If it does return null, we have a pretty big issue.
             auto* wrapper = reinterpret_cast<SafePointerWrapper*>(il2cpp_functions::GarbageCollector_AllocateFixed(sizeof(SafePointerWrapper), nullptr));
@@ -403,6 +422,74 @@ struct SafePtr {
         T* instancePointer;
     };
     CountPointer<SafePointerWrapper> internalHandle;
+};
+
+#if __has_feature(cxx_exceptions)
+#define __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(...) \
+if (isAlive()) \
+return __VA_ARGS__; \
+throw NullHandleException()
+
+#else
+#include "utils.h"
+#define __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(...) \
+if (isAlive()) \
+return __VA_ARGS__; \
+CRASH_UNLESS(false)
+#endif
+
+template <typename T>
+#ifdef HAS_CODEGEN
+requires(std::is_assignable_v<UnityEngine::Object, T>)
+#endif
+struct SafePtrUnity : public SafePtr<T, true> {
+
+    using Parent = SafePtr<T, true>;
+
+    SafePtrUnity() = default;
+
+    SafePtrUnity(T *wrappableInstance) : Parent(wrappableInstance) {}
+    SafePtrUnity(T &wrappableInstance) : Parent(wrappableInstance) {}
+    SafePtrUnity(Parent&& p) : Parent(p) {}
+    SafePtrUnity(Parent const& p) : Parent(p) {}
+
+    SafePtrUnity(SafePtrUnity&& p) : Parent(p) {}
+    SafePtrUnity(SafePtrUnity const& p) : Parent(p) {}
+
+
+    operator T*() {
+        __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(Parent::internalHandle->instancePointer);
+    }
+
+    operator T const*() const {
+        __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(Parent::internalHandle->instancePointer);
+    }
+
+    T* const operator ->() {
+        __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(Parent::internalHandle->instancePointer);
+    }
+
+    T* const operator ->() const {
+        __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(Parent::internalHandle->instancePointer);
+    }
+
+    T& operator *() {
+        __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(*Parent::internalHandle->instancePointer);
+    }
+
+    T const& operator *() const {
+        __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(*Parent::internalHandle->instancePointer);
+    }
+
+    inline bool isAlive() {
+#ifdef HAS_CODEGEN
+        return Parent::internalHandle && Parent::internalHandle.m_cachedPtr.m_value;
+#else
+        // offset yay
+      return Parent::internalHandle && (Parent::internalHandle + 0x10)
+#endif
+    }
+
 };
 
 /// @brief Represents a pointer that may be GC'd, but will notify you when it has.
@@ -508,12 +595,12 @@ struct FunctionWrapper<std::function<R (TArgs...)>> : AbstractFunction<R (void*,
 namespace std {
     template<typename R, typename T, typename... TArgs>
     struct hash<AbstractFunction<R (T*, TArgs...)>> {
-        std::size_t operator()(const AbstractFunction<R (T*, TArgs...)>& obj) const noexcept {
-            auto seed = std::hash<void*>{}(obj.instance());
-            return seed ^ std::hash<void*>{}(reinterpret_cast<void*>(obj.ptr())) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            return seed;
-        }
-    };
+    std::size_t operator()(const AbstractFunction<R (T*, TArgs...)>& obj) const noexcept {
+        auto seed = std::hash<void*>{}(obj.instance());
+        return seed ^ std::hash<void*>{}(reinterpret_cast<void*>(obj.ptr())) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        return seed;
+    }
+};
 }
 
 template<typename R, typename T, typename... TArgs>
@@ -566,10 +653,10 @@ public:
 namespace std {
     template<typename R, typename T, typename... TArgs>
     struct hash<ThinVirtualLayer<R (T*, TArgs...)>> {
-        std::size_t operator()(const ThinVirtualLayer<R (T*, TArgs...)>& obj) const noexcept {
-            return std::hash<AbstractFunction<R (T*, TArgs...)>>{}(*obj.func);
-        }
-    };
+    std::size_t operator()(const ThinVirtualLayer<R (T*, TArgs...)>& obj) const noexcept {
+        return std::hash<AbstractFunction<R (T*, TArgs...)>>{}(*obj.func);
+    }
+};
 }
 
 // TODO: Make a version of this for C# delegates?
