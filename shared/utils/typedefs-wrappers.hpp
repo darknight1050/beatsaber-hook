@@ -306,12 +306,12 @@ struct SafePtr {
         internalHandle = std::move(other);
     }
 
-    inline SafePtr<T>& operator=(T* other) {
+    inline SafePtr<T, AllowUnity>& operator=(T* other) {
         emplace(other);
         return *this;
     }
 
-    inline SafePtr<T>& operator=(T& other) {
+    inline SafePtr<T, AllowUnity>& operator=(T& other) {
         emplace(other);
         return *this;
     }
@@ -323,7 +323,7 @@ struct SafePtr {
     /// @tparam U The type to cast to.
     /// @return A new SafePtr of the cast value.
     template<class U>
-    [[nodiscard]] inline SafePtr<U> cast() const {
+    [[nodiscard]] inline SafePtr<U, AllowUnity> cast() const {
         // TODO: We currently assume that the first sizeof(void*) bytes of ptr is the klass field.
         // This should hold true for everything except value types.
         if (!internalHandle) {
@@ -331,20 +331,20 @@ struct SafePtr {
             throw NullHandleException();
 #else
             SAFE_ABORT();
-            return SafePtr<U>();
+            return SafePtr<U, AllowUnity>();
 #endif
         }
         auto* k1 = CRASH_UNLESS(classof(U*));
         auto* k2 = *CRASH_UNLESS(reinterpret_cast<Il2CppClass**>(internalHandle->instancePointer));
         il2cpp_functions::Init();
         if (il2cpp_functions::class_is_assignable_from(k1, k2)) {
-            return SafePtr<U>(reinterpret_cast<U*>(internalHandle->instancePointer));
+            return SafePtr<U, AllowUnity>(reinterpret_cast<U*>(internalHandle->instancePointer));
         }
 #if __has_feature(cxx_exceptions)
         throw TypeCastException();
 #else
         SAFE_ABORT();
-        return SafePtr<U>();
+        return SafePtr<U, AllowUnity>();
 #endif
     }
     /// @brief Performs an il2cpp type checked cast from T to U.
@@ -353,7 +353,7 @@ struct SafePtr {
     /// @tparam U The type to cast to.
     /// @return A new SafePtr of the cast value, if successful.
     template<class U>
-    [[nodiscard]] inline std::optional<SafePtr<U>> try_cast() const noexcept {
+    [[nodiscard]] inline std::optional<SafePtr<U, AllowUnity>> try_cast() const noexcept {
         auto* k1 = classof(U*);
         if (!internalHandle || !internalHandle->instancePointer || k1) {
             return std::nullopt;
@@ -364,7 +364,7 @@ struct SafePtr {
         }
         il2cpp_functions::Init();
         if (il2cpp_functions::class_is_assignable_from(k1, k2)) {
-            return SafePtr<U>(reinterpret_cast<U*>(internalHandle->instancePointer));
+            return SafePtr<U, AllowUnity>(reinterpret_cast<U*>(internalHandle->instancePointer));
         }
         return std::nullopt;
     }
@@ -511,7 +511,9 @@ struct SafePtrUnity : public SafePtr<T, true> {
         return ((bool)Parent::internalHandle) && (static_cast<T*>(Parent::internalHandle)) && Parent::internalHandle.m_cachedPtr.m_value;
 #else
         // offset yay
-      return ((bool)Parent::internalHandle) && (static_cast<T*>(Parent::internalHandle)) && (Parent::internalHandle + 0x10);
+        // the offset as specified in the codegen header of [m_cachedPtr] is 0x10
+        // which is also the first field of the instance UnityEngine.Object
+      return ((bool)Parent::internalHandle) && (static_cast<T*>(Parent::internalHandle)) && *reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(Parent::internalHandle) + 0x10));
 #endif
     }
 
