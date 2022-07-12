@@ -507,7 +507,7 @@ struct SafePtrUnity : public SafePtr<T, true> {
             return other.isAlive() == isAlive();
         }
 
-        return static_cast<T*>(other.internalHandle) == static_cast<T*>(Parent::internalHandle);
+        return static_cast<T*>(other.internalHandle) == static_cast<T*>(ptr());
     }
 
     template<typename U = T>
@@ -516,19 +516,19 @@ struct SafePtrUnity : public SafePtr<T, true> {
             return static_cast<bool>(other) == isAlive();
         }
 
-        return static_cast<T*>(other) == static_cast<T*>(Parent::internalHandle);
+        return static_cast<T*>(other) == static_cast<T*>(ptr());
     }
 
 
 
     inline bool isAlive() {
 #ifdef HAS_CODEGEN
-        return ((bool)Parent::internalHandle) && (static_cast<T*>(Parent::internalHandle)) && Parent::internalHandle.m_cachedPtr.m_value;
+        return ((bool)Parent::internalHandle) && (ptr()) && ptr().m_cachedPtr.m_value;
 #else
         // offset yay
         // the offset as specified in the codegen header of [m_cachedPtr] is 0x10
         // which is also the first field of the instance UnityEngine.Object
-      return ((bool)Parent::internalHandle) && (static_cast<T*>(Parent::internalHandle)) && *reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(Parent::internalHandle) + 0x10);
+      return ((bool)Parent::internalHandle) && (ptr()) && *reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(ptr()) + 0x10);
 #endif
     }
 
