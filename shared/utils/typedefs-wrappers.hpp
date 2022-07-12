@@ -372,6 +372,21 @@ struct SafePtr {
     /// @brief Returns false if this is a defaultly constructed SafePtr, true otherwise.
     /// Note that this means that it will return true if it holds a nullptr value explicitly!
     /// This means that you should check yourself before calling anything using the held T*.
+    inline bool isHandleValid() const {
+        return (bool) internalHandle;
+    } 
+
+    T* ptr() {
+        return __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
+    }
+
+    T const* ptr() const{
+        return __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
+    }
+
+    /// @brief Returns false if this is a defaultly constructed SafePtr, true otherwise.
+    /// Note that this means that it will return true if it holds a nullptr value explicitly!
+    /// This means that you should check yourself before calling anything using the held T*.
     operator bool() const noexcept {
         return (bool)internalHandle;
     }
@@ -398,7 +413,7 @@ struct SafePtr {
     }
 
 private:
-    friend class SafePtrUnity<T>;
+    friend struct SafePtrUnity<T>;
 
     struct SafePointerWrapper {
         static SafePointerWrapper* New(T* instance) {
