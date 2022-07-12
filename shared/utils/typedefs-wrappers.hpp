@@ -484,12 +484,12 @@ struct SafePtrUnity : public SafePtr<T, true> {
     }
 
     inline SafePtrUnity<T>& operator=(T* other) {
-        emplace(other);
+        Parent::emplace(other);
         return *this;
     }
 
     inline SafePtrUnity<T>& operator=(T& other) {
-        emplace(other);
+        Parent::emplace(other);
         return *this;
     }
 
