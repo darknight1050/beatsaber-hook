@@ -511,7 +511,7 @@ struct SafePtrUnity : public SafePtr<T, true> {
         return ((bool)Parent::internalHandle) && (static_cast<T*>(Parent::internalHandle)) && Parent::internalHandle.m_cachedPtr.m_value;
 #else
         // offset yay
-      return ((bool)Parent::internalHandle) && (static_cast<T*>(Parent::internalHandle)) && (Parent::internalHandle + 0x10)
+      return ((bool)Parent::internalHandle) && (static_cast<T*>(Parent::internalHandle)) && (Parent::internalHandle + 0x10);
 #endif
     }
 
