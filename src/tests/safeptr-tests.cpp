@@ -86,5 +86,28 @@ static void test_cast() {
             SAFE_ABORT();
         }
     }
+    {
+        Il2CppObject inst;
+        SafePtrUnity<Il2CppObject> a(&inst);
+        // Standard operations should apply just fine for an Il2CppObject--
+        // we are casting to grab an invalid field, so this won't ever work in practice, but
+        // it should compile
+        auto b = a.cast<Il2CppReflectionType>();
+        auto c = *a.try_cast<Il2CppReflectionType>();
+        if (a) {
+            CRASH_UNLESS(static_cast<Il2CppObject*>(a));
+        }
+        if (b) {
+            CRASH_UNLESS(static_cast<Il2CppReflectionType*>(b));
+        }
+        auto call_ref = [](Il2CppObject&) {};
+        call_ref(*a);
+        SafePtrUnity<Il2CppObject> const ca(a);
+        auto call_cref = [](Il2CppObject const&) {};
+        // Should not compile:
+        // Il2CppObject& v = ca;
+        call_cref(*ca);
+        call_cref(*a);
+    }
 }
 #endif
