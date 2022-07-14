@@ -222,18 +222,12 @@ private:
 // TODO: Remove all conversion operators? (Basically force people to guarantee lifetime of held instance?)
 
 #ifdef HAS_CODEGEN
-
 namespace UnityEngine {
     class Object;
 }
-
-template <typename T>
-requires(std::is_assignable_v<UnityEngine::Object, T>)
-struct SafePtrUnity;
-#else
-template <typename T>
-struct SafePtrUnity;
 #endif
+template <typename T>
+struct SafePtrUnity;
 
 /// @brief Represents a C++ type that wraps a C# pointer that will be valid for the entire lifetime of this instance.
 /// This instance must be created at a time such that il2cpp_functions::Init is valid, or else it will throw a CreatedTooEarlyException
