@@ -451,9 +451,6 @@ CRASH_UNLESS(false)
 #endif
 
 template <typename T>
-#ifdef HAS_CODEGEN
-requires(std::is_assignable_v<UnityEngine::Object, T>)
-#endif
 struct SafePtrUnity : public SafePtr<T, true> {
     private:
     using Parent = SafePtr<T, true>;
