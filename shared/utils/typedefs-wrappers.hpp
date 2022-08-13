@@ -381,11 +381,9 @@ struct SafePtr {
         __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
     }
 
-    /// @brief Returns false if this is a defaultly constructed SafePtr, true otherwise.
-    /// Note that this means that it will return true if it holds a nullptr value explicitly!
-    /// This means that you should check yourself before calling anything using the held T*.
+    /// @brief Returns false if this is a defaultly constructed SafePtr, or if the held pointer evaluates to false
     operator bool() const noexcept {
-        return isHandleValid();
+        return isHandleValid() && ptr();
     }
 
     /// @brief Dereferences the instance pointer to a reference type of the held instance.
