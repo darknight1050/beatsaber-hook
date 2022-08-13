@@ -388,22 +388,22 @@ struct SafePtr {
 
     /// @brief Dereferences the instance pointer to a reference type of the held instance.
     /// Throws a NullHandleException if there is no internal handle.
-    T& operator *() {
+    [[nodiscard]] T& operator *() {
         return *ptr();
     }
 
-    const T& operator *() const {
+    [[nodiscard]] const T& operator *() const {
         return *ptr();
     }
 
-    T* const operator ->() const {
+    [[nodiscard]] T* const operator ->() const {
         return const_cast<T*>(ptr());
     }
 
     /// @brief Explicitly cast this instance to a T*.
     /// Note, however, that the lifetime of this returned T* is not longer than the lifetime of this instance.
     /// Consider passing a SafePtr reference or copy instead.
-    explicit operator T* const() const {
+    [[nodiscard]] explicit operator T* const() const {
         return const_cast<T*>(ptr());
     }
 
