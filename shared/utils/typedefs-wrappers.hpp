@@ -243,8 +243,12 @@ struct SafePtr {
     /// @brief Construct a SafePtr<T> with the provided instance pointer (which may be nullptr).
     /// If you wish to wrap a non-existent pointer (ex, use as a default constructor) see the 0 arg constructor instead.
     SafePtr(T* wrappableInstance) : internalHandle(SafePointerWrapper::New(wrappableInstance)) {}
+    /// @brief Construct a SafePtr<T> with the provided wrapper
+    SafePtr(T& wrappableInstance) requires(il2cpp_utils::has_il2cpp_conversion<T>) : internalHandle(SafePointerWrapper::New(wrappableInstance.convert())) {}
+    /// @brief Construct a SafePtr<T> with the provided wrapper
+    SafePtr(T&& wrappableInstance) requires(il2cpp_utils::has_il2cpp_conversion<T>) : internalHandle(SafePointerWrapper::New(wrappableInstance.convert())) {}
     /// @brief Construct a SafePtr<T> with the provided reference
-    SafePtr(T& wrappableInstance) : internalHandle(SafePointerWrapper::New(std::addressof(wrappableInstance))) {}
+    SafePtr(T& wrappableInstance) requires(!il2cpp_utils::has_il2cpp_conversion<T>) : internalHandle(SafePointerWrapper::New(std::addressof(wrappableInstance))) {}
     /// @brief Move constructor is default, moves the internal handle and keeps reference count the same.
     SafePtr(SafePtr&& other) = default;
     /// @brief Copy constructor copies the HANDLE, that is, the held pointer remains the same.
