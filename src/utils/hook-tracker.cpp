@@ -101,6 +101,7 @@ void HookTracker::CombineHooks() noexcept {
             }
             // Of course, if the function returns something that is of a different HookInfo type, for example, this may cause all sorts of pain.
             auto otherHooks = *reinterpret_cast<const std::unordered_map<const void*, std::list<HookInfo>>*(*)()>(getter)();
+            Logger::get().debug("Found other hooks: %zu for module: %s", otherHooks.size(), path.c_str());
             for (auto itr : otherHooks) {
                 // For each void*, find our match
                 auto match = hooks.find(itr.first);

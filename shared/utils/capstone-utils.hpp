@@ -27,12 +27,15 @@ struct AddrSearchPair {
 
 auto find_through_hooks(void const* hook, uint32_t initialSearchSize, auto&& func) {
     // First, check to see if we are hooked.
+    Logger::get().debug("Finding through potential hook: %p and size: %u", hook, initialSearchSize);
     auto hooks = HookTracker::GetHooks(hook);
     if (!hooks.empty()) {
         uint32_t const* addr = hooks.front().original_data.data();
         uint32_t size = hooks.front().original_data.size() * sizeof(uint32_t);
+        Logger::get().debug("Hook found! Original data: %p with size: %u", addr, size);
         return func(cs::AddrSearchPair(addr, size), cs::AddrSearchPair(reinterpret_cast<uint32_t const*>(hook), initialSearchSize));
     }
+    Logger::get().debug("No hook found! Searching: %p, %u", hook, initialSearchSize);
     return func(cs::AddrSearchPair(reinterpret_cast<uint32_t const*>(hook), initialSearchSize));
 }
 
@@ -44,6 +47,7 @@ decltype(auto) findNth(std::array<AddrSearchPair, sz>& addrs, uint32_t nToRetOn,
             auto ptr = reinterpret_cast<uint64_t>(addrs[searchIdx].addr);
             auto instructions = reinterpret_cast<const uint8_t*>(addrs[searchIdx].addr);
             bool res = cs_disasm_iter(getHandle(), &instructions, &addrs[searchIdx].remSearchSize, &ptr, insn);
+            Logger::get().debug("%p diassemb: %s (rCount: %i, nToRetOn: %u, sz: %zu)", (void*)ptr, insn->mnemonic, retCount, nToRetOn, addrs[searchIdx].remSearchSize);
             if (res) {
                 // Valid decode, so lets check to see if it is a match or we need to break.
                 if (insn->id == ARM64_INS_RET) {
@@ -84,7 +88,7 @@ decltype(auto) findNth(std::array<AddrSearchPair, sz>& addrs, uint32_t nToRetOn,
             }
         }
         // We didn't find it. Let's instead look at the next address/size pair for a match.
-        Logger::get().debug("Could not find: %u call at: %p within: %i rets!", nToRetOn, addrs[searchIdx].addr, retCount);
+        Logger::get().debug("Could not find: %u call at: %p within: %i rets at idx: %zu!", nToRetOn, addrs[searchIdx].addr, retCount, searchIdx);
     }
     // If we run out of bytes to parse, we fail
     cs_free(insn, 1);
@@ -103,6 +107,7 @@ auto findNth(const uint32_t* addr, F1&& match, F2&& skip) {
     size_t sz = szBytes;
     while (sz > 0) {
         bool res = cs_disasm_iter(getHandle(), &instructions, &sz, &ptr, insn);
+        Logger::get().debug("%p diassemb: %s (rCount: %i, nCalls: %u, sz: %zu)", (void*)ptr, insn->mnemonic, rCount, nCalls, sz);
         if (res) {
             // Valid decode, so lets check to see if it is a match or we need to break.
             if (insn->id == ARM64_INS_RET) {

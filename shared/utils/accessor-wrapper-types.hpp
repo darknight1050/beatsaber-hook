@@ -144,7 +144,7 @@ namespace bs_hook {
 
     template<class T, class U, internal::NTTPString name>
     struct StaticField<T, U, name, true> : StaticField<T, U, name, false> {
-        using StaticField<T, U, name, false>::operator U();
+        using StaticField<T, U, name, false>::operator U;
         StaticField& operator=(U&& value) {
             auto val = il2cpp_utils::SetFieldValue(classof(T), name.data.data(), std::forward<decltype(value)>(value));
             if (!val) throw FieldException(std::string("Could not set static field with name: " + name.data.data()));
