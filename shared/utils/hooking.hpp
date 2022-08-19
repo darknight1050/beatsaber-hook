@@ -103,6 +103,9 @@ struct HookCatchWrapper<Func, R (*)(TArgs...)> {
     }
 };
 
+// TODO: Make a pending_install collection and add HookInfo to it to ensure installation
+// Then, walk this at load time and install (could do so after il2cpp_functions::Init)
+
 // Make an address-specified hook, that has a catch handler.
 #define MAKE_HOOK(name_, addr_, retval, ...) \
 struct Hook_##name_ { \
@@ -471,6 +474,81 @@ struct Hook_##name_ { \
     static inline retval (*name_)(__VA_ARGS__) = nullptr; \
     static funcType hook() { return hook_##name_; } \
     static retval hook_##name_(__VA_ARGS__); \
+}; \
+retval Hook_##name_::hook_##name_(__VA_ARGS__)
+
+// TODO: Remove all of these macros and replace it with just one or MAYBE two-- if people want to do it themselves
+// they can implement the structure themselves
+
+template<class T>
+struct TypeConv {
+    using type = T;
+    static T make(T p) {
+        return p;
+    }
+    static T convert(T p) {
+        return p;
+    }
+};
+
+template<class T>
+requires (il2cpp_utils::has_il2cpp_conversion<T>)
+struct TypeConv<T> {
+    using type = void*;
+    static T make(void* p) {
+        return T(p);
+    }
+    static void* convert(T v) {
+        return v.convert();
+    }
+};
+
+template<auto F>
+struct HookWrapperCompose;
+
+template<class Ret, class... TArgs, Ret (*func)(TArgs...)>
+struct HookWrapperCompose<func> {
+    static typename TypeConv<Ret>::type wrapper(typename TypeConv<TArgs>::type... args) {
+        if constexpr (std::is_same_v<typename TypeConv<Ret>::type, void>) {
+            func(TypeConv<TArgs>::make(args)...);
+        } else {
+            return TypeConv<Ret>::convert(func(TypeConv<TArgs>::make(args)...));
+        }
+    }
+};
+
+template<class F>
+struct HookWrapperInvoke;
+
+template<class R, class... TArgs>
+struct HookWrapperInvoke<R (*)(TArgs...)> {
+    static R wrapper(typename TypeConv<R>::type (*func)(typename TypeConv<TArgs>::type...), TArgs... args) {
+        if constexpr (std::is_same_v<R, void>) {
+            func(TypeConv<TArgs>::convert(args)...);
+        } else {
+            return TypeConv<R>::make(func(TypeConv<TArgs>::convert(args)...));
+        }
+    }
+};
+
+#define MAKE_HOOK_WRAPPER(name_, mPtr, retval, ...) \
+struct Hook_##name_ { \
+    static retval hook_##name_(__VA_ARGS__); \
+    using funcType = decltype(&::Hooking::HookWrapperCompose<&hook_##name_>::wrapper); \
+    /* static_assert(std::is_same_v<funcType, ::Hooking::InternalMethodCheck<decltype(mPtr)>::funcType>, "Hook method signature does not match!"); */ \
+    constexpr static const char* name() { return #name_; } \
+    static const MethodInfo* getInfo() { return ::il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get(); } \
+    static funcType* trampoline() { return &orig_base; } \
+    static inline funcType orig_base = nullptr; \
+    template<class... TArgs> \
+    static inline retval name_(TArgs... args) { \
+        if constexpr (std::is_same_v<retval, void>) { \
+            ::Hooking::HookWrapperInvoke<decltype(&hook_##name_)>::wrapper(orig_base, args...); \
+        } else { \
+            return ::Hooking::HookWrapperInvoke<decltype(&hook_##name_)>::wrapper(orig_base, args...); \
+        } \
+    } \
+    static funcType hook() { return &::Hooking::HookWrapperCompose<::Hooking::HookCatchWrapper<&hook_##name_, decltype(&hook_##name_)>::wrapper>::wrapper; } \
 }; \
 retval Hook_##name_::hook_##name_(__VA_ARGS__)
 
