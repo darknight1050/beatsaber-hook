@@ -2,6 +2,7 @@
 #include <string_view>
 #include <string>
 #include <list>
+#include <array>
 #include <unordered_map>
 
 /// @brief Stores information about an installed hook.
@@ -10,8 +11,11 @@ struct HookInfo {
     const void* destination;
     const void* trampoline;
     const void* orig;
+    std::array<uint32_t, 6> original_data;
     HookInfo(std::string_view name_, void* dst, void* src, void* orig_)
-        : name(name_.data()), destination(dst), trampoline(src), orig(orig_) {}
+        : name(name_.data()), destination(dst), trampoline(src), orig(orig_) {
+        std::copy_n(reinterpret_cast<uint32_t*>(src), original_data.size(), original_data.begin());
+    }
     bool operator==(const HookInfo& other) const {
         return name == other.name && destination == other.destination && trampoline == other.trampoline && orig == other.orig;
     }
