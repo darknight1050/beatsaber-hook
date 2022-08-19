@@ -47,7 +47,7 @@ namespace bs_hook {
         explicit InstanceProperty(void* inst) noexcept : instance(inst) {}
         operator T() const {
             auto res = il2cpp_utils::GetPropertyValue<T, false>(reinterpret_cast<Il2CppObject*>(const_cast<void*>(instance)), name.data.data());
-            if (!res) throw il2cpp_utils::exceptions::StackTraceException(std::string("Failed to get instance property: ") + name.data.data());
+            if (!res) throw PropertyException(std::string("Failed to get instance property: ") + name.data.data());
             return *res;
         }
         private:
@@ -60,7 +60,7 @@ namespace bs_hook {
         InstanceProperty& operator=(T&& t) {
             auto val = reinterpret_cast<Il2CppObject*>(instance);
             auto res = il2cpp_utils::SetPropertyValue<false>(val, name.data.data(), std::forward<decltype(t)>(t));
-            if (!res) throw il2cpp_utils::exceptions::StackTraceException(std::string("Failed to set instance property: ") + name.data.data());
+            if (!res) throw PropertyException(std::string("Failed to set instance property: ") + name.data.data());
             return *this;
         }
         private:
@@ -72,17 +72,69 @@ namespace bs_hook {
         explicit InstanceProperty(void* inst) noexcept : instance(inst) {}
         operator T() const {
             auto res = il2cpp_utils::GetPropertyValue<T, false>(reinterpret_cast<Il2CppObject*>(const_cast<void*>(instance)), name.data.data());
-            if (!res) throw il2cpp_utils::exceptions::StackTraceException(std::string("Failed to get instance property: ") + name.data.data());
+            if (!res) throw PropertyException(std::string("Failed to get instance property: ") + name.data.data());
             return *res;
         }
         InstanceProperty& operator=(T&& t) {
             auto val = reinterpret_cast<Il2CppObject*>(instance);
             auto res = il2cpp_utils::SetPropertyValue<false>(val, name.data.data(), std::forward<decltype(t)>(t));
-            if (!res) throw il2cpp_utils::exceptions::StackTraceException(std::string("Failed to set instance property: ") + name.data.data());
+            if (!res) throw PropertyException(std::string("Failed to set instance property: ") + name.data.data());
             return *this;
         }
         private:
         void* instance;
+    };
+
+    template<class T, internal::NTTPString name, bool get, bool set>
+    struct StaticProperty;
+
+    template<class T, internal::NTTPString name>
+    struct StaticProperty<T, name, true, false> {
+        explicit StaticProperty(Il2CppClass* (*k)()) : klass_resolver(k) {}
+        operator T() const {
+            auto klass = klass_resolver();
+            if (!klass) throw NullException(std::string("Class for static property with name: ") + name.data.data() + " is null!");
+            auto res = il2cpp_utils::GetPropertyValue<T, false>(klass, name.data.data());
+            if (!res) throw PropertyException(std::string("Failed to get static property: ") + name.data.data());
+            return *res;
+        }
+        private:
+        Il2CppClass* (*klass_resolver)();
+    };
+
+    template<class T, internal::NTTPString name>
+    struct StaticProperty<T, name, false, true> {
+        explicit StaticProperty(Il2CppClass* (*k)()) : klass_resolver(k) {}
+        StaticProperty& operator=(T&& value) {
+            auto klass = klass_resolver();
+            if (!klass) throw NullException(std::string("Class for static property with name: ") + name.data.data() + " is null!");
+            auto res = il2cpp_utils::SetPropertyValue<false>(klass, name.data.data(), std::forward<decltype(value)>(value));
+            if (!res) throw PropertyException(std::string("Failed to set static property: ") + name.data.data());
+            return *this;
+        }
+        private:
+        Il2CppClass* (*klass_resolver)();
+    };
+
+    template<class T, internal::NTTPString name>
+    struct StaticProperty<T, name, true, true> {
+        explicit StaticProperty(Il2CppClass* (*k)()) : klass_resolver(k) {}
+        operator T() const {
+            auto klass = klass_resolver();
+            if (!klass) throw NullException(std::string("Class for static property with name: ") + name.data.data() + " is null!");
+            auto res = il2cpp_utils::GetPropertyValue<T, false>(klass, name.data.data());
+            if (!res) throw PropertyException(std::string("Failed to get static property: ") + name.data.data());
+            return *res;
+        }
+        StaticProperty& operator=(T&& value) {
+            auto klass = klass_resolver();
+            if (!klass) throw NullException(std::string("Class for static property with name: ") + name.data.data() + " is null!");
+            auto res = il2cpp_utils::SetPropertyValue<false>(klass, name.data.data(), std::forward<decltype(value)>(value));
+            if (!res) throw PropertyException(std::string("Failed to set static property: ") + name.data.data());
+            return *this;
+        }
+        private:
+        Il2CppClass* (*klass_resolver)();
     };
 
     template<class T, std::size_t offset, bool assignable>
@@ -130,25 +182,41 @@ namespace bs_hook {
         void* instance;
     };
 
-    template<class T, class U, internal::NTTPString name, bool assignable>
+    template<class T, internal::NTTPString name, bool assignable>
     struct StaticField;
 
-    template<class T, class U, internal::NTTPString name>
-    struct StaticField<T, U, name, false> {
-        operator U() const {
-            auto val = il2cpp_utils::GetFieldValue(classof(T), name.data.data());
+    template<class T, internal::NTTPString name>
+    struct StaticField<T, name, false> {
+        explicit StaticField(Il2CppClass* (*k)()) : klass_resolver(k) {}
+        operator T() const {
+            auto klass = klass_resolver();
+            if (!klass) throw NullException(std::string("Class for static field with name: ") + name.data.data() + " is null!");
+            auto val = il2cpp_utils::GetFieldValue<T>(klass, name.data.data());
             if (!val) throw FieldException(std::string("Could not get static field with name: ") + name.data.data());
             return *val;
         }
+        private:
+        Il2CppClass* (*klass_resolver)();
     };
 
-    template<class T, class U, internal::NTTPString name>
-    struct StaticField<T, U, name, true> : StaticField<T, U, name, false> {
-        using StaticField<T, U, name, false>::operator U;
-        StaticField& operator=(U&& value) {
-            auto val = il2cpp_utils::SetFieldValue(classof(T), name.data.data(), std::forward<decltype(value)>(value));
-            if (!val) throw FieldException(std::string("Could not set static field with name: " + name.data.data()));
+    template<class T, internal::NTTPString name>
+    struct StaticField<T, name, true> {
+        explicit StaticField(Il2CppClass* (*k)()) : klass_resolver(k) {}
+        operator T() const {
+            auto klass = klass_resolver();
+            if (!klass) throw NullException(std::string("Class for static field with name: ") + name.data.data() + " is null!");
+            auto val = il2cpp_utils::GetFieldValue<T>(klass, name.data.data());
+            if (!val) throw FieldException(std::string("Could not get static field with name: ") + name.data.data());
+            return *val;
+        }
+        StaticField& operator=(T&& value) {
+            auto klass = klass_resolver();
+            if (!klass) throw NullException(std::string("Class for static field with name: ") + name.data.data() + " is null!");
+            auto val = il2cpp_utils::SetFieldValue(klass, name.data.data(), std::forward<decltype(value)>(value));
+            if (!val) throw FieldException(std::string("Could not set static field with name: ") + name.data.data());
             return *this;
         }
+        private:
+        Il2CppClass* (*klass_resolver)();
     };
 }

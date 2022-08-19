@@ -11,6 +11,15 @@ struct Underlying {
     int c;
 };
 
+struct Test;
+
+template<>
+struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test> {
+    static Il2CppClass* get() {
+        return nullptr;
+    }
+};
+
 struct Test {
     friend int main();
     // TODO: This explicit constructor should either not be a constructor at all (static method, and change concept to match)
@@ -29,6 +38,11 @@ struct Test {
     bs_hook::InstanceProperty<"A", int, true, true> A{instance};
     bs_hook::InstanceProperty<"B", int, true, true> B{instance};
     bs_hook::InstanceField<int, 0x8, true> c{instance};
+    static inline bs_hook::StaticField<int, "staticA", true> staticA{&::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get};
+    static inline bs_hook::StaticField<int, "staticA2", false> staticA2{&::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get};
+    static inline bs_hook::StaticProperty<int, "staticProp", true, true> staticB{&::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get};
+    static inline bs_hook::StaticProperty<int, "staticProp2", true, false> staticProp2{&::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get};
+    static inline bs_hook::StaticProperty<int, "staticProp3", false, true> staticProp3{&::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get};
 };
 
 int main() {
@@ -42,6 +56,12 @@ int main() {
     std::cout << "A: " << t.A << " B: " << t.B << " c: " << t.c << std::endl;
     // return t.A == t.B;
     // return t.c;
+    Test::staticA = 456;
+    Test::staticB = 789;
+    Test::staticA = Test::staticB;
+    // Test::staticA2 = 123; // INVALID!
+    // Test::staticProp2 = 123; // INVALID!
+    // Test::staticB = Test::staticProp3; // INVALID!
     return t.A == 0x4567 && t.B == 0x1234 && t.c == 123;
 }
 #endif
