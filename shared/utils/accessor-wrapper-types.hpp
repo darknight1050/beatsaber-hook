@@ -90,12 +90,20 @@ namespace bs_hook {
         operator T() const {
             if (instance == nullptr) throw NullException("Instance field access failed at offset: " + std::to_string(offset) + " because instance was null!");
             // TODO: Also set wbarrier
+            if constexpr (il2cpp_utils::has_il2cpp_conversion<T>) {
+                // Handle wrapper types differently
+                return T(*reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(const_cast<void*>(instance)) + offset));
+            }
             return *reinterpret_cast<T*>(reinterpret_cast<uint8_t*>(const_cast<void*>(instance)) + offset);
         }
         InstanceField& operator=(T&& t) {
             if (instance == nullptr) throw NullException("Instance field assignment failed at offset: " + std::to_string(offset) + " because instance was null!");
-            *reinterpret_cast<T*>(reinterpret_cast<uint8_t*>(instance) + offset) = t;
             // TODO: Also set wbarrier
+            if constexpr (il2cpp_utils::has_il2cpp_conversion<T>) {
+                *reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(instance) + offset) = t.convert();
+            } else {
+                *reinterpret_cast<T*>(reinterpret_cast<uint8_t*>(instance) + offset) = t;
+            }
             return *this;
         }
         private:
@@ -106,8 +114,12 @@ namespace bs_hook {
     struct InstanceField<T, offset, false> {
         explicit InstanceField(void* inst) noexcept : instance(inst) {}
         operator T() const {
-            if (instance == nullptr) throw NullException("Instance field access failed because instance was null!");
+            if (instance == nullptr) throw NullException("Instance field access failed at offset: " + std::to_string(offset) + " because instance was null!");
             // TODO: Also set wbarrier
+            if constexpr (il2cpp_utils::has_il2cpp_conversion<T>) {
+                // Handle wrapper types differently
+                return T(*reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(const_cast<void*>(instance)) + offset));
+            }
             return *reinterpret_cast<T*>(reinterpret_cast<uint8_t*>(const_cast<void*>(instance)) + offset);
         }
         private:
