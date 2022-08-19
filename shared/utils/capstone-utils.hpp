@@ -45,8 +45,7 @@ decltype(auto) findNth(std::array<AddrSearchPair, sz>& addrs, uint32_t nToRetOn,
     for (std::size_t searchIdx = 0; searchIdx < addrs.size(); searchIdx++) {
         while (addrs[searchIdx].remSearchSize > 0) {
             auto ptr = reinterpret_cast<uint64_t>(addrs[searchIdx].addr);
-            auto instructions = reinterpret_cast<const uint8_t*>(addrs[searchIdx].addr);
-            bool res = cs_disasm_iter(getHandle(), &instructions, &addrs[searchIdx].remSearchSize, &ptr, insn);
+            bool res = cs_disasm_iter(getHandle(), reinterpret_cast<const uint8_t**>(&addrs[searchIdx].addr), &addrs[searchIdx].remSearchSize, &ptr, insn);
             Logger::get().debug("%p diassemb: %s (rCount: %i, nToRetOn: %u, sz: %zu)", (void*)ptr, insn->mnemonic, retCount, nToRetOn, addrs[searchIdx].remSearchSize);
             if (res) {
                 // Valid decode, so lets check to see if it is a match or we need to break.
