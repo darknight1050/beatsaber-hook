@@ -6,16 +6,11 @@
 #include "il2cpp-type-check.hpp"
 #include "il2cpp-functions.hpp"
 #include "il2cpp-utils-methods.hpp"
+#include "base-wrapper-type.hpp"
 #include <optional>
 #include <vector>
 
 namespace il2cpp_utils {
-    template<class T>
-    concept has_il2cpp_conversion = requires (T t) {
-        {t.convert()} -> std::same_as<void*>;
-        std::is_constructible_v<T, void*>;
-    };
-
     template<class TOut>
     ::std::optional<TOut> FromIl2CppObject(Il2CppObject* obj) {
         il2cpp_functions::Init();
