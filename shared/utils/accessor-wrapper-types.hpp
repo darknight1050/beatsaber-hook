@@ -28,6 +28,10 @@ namespace bs_hook {
     struct NullException : public il2cpp_utils::exceptions::StackTraceException {
         using StackTraceException::StackTraceException;
     };
+
+    struct FieldException : public il2cpp_utils::exceptions::StackTraceException {
+        using StackTraceException::StackTraceException;
+    };
     // TODO: Note that these types are not safe to be passed into RunMethod by themselves (or generic functions)
     // This is because they are wrapper over T, as opposed to being analogous to T.
     // We cannot EASILY solve this using wrapper types, because we could be holding a value type as T.
@@ -110,7 +114,7 @@ namespace bs_hook {
         void* instance;
     };
 
-        template<class T, std::size_t offset>
+    template<class T, std::size_t offset>
     struct InstanceField<T, offset, false> {
         explicit InstanceField(void* inst) noexcept : instance(inst) {}
         operator T() const {
@@ -124,5 +128,27 @@ namespace bs_hook {
         }
         private:
         void* instance;
+    };
+
+    template<class T, class U, internal::NTTPString name, bool assignable>
+    struct StaticField;
+
+    template<class T, class U, internal::NTTPString name>
+    struct StaticField<T, U, name, false> {
+        operator U() const {
+            auto val = il2cpp_utils::GetFieldValue(classof(T), name.data.data());
+            if (!val) throw FieldException(std::string("Could not get static field with name: ") + name.data.data());
+            return *val;
+        }
+    };
+
+    template<class T, class U, internal::NTTPString name>
+    struct StaticField<T, U, name, true> : StaticField<T, U, name, false> {
+        using StaticField<T, U, name, false>::operator U();
+        StaticField& operator=(U&& value) {
+            auto val = il2cpp_utils::SetFieldValue(classof(T), name.data.data(), std::forward<decltype(value)>(value));
+            if (!val) throw FieldException(std::string("Could not set static field with name: " + name.data.data()));
+            return *this;
+        }
     };
 }
