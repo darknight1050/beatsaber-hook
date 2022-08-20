@@ -25,6 +25,11 @@ namespace il2cpp_utils {
                 stacktrace_size = backtrace_helpers::captureBacktrace(stacktrace_buffer, STACK_TRACE_SIZE, 0);
             }
             void log_backtrace() const;
+
+            [[nodiscard]] virtual char const* what() const noexcept override {
+                log_backtrace();
+                return std::runtime_error::what();
+            }
         };
     }
     // Returns a legible string from an Il2CppException*
@@ -83,6 +88,11 @@ namespace il2cpp_utils {
             throw Il2CppExceptionWrapper(ex);
             #endif
         }
+
+        [[nodiscard]] virtual char const* what() const noexcept override {
+            log_backtrace();
+            return std::runtime_error::what();
+        }
     };
     #endif
 }
@@ -105,6 +115,8 @@ namespace il2cpp_utils {
 } catch (::il2cpp_utils::RunMethodException const& exc) { \
     ::Logger::get().error("Caught in mod ID: " _CATCH_HANDLER_ID ": Uncaught RunMethodException! what(): %s", exc.what()); \
     exc.log_backtrace(); \
+    ::Logger::get().error("Catch handler backtrace..."); \
+    ::Logger::get().Backtrace(100); \
     if (exc.ex) { \
         exc.rethrow(); \
     } \
@@ -112,12 +124,18 @@ namespace il2cpp_utils {
 } catch (::il2cpp_utils::exceptions::StackTraceException const& exc) { \
     ::Logger::get().error("Caught in mod ID: " _CATCH_HANDLER_ID ": Uncaught StackTraceException! what(): %s", exc.what()); \
     exc.log_backtrace(); \
+    ::Logger::get().error("Catch handler backtrace..."); \
+    ::Logger::get().Backtrace(100); \
     SAFE_ABORT(); \
 } catch (::std::exception const& exc) { \
     ::Logger::get().error("Caught in mod ID: " _CATCH_HANDLER_ID ": Uncaught C++ exception! type name: %s, what(): %s", typeid(exc).name(), exc.what()); \
+    ::Logger::get().error("Catch handler backtrace..."); \
+    ::Logger::get().Backtrace(100); \
     ::il2cpp_utils::raise(exc); \
 } catch (...) { \
     ::Logger::get().error("Caught in mod ID: " _CATCH_HANDLER_ID ": Uncaught, unknown C++ exception (not std::exception) with no known what() method!"); \
+    ::Logger::get().error("Catch handler backtrace..."); \
+    ::Logger::get().Backtrace(100); \
     SAFE_ABORT(); \
 }
 
