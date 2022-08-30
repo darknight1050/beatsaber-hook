@@ -145,7 +145,7 @@ namespace bs_hook {
         explicit InstanceField(void* inst) noexcept : instance(inst) {}
         operator T() const {
             if (instance == nullptr) throw NullException("Instance field access failed at offset: " + std::to_string(offset) + " because instance was null!");
-            // TODO: Also set wbarrier
+            // No wbarrier required for unilateral gets
             if constexpr (il2cpp_utils::has_il2cpp_conversion<T>) {
                 // Handle wrapper types differently
                 return T(*reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(const_cast<void*>(instance)) + offset));
@@ -154,10 +154,17 @@ namespace bs_hook {
         }
         InstanceField& operator=(T&& t) {
             if (instance == nullptr) throw NullException("Instance field assignment failed at offset: " + std::to_string(offset) + " because instance was null!");
-            // TODO: Also set wbarrier
+            
             if constexpr (il2cpp_utils::has_il2cpp_conversion<T>) {
-                *reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(instance) + offset) = t.convert();
+                // We only do this if we are a wrapper type!
+                il2cpp_functions::Init();
+                // instance is actually unused for wbarrier, wbarrier call performs the assignment
+                il2cpp_functions::gc_wbarrier_set_field(instance, reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(instance) + offset), t.convert());
             } else {
+                // No wbarrier for types that are not wrapper types
+                // Value types ALSO need a wbarrier, but for the whole size of themselves.
+                // We need to xref trace to find the correct wbarrier set in this case, or call the set_field directly...
+                // Which is a bit of a pain.
                 *reinterpret_cast<T*>(reinterpret_cast<uint8_t*>(instance) + offset) = t;
             }
             return *this;
@@ -184,6 +191,8 @@ namespace bs_hook {
 
     template<class T, internal::NTTPString name, bool assignable>
     struct StaticField;
+
+    // Static fields all have proper wbarriers through using set field API calls
 
     template<class T, internal::NTTPString name>
     struct StaticField<T, name, false> {
