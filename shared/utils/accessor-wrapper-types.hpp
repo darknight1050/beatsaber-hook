@@ -44,7 +44,7 @@ namespace bs_hook {
     
     template<internal::NTTPString name, class T>
     struct InstanceProperty<name, T, true, false> {
-        explicit InstanceProperty(void* inst) noexcept : instance(inst) {}
+        explicit constexpr InstanceProperty(void* inst) noexcept : instance(inst) {}
         operator T() const {
             auto res = il2cpp_utils::GetPropertyValue<T, false>(reinterpret_cast<Il2CppObject*>(const_cast<void*>(instance)), name.data.data());
             if (!res) throw PropertyException(std::string("Failed to get instance property: ") + name.data.data());
@@ -56,7 +56,7 @@ namespace bs_hook {
 
     template<internal::NTTPString name, class T>
     struct InstanceProperty<name, T, false, true> {
-        explicit InstanceProperty(void* inst) noexcept : instance(inst) {}
+        explicit constexpr InstanceProperty(void* inst) noexcept : instance(inst) {}
         InstanceProperty& operator=(T&& t) {
             auto val = reinterpret_cast<Il2CppObject*>(instance);
             auto res = il2cpp_utils::SetPropertyValue<false>(val, name.data.data(), std::forward<decltype(t)>(t));
@@ -69,7 +69,7 @@ namespace bs_hook {
 
     template<internal::NTTPString name, class T>
     struct InstanceProperty<name, T, true, true> {
-        explicit InstanceProperty(void* inst) noexcept : instance(inst) {}
+        explicit constexpr InstanceProperty(void* inst) noexcept : instance(inst) {}
         operator T() const {
             auto res = il2cpp_utils::GetPropertyValue<T, false>(reinterpret_cast<Il2CppObject*>(const_cast<void*>(instance)), name.data.data());
             if (!res) throw PropertyException(std::string("Failed to get instance property: ") + name.data.data());
@@ -133,7 +133,7 @@ namespace bs_hook {
     
     template<class T, std::size_t offset>
     struct InstanceField<T, offset, true> {
-        explicit InstanceField(void* inst) noexcept : instance(inst) {}
+        explicit constexpr InstanceField(void* inst) noexcept : instance(inst) {}
         operator T() const {
             if (instance == nullptr) throw NullException("Instance field access failed at offset: " + std::to_string(offset) + " because instance was null!");
             // No wbarrier required for unilateral gets
@@ -166,7 +166,7 @@ namespace bs_hook {
 
     template<class T, std::size_t offset>
     struct InstanceField<T, offset, false> {
-        explicit InstanceField(void* inst) noexcept : instance(inst) {}
+        explicit constexpr InstanceField(void* inst) noexcept : instance(inst) {}
         operator T() const {
             if (instance == nullptr) throw NullException("Instance field access failed at offset: " + std::to_string(offset) + " because instance was null!");
             // TODO: Also set wbarrier
