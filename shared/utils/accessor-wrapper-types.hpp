@@ -85,12 +85,11 @@ namespace bs_hook {
         void* instance;
     };
 
-    template<class T, internal::NTTPString name, bool get, bool set>
+    template<class T, internal::NTTPString name, bool get, bool set, auto klass_resolver>
     struct StaticProperty;
 
-    template<class T, internal::NTTPString name>
-    struct StaticProperty<T, name, true, false> {
-        explicit StaticProperty(Il2CppClass* (*k)()) : klass_resolver(k) {}
+    template<class T, internal::NTTPString name, auto klass_resolver>
+    struct StaticProperty<T, name, true, false, klass_resolver> {
         operator T() const {
             auto klass = klass_resolver();
             if (!klass) throw NullException(std::string("Class for static property with name: ") + name.data.data() + " is null!");
@@ -98,13 +97,10 @@ namespace bs_hook {
             if (!res) throw PropertyException(std::string("Failed to get static property: ") + name.data.data());
             return *res;
         }
-        private:
-        Il2CppClass* (*klass_resolver)();
     };
 
-    template<class T, internal::NTTPString name>
-    struct StaticProperty<T, name, false, true> {
-        explicit StaticProperty(Il2CppClass* (*k)()) : klass_resolver(k) {}
+    template<class T, internal::NTTPString name, auto klass_resolver>
+    struct StaticProperty<T, name, false, true, klass_resolver> {
         StaticProperty& operator=(T&& value) {
             auto klass = klass_resolver();
             if (!klass) throw NullException(std::string("Class for static property with name: ") + name.data.data() + " is null!");
@@ -112,13 +108,10 @@ namespace bs_hook {
             if (!res) throw PropertyException(std::string("Failed to set static property: ") + name.data.data());
             return *this;
         }
-        private:
-        Il2CppClass* (*klass_resolver)();
     };
 
-    template<class T, internal::NTTPString name>
-    struct StaticProperty<T, name, true, true> {
-        explicit StaticProperty(Il2CppClass* (*k)()) : klass_resolver(k) {}
+    template<class T, internal::NTTPString name, auto klass_resolver>
+    struct StaticProperty<T, name, true, true, klass_resolver> {
         operator T() const {
             auto klass = klass_resolver();
             if (!klass) throw NullException(std::string("Class for static property with name: ") + name.data.data() + " is null!");
@@ -133,8 +126,6 @@ namespace bs_hook {
             if (!res) throw PropertyException(std::string("Failed to set static property: ") + name.data.data());
             return *this;
         }
-        private:
-        Il2CppClass* (*klass_resolver)();
     };
 
     template<class T, std::size_t offset, bool assignable>
@@ -162,7 +153,7 @@ namespace bs_hook {
                 il2cpp_functions::gc_wbarrier_set_field(instance, reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(instance) + offset), t.convert());
             } else {
                 // No wbarrier for types that are not wrapper types
-                // Value types ALSO need a wbarrier, but for the whole size of themselves.
+                // TODO: Value types ALSO need a wbarrier, but for the whole size of themselves.
                 // We need to xref trace to find the correct wbarrier set in this case, or call the set_field directly...
                 // Which is a bit of a pain.
                 *reinterpret_cast<T*>(reinterpret_cast<uint8_t*>(instance) + offset) = t;
@@ -189,14 +180,13 @@ namespace bs_hook {
         void* instance;
     };
 
-    template<class T, internal::NTTPString name, bool assignable>
+    template<class T, internal::NTTPString name, bool assignable, auto klass_resolver>
     struct StaticField;
 
     // Static fields all have proper wbarriers through using set field API calls
 
-    template<class T, internal::NTTPString name>
-    struct StaticField<T, name, false> {
-        explicit StaticField(Il2CppClass* (*k)()) : klass_resolver(k) {}
+    template<class T, internal::NTTPString name, auto klass_resolver>
+    struct StaticField<T, name, false, klass_resolver> {
         operator T() const {
             auto klass = klass_resolver();
             if (!klass) throw NullException(std::string("Class for static field with name: ") + name.data.data() + " is null!");
@@ -204,13 +194,10 @@ namespace bs_hook {
             if (!val) throw FieldException(std::string("Could not get static field with name: ") + name.data.data());
             return *val;
         }
-        private:
-        Il2CppClass* (*klass_resolver)();
     };
 
-    template<class T, internal::NTTPString name>
-    struct StaticField<T, name, true> {
-        explicit StaticField(Il2CppClass* (*k)()) : klass_resolver(k) {}
+    template<class T, internal::NTTPString name, auto klass_resolver>
+    struct StaticField<T, name, true, klass_resolver> {
         operator T() const {
             auto klass = klass_resolver();
             if (!klass) throw NullException(std::string("Class for static field with name: ") + name.data.data() + " is null!");
@@ -225,7 +212,5 @@ namespace bs_hook {
             if (!val) throw FieldException(std::string("Could not set static field with name: ") + name.data.data());
             return *this;
         }
-        private:
-        Il2CppClass* (*klass_resolver)();
     };
 }

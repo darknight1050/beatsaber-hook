@@ -491,6 +491,11 @@ struct TypeConv {
     }
 };
 
+template<>
+struct TypeConv<void> {
+    using type = void;
+};
+
 template<class T>
 requires (il2cpp_utils::has_il2cpp_conversion<T>)
 struct TypeConv<T> {
