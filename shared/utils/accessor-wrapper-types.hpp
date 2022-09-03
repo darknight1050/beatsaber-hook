@@ -63,7 +63,6 @@ namespace bs_hook {
     // We cannot EASILY solve this using wrapper types, because we could be holding a value type as T.
     // This makes things tricky and we should come back to this when we are confident we can handle this case correctly.
 
-
     template<internal::NTTPString name, class T, bool get, bool set>
     /// @brief Represents a InstanceProperty on a wrapper type. Forwards to calling the get/set methods where applicable.
     struct InstanceProperty;
@@ -89,6 +88,9 @@ namespace bs_hook {
             return this->operator T();
         }
 
+        template<typename... Targs>
+        decltype(auto) operator ()(Targs&&... args) { return this->operator T()(std::forward<Targs...>(args...)); }
+
         private:
         void* instance;
     };
@@ -102,6 +104,7 @@ namespace bs_hook {
             if (!res) throw PropertyException(std::string("Failed to set instance property: ") + name.data.data());
             return *this;
         }
+        
         private:
         void* instance;
     };
@@ -139,6 +142,14 @@ auto& operator op##=(const U& rhs) {        \
         inline auto v() const {
             return this->operator T();
         }
+
+        template<typename... Targs>
+        decltype(auto) operator ()(Targs&&... args) { return this->operator T()(std::forward<Targs...>(args...)); }
+
+        auto& operator ++() { return this->operator=(++this->operator T()); }
+        auto& operator ++(int) { return this->operator=(this->operator T()++); }
+        auto& operator --() { return this->operator=(--this->operator T()); }
+        auto& operator --(int) { return this->operator=(this->operator T()--); }
 
         /* These operators forward to the ones on the underlying type */
         BINARY_OPERATOR_OP_EQ_PROP(+);
@@ -181,6 +192,9 @@ auto& operator op##=(const U& rhs) {        \
         inline auto v() const {
             return this->operator T();
         }
+
+        template<typename... Targs>
+        decltype(auto) operator ()(Targs&&... args) { return this->operator T()(std::forward<Targs...>(args...)); }
     };
 
     template<class T, internal::NTTPString name, auto klass_resolver>
@@ -223,6 +237,14 @@ auto& operator op##=(const U& rhs) {        \
         inline auto v() const {
             return this->operator T();
         }
+
+        template<typename... Targs>
+        decltype(auto) operator ()(Targs&&... args) { return this->operator T()(std::forward<Targs...>(args...)); }
+
+        auto& operator ++() { return this->operator=(++this->operator T()); }
+        auto& operator ++(int) { return this->operator=(this->operator T()++); }
+        auto& operator --() { return this->operator=(--this->operator T()); }
+        auto& operator --(int) { return this->operator=(this->operator T()--); }
 
         BINARY_OPERATOR_OP_EQ_PROP(+);
         BINARY_OPERATOR_OP_EQ_PROP(-);
@@ -275,6 +297,9 @@ auto& operator op##=(const U& rhs) {        \
             return this->operator Ref();
         }
 
+        template<typename... Targs>
+        decltype(auto) operator ()(Targs&&... args) { return this->operator Ref()(std::forward<Targs...>(args...)); }
+
         private:
         void* instance;
     };
@@ -306,6 +331,11 @@ auto& operator op##=(const U& rhs) {        \
             }
             return *this;
         }
+
+        auto& operator ++() { return this->operator=(++this->operator Ref()); }
+        auto& operator ++(int) { return this->operator=(this->operator Ref()++); }
+        auto& operator --() { return this->operator=(--this->operator Ref()); }
+        auto& operator --(int) { return this->operator=(this->operator Ref()--); }
 
         BINARY_OPERATOR_OP_EQ_FIELD(+);
         BINARY_OPERATOR_OP_EQ_FIELD(-);
@@ -355,6 +385,9 @@ auto& operator op##=(const U& rhs) {            \
         inline auto v() const {
             return this->operator T();
         }
+
+        template<typename... Targs>
+        decltype(auto) operator ()(Targs&&... args) { return this->operator T()(std::forward<Targs...>(args...)); }
     };
 
     template<class T, internal::NTTPString name, auto klass_resolver>
@@ -366,6 +399,11 @@ auto& operator op##=(const U& rhs) {            \
             if (!val) throw FieldException(std::string("Could not set static field with name: ") + name.data.data());
             return *this;
         }
+
+        auto& operator ++() { return this->operator=(++this->operator T()); }
+        auto& operator ++(int) { return this->operator=(this->operator T()++); }
+        auto& operator --() { return this->operator=(--this->operator T()); }
+        auto& operator --(int) { return this->operator=(this->operator T()--); }
 
         BINARY_OPERATOR_OP_EQ_STATIC_FIELD(+);
         BINARY_OPERATOR_OP_EQ_STATIC_FIELD(-);

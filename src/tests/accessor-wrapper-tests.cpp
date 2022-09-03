@@ -5,6 +5,10 @@
 #include <iostream>
 
 
+struct Delegate {
+    void operator()(int a) { a += 5;}
+};
+
 struct Color {
     float r, g, b, a;
     Color& operator +=(const Color& rhs) {
@@ -25,6 +29,7 @@ struct Underlying {
     int b;
     int c;
     Color d;
+    Delegate e;
 };
 
 struct Test;
@@ -56,6 +61,7 @@ struct Test {
     bs_hook::InstanceProperty<"B", Color, true, true> colorProp{instance};
     bs_hook::AssignableInstanceField<int, 0x8> c{instance};
     bs_hook::AssignableInstanceField<Color, 0x16> mycol{instance};
+    bs_hook::AssignableInstanceField<Delegate, 0x20> delegate{instance};
     static inline bs_hook::AssignableStaticField<int, "staticA", &::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get> staticA;
     static inline bs_hook::StaticField<int, "staticA2", &::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get> staticA2;
     static inline bs_hook::StaticProperty<int, "staticProp", true, true, &::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get> staticB;
@@ -69,6 +75,8 @@ int main() {
     t.B = 0x1234;
     std::cout << std::endl;
     t.c = 123;
+    t.c++;
+    t.c--;
     std::cout << "A: " << t.A << " B: " << t.B << " c: " << t.c << std::endl;
     t.assign(new Underlying());
     std::cout << "A: " << t.A << " B: " << t.B << " c: " << t.c << std::endl;
@@ -81,6 +89,7 @@ int main() {
     t.mycol += Color{1, 2, 3, 4};
     t.colorProp->g = -5.0f;
     t.colorProp += Color{1, 2, 3, 4};
+    t.delegate(4);
     // Test::staticA2 = 123; // INVALID!
     // Test::staticProp2 = 123; // INVALID!
     // Test::staticB = Test::staticProp3; // INVALID!
