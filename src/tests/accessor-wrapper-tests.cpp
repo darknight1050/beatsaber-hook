@@ -37,9 +37,9 @@ struct Test {
     public:
     bs_hook::InstanceProperty<"A", int, true, true> A{instance};
     bs_hook::InstanceProperty<"B", int, true, true> B{instance};
-    bs_hook::InstanceField<int, 0x8, true> c{instance};
-    static inline bs_hook::StaticField<int, "staticA", true, &::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get> staticA;
-    static inline bs_hook::StaticField<int, "staticA2", false, &::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get> staticA2;
+    bs_hook::AssignableInstanceField<int, 0x8> c{instance};
+    static inline bs_hook::AssignableStaticField<int, "staticA", &::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get> staticA;
+    static inline bs_hook::StaticField<int, "staticA2", &::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get> staticA2;
     static inline bs_hook::StaticProperty<int, "staticProp", true, true, &::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get> staticB;
     static inline bs_hook::StaticProperty<int, "staticProp2", true, false, &::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get> staticProp2;
     static inline bs_hook::StaticProperty<int, "staticProp3", false, true, &::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get> staticProp3;

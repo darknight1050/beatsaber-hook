@@ -128,11 +128,11 @@ namespace bs_hook {
         }
     };
 
-    template<class T, std::size_t offset, bool assignable>
+    template<class T, std::size_t offset>
     struct InstanceField;
     
     template<class T, std::size_t offset>
-    struct InstanceField<T, offset, true> {
+    struct InstanceField {
         explicit constexpr InstanceField(void* inst) noexcept : instance(inst) {}
         operator T() const {
             if (instance == nullptr) throw NullException("Instance field access failed at offset: " + std::to_string(offset) + " because instance was null!");
@@ -143,7 +143,18 @@ namespace bs_hook {
             }
             return *reinterpret_cast<T*>(reinterpret_cast<uint8_t*>(const_cast<void*>(instance)) + offset);
         }
-        InstanceField& operator=(T&& t) {
+
+        inline T operator *() const {
+            return this->operator T();
+        }
+        private:
+        void* instance;
+    };
+
+    template<class T, std::size_t offset>
+    struct AssignableInstanceField : public InstanceField<T, offset> {
+        explicit constexpr AssignableInstanceField(void* inst) noexcept : InstanceField<T, offset>(inst) {}
+        AssignableInstanceField& operator=(T&& t) {
             if (instance == nullptr) throw NullException("Instance field assignment failed at offset: " + std::to_string(offset) + " because instance was null!");
             
             if constexpr (il2cpp_utils::has_il2cpp_conversion<T>) {
@@ -164,48 +175,29 @@ namespace bs_hook {
         void* instance;
     };
 
-    template<class T, std::size_t offset>
-    struct InstanceField<T, offset, false> {
-        explicit constexpr InstanceField(void* inst) noexcept : instance(inst) {}
-        operator T() const {
-            if (instance == nullptr) throw NullException("Instance field access failed at offset: " + std::to_string(offset) + " because instance was null!");
-            // TODO: Also set wbarrier
-            if constexpr (il2cpp_utils::has_il2cpp_conversion<T>) {
-                // Handle wrapper types differently
-                return T(*reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(const_cast<void*>(instance)) + offset));
-            }
-            return *reinterpret_cast<T*>(reinterpret_cast<uint8_t*>(const_cast<void*>(instance)) + offset);
-        }
-        private:
-        void* instance;
-    };
-
-    template<class T, internal::NTTPString name, bool assignable, auto klass_resolver>
+    template<class T, internal::NTTPString name, auto klass_resolver>
     struct StaticField;
 
     // Static fields all have proper wbarriers through using set field API calls
-
+    
     template<class T, internal::NTTPString name, auto klass_resolver>
-    struct StaticField<T, name, false, klass_resolver> {
+    struct StaticField {
         operator T() const {
             auto klass = klass_resolver();
             if (!klass) throw NullException(std::string("Class for static field with name: ") + name.data.data() + " is null!");
             auto val = il2cpp_utils::GetFieldValue<T>(klass, name.data.data());
             if (!val) throw FieldException(std::string("Could not get static field with name: ") + name.data.data());
             return *val;
+        }
+
+        inline T operator *() {
+            return static_cast<T>(*this);
         }
     };
 
     template<class T, internal::NTTPString name, auto klass_resolver>
-    struct StaticField<T, name, true, klass_resolver> {
-        operator T() const {
-            auto klass = klass_resolver();
-            if (!klass) throw NullException(std::string("Class for static field with name: ") + name.data.data() + " is null!");
-            auto val = il2cpp_utils::GetFieldValue<T>(klass, name.data.data());
-            if (!val) throw FieldException(std::string("Could not get static field with name: ") + name.data.data());
-            return *val;
-        }
-        StaticField& operator=(T&& value) {
+    struct AssignableStaticField : public StaticField<T, name, klass_resolver> {
+        AssignableStaticField& operator=(T&& value) {
             auto klass = klass_resolver();
             if (!klass) throw NullException(std::string("Class for static field with name: ") + name.data.data() + " is null!");
             auto val = il2cpp_utils::SetFieldValue(klass, name.data.data(), std::forward<decltype(value)>(value));
