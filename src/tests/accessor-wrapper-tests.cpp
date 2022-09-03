@@ -5,10 +5,26 @@
 #include <iostream>
 
 
+struct Color {
+    float r, g, b, a;
+    Color& operator +=(const Color& rhs) {
+        r += rhs.r;
+        g += rhs.g;
+        b += rhs.b;
+        a += rhs.a;
+        return *this;
+    }
+
+    Color* operator ->() {
+        return this;
+    }
+};
+
 struct Underlying {
     int a;
     int b;
     int c;
+    Color d;
 };
 
 struct Test;
@@ -37,7 +53,9 @@ struct Test {
     public:
     bs_hook::InstanceProperty<"A", int, true, true> A{instance};
     bs_hook::InstanceProperty<"B", int, true, true> B{instance};
+    bs_hook::InstanceProperty<"B", Color, true, true> colorProp{instance};
     bs_hook::AssignableInstanceField<int, 0x8> c{instance};
+    bs_hook::AssignableInstanceField<Color, 0x16> mycol{instance};
     static inline bs_hook::AssignableStaticField<int, "staticA", &::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get> staticA;
     static inline bs_hook::StaticField<int, "staticA2", &::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get> staticA2;
     static inline bs_hook::StaticProperty<int, "staticProp", true, true, &::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Test>::get> staticB;
@@ -59,6 +77,10 @@ int main() {
     Test::staticA = 456;
     Test::staticB = 789;
     Test::staticA = Test::staticB;
+    t.mycol->r = 5.0f;
+    t.mycol += Color{1, 2, 3, 4};
+    t.colorProp->g = -5.0f;
+    t.colorProp += Color{1, 2, 3, 4};
     // Test::staticA2 = 123; // INVALID!
     // Test::staticProp2 = 123; // INVALID!
     // Test::staticB = Test::staticProp3; // INVALID!

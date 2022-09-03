@@ -19,9 +19,17 @@ namespace bs_hook {
     /// All other wrapper types should inherit from this or otherwise satisfy the constraint above.
     struct Il2CppWrapperType {
         constexpr explicit Il2CppWrapperType(void* i) noexcept : instance(i) {}
+        constexpr Il2CppWrapperType(Il2CppWrapperType const& other) = default;
+        constexpr Il2CppWrapperType(Il2CppWrapperType && other) = default;
+        constexpr Il2CppWrapperType& operator=(Il2CppWrapperType const& other) = default;
+        constexpr Il2CppWrapperType& operator=(Il2CppWrapperType && other) = default;
+
         constexpr void* convert() const noexcept {
             return const_cast<void*>(instance);
         }
+
+        operator Il2CppObject*() { return const_cast<Il2CppObject*>(static_cast<Il2CppObject*>(instance)); }
+
         protected:
         void* instance;
     };
