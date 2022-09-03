@@ -6,7 +6,10 @@
 
 
 struct Delegate {
-    void operator()(int a) { a += 5;}
+    void operator()(int a) { 
+        value = a;
+    }
+    int value;
 };
 
 struct Color {
