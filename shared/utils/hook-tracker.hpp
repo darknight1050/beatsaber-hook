@@ -11,8 +11,11 @@ struct HookInfo {
     const void* destination;
     const void* trampoline;
     const void* orig;
-    HookInfo(std::string_view name_, void* dst, void* src, void* orig_)
-        : name(name_.data()), destination(dst), trampoline(src), orig(orig_) {}
+    std::array<uint32_t, 6> original_data;
+    HookInfo(std::string_view name_, void* dst, void* src)
+        : name(name_.data()), destination(dst), trampoline(src) {
+        std::copy_n(reinterpret_cast<uint32_t*>(dst), original_data.size(), original_data.begin());
+    }
     bool operator==(const HookInfo& other) const {
         return name == other.name && destination == other.destination && trampoline == other.trampoline && orig == other.orig;
     }
