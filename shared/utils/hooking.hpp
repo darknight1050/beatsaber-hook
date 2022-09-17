@@ -603,9 +603,13 @@ inline void __InstallHook(L& logger, void* addr) {
     logger.info("Installing hook: %s to offset: %p", T::name(), addr);
     #endif
     #ifdef __aarch64__
-    A64HookFunction(addr, (void*) T::hook(), (void**) T::trampoline());
     if constexpr (track) {
-        HookTracker::AddHook(T::name(), addr, (void*) T::hook(), (void*) *T::trampoline());
+        HookInfo info(T::name(), addr, (void*) T::hook());
+        A64HookFunction(addr, (void*) T::hook(), (void**) T::trampoline());
+        info.orig = (void*) *T::trampoline();
+        HookTracker::AddHook(info);
+    } else {
+        A64HookFunction(addr, (void*) T::hook(), (void**) T::trampoline());
     }
     #else
     registerInlineHook((uint32_t) addr, (uint32_t) T::hook(), (uint32_t **) T::trampoline());

@@ -32,7 +32,7 @@ auto find_through_hooks(void const* hook, uint32_t initialSearchSize, auto&& fun
     if (!hooks.empty()) {
         uint32_t const* addr = hooks.front().original_data.data();
         uint32_t size = hooks.front().original_data.size() * sizeof(uint32_t);
-        Logger::get().debug("Hook found! Original data: %p with size: %u", addr, size);
+        Logger::get().debug("Hook found (%s)! Original data: %p with size: %u", hooks.front().name.c_str(), addr, size);
         return func(cs::AddrSearchPair(addr, size), cs::AddrSearchPair(reinterpret_cast<uint32_t const*>(hook), initialSearchSize));
     }
     Logger::get().debug("No hook found! Searching: %p, %u", hook, initialSearchSize);
