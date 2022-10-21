@@ -28,7 +28,7 @@ namespace bs_hook {
             return const_cast<void*>(instance);
         }
 
-        operator Il2CppObject*() { return const_cast<Il2CppObject*>(static_cast<Il2CppObject*>(instance)); }
+        operator Il2CppObject*() const noexcept { return const_cast<Il2CppObject*>(static_cast<Il2CppObject const*>(instance)); }
 
         protected:
         void* instance;
