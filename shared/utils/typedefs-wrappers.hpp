@@ -243,8 +243,12 @@ struct SafePtr {
     /// @brief Construct a SafePtr<T> with the provided instance pointer (which may be nullptr).
     /// If you wish to wrap a non-existent pointer (ex, use as a default constructor) see the 0 arg constructor instead.
     SafePtr(T* wrappableInstance) : internalHandle(SafePointerWrapper::New(wrappableInstance)) {}
+    /// @brief Construct a SafePtr<T> with the provided wrapper
+    SafePtr(T& wrappableInstance) requires(il2cpp_utils::has_il2cpp_conversion<T>) : internalHandle(SafePointerWrapper::New(wrappableInstance.convert())) {}
+    /// @brief Construct a SafePtr<T> with the provided wrapper
+    SafePtr(T&& wrappableInstance) requires(il2cpp_utils::has_il2cpp_conversion<T>) : internalHandle(SafePointerWrapper::New(wrappableInstance.convert())) {}
     /// @brief Construct a SafePtr<T> with the provided reference
-    SafePtr(T& wrappableInstance) : internalHandle(SafePointerWrapper::New(std::addressof(wrappableInstance))) {}
+    SafePtr(T& wrappableInstance) requires(!il2cpp_utils::has_il2cpp_conversion<T>) : internalHandle(SafePointerWrapper::New(std::addressof(wrappableInstance))) {}
     /// @brief Move constructor is default, moves the internal handle and keeps reference count the same.
     SafePtr(SafePtr&& other) = default;
     /// @brief Copy constructor copies the HANDLE, that is, the held pointer remains the same.
@@ -381,31 +385,29 @@ struct SafePtr {
         __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
     }
 
-    /// @brief Returns false if this is a defaultly constructed SafePtr, true otherwise.
-    /// Note that this means that it will return true if it holds a nullptr value explicitly!
-    /// This means that you should check yourself before calling anything using the held T*.
+    /// @brief Returns false if this is a defaultly constructed SafePtr, or if the held pointer evaluates to false
     operator bool() const noexcept {
-        return isHandleValid();
+        return isHandleValid() && ptr();
     }
 
     /// @brief Dereferences the instance pointer to a reference type of the held instance.
     /// Throws a NullHandleException if there is no internal handle.
-    T& operator *() {
+    [[nodiscard]] T& operator *() {
         return *ptr();
     }
 
-    const T& operator *() const {
+    [[nodiscard]] const T& operator *() const {
         return *ptr();
     }
 
-    T* const operator ->() const {
+    [[nodiscard]] T* const operator ->() const {
         return const_cast<T*>(ptr());
     }
 
     /// @brief Explicitly cast this instance to a T*.
     /// Note, however, that the lifetime of this returned T* is not longer than the lifetime of this instance.
     /// Consider passing a SafePtr reference or copy instead.
-    explicit operator T* const() const {
+    [[nodiscard]] explicit operator T* const() const {
         return const_cast<T*>(ptr());
     }
 
