@@ -1,16 +1,17 @@
 #pragma once
+#include <concepts>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <set>
+#include <shared_mutex>
+#include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include "base-wrapper-type.hpp"
 #include "il2cpp-functions.hpp"
 #include "il2cpp-type-check.hpp"
-#include <mutex>
-#include <shared_mutex>
-#include <unordered_map>
-#include <utility>
-#include <functional>
-#include <set>
-#include <unordered_set>
-#include <concepts>
-#include <type_traits>
-#include <memory>
 #include "il2cpp-utils-exceptions.hpp"
 
 #if __has_feature(cxx_exceptions)
@@ -24,16 +25,14 @@ struct TypeCastException : il2cpp_utils::exceptions::StackTraceException {
     TypeCastException() : il2cpp_utils::exceptions::StackTraceException("The type could not be cast safely! Check your SafePtr/CountPointer cast calls!") {}
 };
 #define __SAFE_PTR_NULL_HANDLE_CHECK(handle, ...) \
-if (handle) \
-return __VA_ARGS__; \
-throw NullHandleException()
+    if (handle) return __VA_ARGS__;               \
+    throw NullHandleException()
 
 #else
 #include "utils.h"
 #define __SAFE_PTR_NULL_HANDLE_CHECK(handle, ...) \
-if (handle) \
-return __VA_ARGS__; \
-CRASH_UNLESS(false)
+    if (handle) return __VA_ARGS__;               \
+    CRASH_UNLESS(false)
 #endif
 
 /// @brief A thread-safe, static type that holds a mapping from addresses to reference counts.
@@ -72,14 +71,15 @@ struct Counter {
             return 0;
         }
     }
-private:
+
+   private:
     static std::unordered_map<void*, size_t> addrRefCount;
     static std::shared_mutex mutex;
 };
 
 /// @brief Represents a smart pointer that has a reference count, which does NOT destroy the held instance on refcount reaching 0.
 /// @tparam T The type to wrap as a pointer.
-template<class T>
+template <class T>
 struct CountPointer {
     /// @brief Default constructor for Count Pointer, defaults to a nullptr, with 0 references.
     explicit CountPointer() : ptr(nullptr) {}
@@ -169,7 +169,7 @@ struct CountPointer {
     /// See try_cast for a version that does not.
     /// @tparam U The type to cast to.
     /// @return A new CountPointer of the cast value.
-    template<class U>
+    template <class U>
     [[nodiscard]] inline CountPointer<U> cast() const {
         // TODO: We currently assume that the first sizeof(void*) bytes of ptr is the klass field.
         // This should hold true for everything except value types.
@@ -192,7 +192,7 @@ struct CountPointer {
     /// Currently assumes the `klass` field is the first pointer in T.
     /// @tparam U The type to cast to.
     /// @return A new CountPointer of the cast value, if successful.
-    template<class U>
+    template <class U>
     [[nodiscard]] inline std::optional<CountPointer<U>> try_cast() const noexcept {
         auto* k1 = classof(U*);
         if (!ptr || !k1) {
@@ -214,7 +214,8 @@ struct CountPointer {
     constexpr T* const __internal_get() const noexcept {
         return ptr;
     }
-private:
+
+   private:
     T* ptr;
 };
 
@@ -223,7 +224,7 @@ private:
 
 #ifdef HAS_CODEGEN
 namespace UnityEngine {
-    class Object;
+class Object;
 }
 #endif
 template <typename T>
@@ -233,7 +234,7 @@ struct SafePtrUnity;
 /// This instance must be created at a time such that il2cpp_functions::Init is valid, or else it will throw a CreatedTooEarlyException
 /// @tparam T The type of the instance to wrap.
 /// @tparam AllowUnity Whether to permit convertible Unity Object types to be wrapped.
-template<class T, bool AllowUnity = false>
+template <class T, bool AllowUnity = false>
 struct SafePtr {
 #ifdef HAS_CODEGEN
     static_assert(!std::is_assignable_v<UnityEngine::Object, T> || AllowUnity, "Don't use Unity types with SafePtr. Ignore this warning by specifying SafePtr<T, true>");
@@ -244,11 +245,17 @@ struct SafePtr {
     /// If you wish to wrap a non-existent pointer (ex, use as a default constructor) see the 0 arg constructor instead.
     SafePtr(T* wrappableInstance) : internalHandle(SafePointerWrapper::New(wrappableInstance)) {}
     /// @brief Construct a SafePtr<T> with the provided wrapper
-    SafePtr(T& wrappableInstance) requires(il2cpp_utils::has_il2cpp_conversion<T>) : internalHandle(SafePointerWrapper::New(wrappableInstance.convert())) {}
+    SafePtr(T& wrappableInstance)
+        requires(il2cpp_utils::has_il2cpp_conversion<T>)
+        : internalHandle(SafePointerWrapper::New(wrappableInstance.convert())) {}
     /// @brief Construct a SafePtr<T> with the provided wrapper
-    SafePtr(T&& wrappableInstance) requires(il2cpp_utils::has_il2cpp_conversion<T>) : internalHandle(SafePointerWrapper::New(wrappableInstance.convert())) {}
+    SafePtr(T&& wrappableInstance)
+        requires(il2cpp_utils::has_il2cpp_conversion<T>)
+        : internalHandle(SafePointerWrapper::New(wrappableInstance.convert())) {}
     /// @brief Construct a SafePtr<T> with the provided reference
-    SafePtr(T& wrappableInstance) requires(!il2cpp_utils::has_il2cpp_conversion<T>) : internalHandle(SafePointerWrapper::New(std::addressof(wrappableInstance))) {}
+    SafePtr(T& wrappableInstance)
+        requires(!il2cpp_utils::has_il2cpp_conversion<T>)
+        : internalHandle(SafePointerWrapper::New(std::addressof(wrappableInstance))) {}
     /// @brief Move constructor is default, moves the internal handle and keeps reference count the same.
     SafePtr(SafePtr&& other) = default;
     /// @brief Copy constructor copies the HANDLE, that is, the held pointer remains the same.
@@ -322,7 +329,7 @@ struct SafePtr {
     /// @tparam U The type to cast to.
     /// @tparam AllowUnityPrime Whether the casted SafePtr should allow unity conversions.
     /// @return A new SafePtr of the cast value.
-    template<class U, bool AllowUnityPrime = AllowUnity>
+    template <class U, bool AllowUnityPrime = AllowUnity>
     [[nodiscard]] inline SafePtr<U, AllowUnityPrime> cast() const {
         // TODO: We currently assume that the first sizeof(void*) bytes of ptr is the klass field.
         // This should hold true for everything except value types.
@@ -353,7 +360,7 @@ struct SafePtr {
     /// @tparam U The type to cast to.
     /// @tparam AllowUnityPrime Whether the casted SafePtr should allow unity conversions.
     /// @return A new SafePtr of the cast value, if successful.
-    template<class U, bool AllowUnityPrime = AllowUnity>
+    template <class U, bool AllowUnityPrime = AllowUnity>
     [[nodiscard]] inline std::optional<SafePtr<U, AllowUnityPrime>> try_cast() const noexcept {
         auto* k1 = classof(U*);
         if (!internalHandle || !internalHandle->instancePointer || k1) {
@@ -375,7 +382,7 @@ struct SafePtr {
     /// This means that you should check yourself before calling anything using the held T*.
     inline bool isHandleValid() const noexcept {
         return static_cast<bool>(internalHandle);
-    } 
+    }
 
     T* ptr() {
         __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
@@ -385,22 +392,23 @@ struct SafePtr {
         __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
     }
 
-    /// @brief Returns false if this is a defaultly constructed SafePtr, or if the held pointer evaluates to false
+    /// @brief Returns false if this is a defaultly constructed SafePtr,
+    /// or if the held pointer evaluates to false.
     operator bool() const noexcept {
         return isHandleValid() && ptr();
     }
 
     /// @brief Dereferences the instance pointer to a reference type of the held instance.
     /// Throws a NullHandleException if there is no internal handle.
-    [[nodiscard]] T& operator *() {
+    [[nodiscard]] T& operator*() {
         return *ptr();
     }
 
-    [[nodiscard]] const T& operator *() const {
+    [[nodiscard]] const T& operator*() const {
         return *ptr();
     }
 
-    [[nodiscard]] T* const operator ->() const {
+    [[nodiscard]] T* const operator->() const {
         return const_cast<T*>(ptr());
     }
 
@@ -411,7 +419,7 @@ struct SafePtr {
         return const_cast<T*>(ptr());
     }
 
-private:
+   private:
     friend struct SafePtrUnity<T>;
 
     struct SafePointerWrapper {
@@ -440,28 +448,26 @@ private:
 
 #if __has_feature(cxx_exceptions)
 #define __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(...) \
-if (isAlive()) \
-return __VA_ARGS__; \
-throw NullHandleException()
+    if (isAlive()) return __VA_ARGS__;          \
+    throw NullHandleException()
 
 #else
 #include "utils.h"
 #define __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(...) \
-if (isAlive()) \
-return __VA_ARGS__; \
-CRASH_UNLESS(false)
+    if (isAlive()) return __VA_ARGS__;          \
+    CRASH_UNLESS(false)
 #endif
 
 template <typename T>
 struct SafePtrUnity : public SafePtr<T, true> {
-    private:
+   private:
     using Parent = SafePtr<T, true>;
-    public:
 
+   public:
     SafePtrUnity() = default;
 
-    SafePtrUnity(T *wrappableInstance) : Parent(wrappableInstance) {}
-    SafePtrUnity(T &wrappableInstance) : Parent(wrappableInstance) {}
+    SafePtrUnity(T* wrappableInstance) : Parent(wrappableInstance) {}
+    SafePtrUnity(T& wrappableInstance) : Parent(wrappableInstance) {}
     SafePtrUnity(Parent&& p) : Parent(p) {}
     SafePtrUnity(Parent const& p) : Parent(p) {}
 
@@ -493,19 +499,19 @@ struct SafePtrUnity : public SafePtr<T, true> {
         return const_cast<T*>(ptr());
     }
 
-    T* const operator ->() {
+    T* const operator->() {
         return const_cast<T*>(ptr());
     }
 
-    T* const operator ->() const {
+    T* const operator->() const {
         return ptr();
     }
 
-    T& operator *() {
+    T& operator*() {
         return *ptr();
     }
 
-    T const& operator *() const {
+    T const& operator*() const {
         return *ptr();
     }
 
@@ -513,9 +519,9 @@ struct SafePtrUnity : public SafePtr<T, true> {
         return isAlive();
     }
 
-    template<typename U = T>
-    requires(std::is_assignable_v<T, U> || std::is_same_v<T, U>)
-    bool operator ==(SafePtrUnity<U> const& other) const {
+    template <typename U = T>
+        requires(std::is_assignable_v<T, U> || std::is_same_v<T, U>) bool
+    operator==(SafePtrUnity<U> const& other) const {
         if (!other.isAlive() || !isAlive()) {
             return other.isAlive() == isAlive();
         }
@@ -523,8 +529,8 @@ struct SafePtrUnity : public SafePtr<T, true> {
         return static_cast<T*>(other.internalHandle) == static_cast<T*>(Parent::ptr());
     }
 
-    template<typename U = T>
-    bool operator ==(U const* other) const {
+    template <typename U = T>
+    bool operator==(U const* other) const {
         if (!other || !isAlive()) {
             return static_cast<bool>(other) == isAlive();
         }
@@ -539,34 +545,31 @@ struct SafePtrUnity : public SafePtr<T, true> {
         // offset yay
         // the offset as specified in the codegen header of [m_CachedPtr] is 0x10
         // which is also the first field of the instance UnityEngine.Object
-      return static_cast<bool>(Parent::internalHandle) && (Parent::ptr()) && *reinterpret_cast<void* const*>(reinterpret_cast<uint8_t const*>(Parent::ptr()) + 0x10);
+        return static_cast<bool>(Parent::internalHandle) && (Parent::ptr()) && *reinterpret_cast<void* const*>(reinterpret_cast<uint8_t const*>(Parent::ptr()) + 0x10);
 #endif
     }
-
 };
 
 /// @brief Represents a pointer that may be GC'd, but will notify you when it has.
 /// Currently unimplemented, requires a hook into all GC frees/collections
-template<class T>
-struct WeakPtr {
+template <class T>
+struct WeakPtr {};
 
-};
+template <template <typename> typename Container, typename Item>
+concept is_valid_container = requires(Container<Item> coll, Item item) {
+                                 coll.erase(item);
+                                 coll.emplace(item);
+                                 coll.clear();
+                                 coll.begin();
+                                 coll.end();
+                                 coll.size();
+                             };
 
-template<template<typename> typename Container, typename Item>
-concept is_valid_container = requires (Container<Item> coll, Item item) {
-    coll.erase(item);
-    coll.emplace(item);
-    coll.clear();
-    coll.begin();
-    coll.end();
-    coll.size();
-};
-
-template<class T>
+template <class T>
 struct AbstractFunction;
 
-template<typename R, typename T, typename... TArgs>
-struct AbstractFunction<R (T*, TArgs...)> {
+template <typename R, typename T, typename... TArgs>
+struct AbstractFunction<R(T*, TArgs...)> {
     virtual T* instance() const = 0;
     virtual void* ptr() const = 0;
 
@@ -574,11 +577,11 @@ struct AbstractFunction<R (T*, TArgs...)> {
     virtual ~AbstractFunction() = default;
 };
 
-template<class T>
+template <class T>
 struct FunctionWrapper;
 
-template<typename R, typename... TArgs>
-struct FunctionWrapper<R (*)(TArgs...)> : AbstractFunction<R (void*, TArgs...)> {
+template <typename R, typename... TArgs>
+struct FunctionWrapper<R (*)(TArgs...)> : AbstractFunction<R(void*, TArgs...)> {
     void* instance() const override {
         return nullptr;
     }
@@ -586,7 +589,7 @@ struct FunctionWrapper<R (*)(TArgs...)> : AbstractFunction<R (void*, TArgs...)> 
         return reinterpret_cast<void*>(held);
     }
     R (*held)(TArgs...);
-    template<class F>
+    template <class F>
     FunctionWrapper(F&& f) : held(f) {}
     R operator()(TArgs... args) const noexcept override {
         if constexpr (std::is_same_v<R, void>) {
@@ -597,8 +600,8 @@ struct FunctionWrapper<R (*)(TArgs...)> : AbstractFunction<R (void*, TArgs...)> 
     }
 };
 
-template<typename R, typename T, typename... TArgs>
-struct FunctionWrapper<R (T::*)(TArgs...)> : AbstractFunction<R (void*, TArgs...)> {
+template <typename R, typename T, typename... TArgs>
+struct FunctionWrapper<R (T::*)(TArgs...)> : AbstractFunction<R(void*, TArgs...)> {
     void* instance() const override {
         return _instance;
     }
@@ -608,12 +611,12 @@ struct FunctionWrapper<R (T::*)(TArgs...)> : AbstractFunction<R (void*, TArgs...
             fptr wrapper;
             void* data;
         };
-        dat d {.wrapper = held};
+        dat d{ .wrapper = held };
         return d.data;
     }
     R (T::*held)(TArgs...);
     T* _instance;
-    template<class F>
+    template <class F>
     FunctionWrapper(F&& f, T* inst) : held(f), _instance(inst) {}
     R operator()(TArgs... args) const noexcept override {
         if constexpr (std::is_same_v<R, void>) {
@@ -624,18 +627,18 @@ struct FunctionWrapper<R (T::*)(TArgs...)> : AbstractFunction<R (void*, TArgs...
     }
 };
 
-template<typename R, typename... TArgs>
-struct FunctionWrapper<std::function<R (TArgs...)>> : AbstractFunction<R (void*, TArgs...)> {
+template <typename R, typename... TArgs>
+struct FunctionWrapper<std::function<R(TArgs...)>> : AbstractFunction<R(void*, TArgs...)> {
     [[nodiscard]] void* instance() const override {
         return nullptr;
     }
     [[nodiscard]] void* ptr() const override {
         return handle;
     }
-    std::function<R (TArgs...)> const held;
+    std::function<R(TArgs...)> const held;
     void* handle;
 
-    FunctionWrapper(std::function<R (TArgs...)> const& f) : held(f), handle(const_cast<void*>(reinterpret_cast<const void*>(&f))) {}
+    FunctionWrapper(std::function<R(TArgs...)> const& f) : held(f), handle(const_cast<void*>(reinterpret_cast<const void*>(&f))) {}
     R operator()(TArgs... args) const noexcept override {
         if constexpr (std::is_same_v<R, void>) {
             held(args...);
@@ -646,44 +649,45 @@ struct FunctionWrapper<std::function<R (TArgs...)>> : AbstractFunction<R (void*,
 };
 
 namespace std {
-    template<typename R, typename T, typename... TArgs>
-    struct hash<AbstractFunction<R (T*, TArgs...)>> {
-    std::size_t operator()(const AbstractFunction<R (T*, TArgs...)>& obj) const noexcept {
+template <typename R, typename T, typename... TArgs>
+struct hash<AbstractFunction<R(T*, TArgs...)>> {
+    std::size_t operator()(const AbstractFunction<R(T*, TArgs...)>& obj) const noexcept {
         auto seed = std::hash<void*>{}(obj.instance());
         return seed ^ std::hash<void*>{}(reinterpret_cast<void*>(obj.ptr())) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
         return seed;
     }
 };
-}
+}  // namespace std
 
-template<typename R, typename T, typename... TArgs>
-bool operator==(const AbstractFunction<R (T*, TArgs...)>& a, const AbstractFunction<R (T*, TArgs...)>& b) {
+template <typename R, typename T, typename... TArgs>
+bool operator==(const AbstractFunction<R(T*, TArgs...)>& a, const AbstractFunction<R(T*, TArgs...)>& b) {
     return a.instance() == b.instance() && a.ptr() == b.ptr();
 }
 
-template<typename R, typename T, typename... TArgs>
-bool operator<(const AbstractFunction<R (T*, TArgs...)>& a, const AbstractFunction<R (T*, TArgs...)>& b) {
+template <typename R, typename T, typename... TArgs>
+bool operator<(const AbstractFunction<R(T*, TArgs...)>& a, const AbstractFunction<R(T*, TArgs...)>& b) {
     return a.ptr() < b.ptr();
 }
 
-template<class T>
+template <class T>
 struct ThinVirtualLayer;
 
-template<typename R, typename T, typename... TArgs>
-struct std::hash<ThinVirtualLayer<R (T*, TArgs...)>>;
+template <typename R, typename T, typename... TArgs>
+struct std::hash<ThinVirtualLayer<R(T*, TArgs...)>>;
 
-template<typename R, typename T, typename... TArgs>
-struct ThinVirtualLayer<R (T*, TArgs...)> {
-    friend struct std::hash<ThinVirtualLayer<R (T*, TArgs...)>>;
-private:
-    std::shared_ptr<AbstractFunction<R (T*, TArgs...)>> func;
+template <typename R, typename T, typename... TArgs>
+struct ThinVirtualLayer<R(T*, TArgs...)> {
+    friend struct std::hash<ThinVirtualLayer<R(T*, TArgs...)>>;
 
-public:
+   private:
+    std::shared_ptr<AbstractFunction<R(T*, TArgs...)>> func;
+
+   public:
     ThinVirtualLayer(R (*ptr)(TArgs...)) : func(new FunctionWrapper<R (*)(TArgs...)>(ptr)) {}
-    template<class F, typename Q>
+    template <class F, typename Q>
     ThinVirtualLayer(F&& f, Q* inst) : func(new FunctionWrapper<R (Q::*)(TArgs...)>(f, inst)) {}
-    template<class F>
-    ThinVirtualLayer(F&& f) : func(new FunctionWrapper<std::function<R (TArgs...)>>(f)) {}
+    template <class F>
+    ThinVirtualLayer(F&& f) : func(new FunctionWrapper<std::function<R(TArgs...)>>(f)) {}
 
     R operator()(TArgs... args) const noexcept {
         (*func)(args...);
@@ -695,39 +699,40 @@ public:
         return func->ptr();
     }
 
-    bool operator==(const ThinVirtualLayer<R (T*, TArgs...)> other) const {
+    bool operator==(const ThinVirtualLayer<R(T*, TArgs...)> other) const {
         return *func == (*other.func);
     }
-    bool operator<(const ThinVirtualLayer<R (T*, TArgs...)> other) const {
+    bool operator<(const ThinVirtualLayer<R(T*, TArgs...)> other) const {
         return *func < *other.func;
     }
 };
 
 namespace std {
-    template<typename R, typename T, typename... TArgs>
-    struct hash<ThinVirtualLayer<R (T*, TArgs...)>> {
-    std::size_t operator()(const ThinVirtualLayer<R (T*, TArgs...)>& obj) const noexcept {
-        return std::hash<AbstractFunction<R (T*, TArgs...)>>{}(*obj.func);
+template <typename R, typename T, typename... TArgs>
+struct hash<ThinVirtualLayer<R(T*, TArgs...)>> {
+    std::size_t operator()(const ThinVirtualLayer<R(T*, TArgs...)>& obj) const noexcept {
+        return std::hash<AbstractFunction<R(T*, TArgs...)>>{}(*obj.func);
     }
 };
-}
+}  // namespace std
 
 // TODO: Make a version of this for C# delegates?
 // TODO: Also require the function type to be invokable and all that
-template<template<typename> typename Container, typename ...TArgs>
-requires (is_valid_container<Container, ThinVirtualLayer<void (void*, TArgs...)>>)
+template <template <typename> typename Container, typename... TArgs>
+    requires(is_valid_container<Container, ThinVirtualLayer<void(void*, TArgs...)>>)
 class BasicEventCallback {
-private:
-    using functionType = ThinVirtualLayer<void (void*, TArgs...)>;
+   private:
+    using functionType = ThinVirtualLayer<void(void*, TArgs...)>;
     Container<functionType> callbacks;
-public:
+
+   public:
     void invoke(TArgs... args) const {
         for (auto& callback : callbacks) {
             callback(args...);
         }
     }
 
-    BasicEventCallback& operator+=(ThinVirtualLayer<void (void*, TArgs...)> callback) {
+    BasicEventCallback& operator+=(ThinVirtualLayer<void(void*, TArgs...)> callback) {
         callbacks.emplace(std::move(callback));
         return *this;
     }
@@ -737,12 +742,12 @@ public:
         return *this;
     }
 
-    BasicEventCallback& operator-=(ThinVirtualLayer<void (void*, TArgs...)> callback) {
+    BasicEventCallback& operator-=(ThinVirtualLayer<void(void*, TArgs...)> callback) {
         callbacks.erase(callback);
         return *this;
     }
 
-    template<typename T>
+    template <typename T>
     BasicEventCallback& operator-=(void (T::*callback)(TArgs...)) {
         removeCallback(callback);
         return *this;
@@ -753,7 +758,7 @@ public:
     }
     // The instance provide here should have lifetime > calls to invoke.
     // If the provided instance dies before this instance, or before invoke is called, invoke will crash.
-    template<typename T>
+    template <typename T>
     void addCallback(void (T::*callback)(TArgs...), T* inst) {
         callbacks.emplace(callback, inst);
     }
@@ -762,7 +767,7 @@ public:
         callbacks.erase(callback);
     }
 
-    template<typename T>
+    template <typename T>
     void removeCallback(void (T::*callback)(TArgs...)) {
         // Removal of member functions is expensive because we need to remove all member functions regardless of instance
         for (auto itr = callbacks.begin(); itr != callbacks.end();) {
@@ -770,7 +775,7 @@ public:
                 decltype(callback) wrapper;
                 void* data;
             };
-            dat d {.wrapper = callback};
+            dat d{ .wrapper = callback };
             if (itr->ptr() == d.data) {
                 itr = callbacks.erase(itr);
             } else {
@@ -787,15 +792,15 @@ public:
 };
 #undef __SAFE_PTR_NULL_HANDLE_CHECK
 
-template<typename Item>
+template <typename Item>
 using default_ordered_set = std::set<Item>;
 
-template<typename Item>
+template <typename Item>
 using default_unordered_set = std::unordered_set<Item>;
 
 // Good default for most
-template<typename ...TArgs>
+template <typename... TArgs>
 using EventCallback = BasicEventCallback<default_ordered_set, TArgs...>;
 
-template<typename ...TArgs>
+template <typename... TArgs>
 using UnorderedEventCallback = BasicEventCallback<default_unordered_set, TArgs...>;

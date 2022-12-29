@@ -33,7 +33,6 @@ if (DEFINED TEST_BUILD)
     add_compile_definitions(TEST_LIST)
     add_compile_definitions(TEST_STRING)
     add_compile_definitions(TEST_HOOK)
-    add_compile_definitions(TEST_WRAPPER)
 endif()
 
 add_library(
@@ -69,6 +68,8 @@ target_include_directories(${COMPILE_ID} PRIVATE ${INCLUDE_DIR})
 target_include_directories(${COMPILE_ID} PUBLIC ${SHARED_DIR})
 
 target_link_libraries(${COMPILE_ID} PRIVATE -llog)
+target_link_options(${COMPILE_ID} PRIVATE "-fuse-ld=ld")
+
 # add extern stuff like libs and other includes
 include(extern.cmake)
 
