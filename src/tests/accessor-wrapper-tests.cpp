@@ -75,9 +75,11 @@ struct Test {
 int main() {
     Test t(new Underlying());
     t.A = 0x4567;
+    t.A = 5.0f;
     t.B = 0x1234;
     std::cout << std::endl;
     t.c = 123;
+    t.c = 2.0f;
     t.c++;
     t.c--;
     std::cout << "A: " << t.A << " B: " << t.B << " c: " << t.c << std::endl;
@@ -86,7 +88,9 @@ int main() {
     // return t.A == t.B;
     // return t.c;
     Test::staticA = 456;
+    Test::staticA = 456.0f;
     Test::staticB = 789;
+    Test::staticB = 500.0f;
     Test::staticA = Test::staticB;
     t.mycol->r = 5.0f;
     t.mycol += Color{1, 2, 3, 4};
@@ -96,6 +100,18 @@ int main() {
     // Test::staticA2 = 123; // INVALID!
     // Test::staticProp2 = 123; // INVALID!
     // Test::staticB = Test::staticProp3; // INVALID!
+
+    int x = 3;
+    float y = 1.0f;
+    t.A = x;
+    t.A = y;
+    t.c = x;
+    t.c = y;
+    t.staticA = x;
+    t.staticA = y;
+    t.staticB = x;
+    t.staticB = y;
+
     return t.A == 0x4567 && t.B == 0x1234 && t.c == 123;
 }
 #endif

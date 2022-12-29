@@ -98,20 +98,24 @@ namespace bs_hook {
     template<internal::NTTPString name, class T>
     struct InstanceProperty<name, T, false, true> {
         explicit constexpr InstanceProperty(void* inst) noexcept : instance(inst) {}
-        InstanceProperty& operator=(T&& t) {
-            auto val = reinterpret_cast<Il2CppObject*>(instance);
+        template<class U>
+#ifdef HAS_CODEGEN
+        requires(std::is_convertible_v<U, T>)
+#endif
+        InstanceProperty& operator=(U&& t) {
+            auto val = static_cast<Il2CppObject*>(instance);
             auto res = il2cpp_utils::SetPropertyValue<false>(val, name.data.data(), std::forward<decltype(t)>(t));
             if (!res) throw PropertyException(std::string("Failed to set instance property: ") + name.data.data());
             return *this;
         }
-        
+
         private:
         void* instance;
     };
 
 #define BINARY_OPERATOR_OP_EQ_PROP(op)      \
 template<typename U>                        \
-auto& operator op##=(const U& rhs) {        \
+auto& operator op##=(U&& rhs) {             \
     auto temp = this->operator T();         \
     return this->operator=(temp op##= rhs); \
 }
@@ -124,8 +128,9 @@ auto& operator op##=(const U& rhs) {        \
             if (!res) throw PropertyException(std::string("Failed to get instance property: ") + name.data.data());
             return *res;
         }
-        InstanceProperty& operator=(T const& t) {
-            auto val = reinterpret_cast<Il2CppObject*>(instance);
+        template<class U>
+        InstanceProperty& operator=(U&& t) {
+            auto val = static_cast<Il2CppObject*>(instance);
             auto res = il2cpp_utils::SetPropertyValue<false>(val, name.data.data(), std::forward<decltype(t)>(t));
             if (!res) throw PropertyException(std::string("Failed to set instance property: ") + name.data.data());
             return *this;
@@ -133,7 +138,7 @@ auto& operator op##=(const U& rhs) {        \
 
         inline auto operator ->() const {
             return this->operator T();
-        } 
+        }
 
         inline auto operator *() const {
             return this->operator T();
@@ -183,7 +188,7 @@ auto& operator op##=(const U& rhs) {        \
 
         inline auto operator ->() const {
             return this->operator T();
-        } 
+        }
 
         inline auto operator *() const {
             return this->operator T();
@@ -199,7 +204,11 @@ auto& operator op##=(const U& rhs) {        \
 
     template<class T, internal::NTTPString name, auto klass_resolver>
     struct StaticProperty<T, name, false, true, klass_resolver> {
-        StaticProperty& operator=(T&& value) {
+        template<class U>
+#ifdef HAS_CODEGEN
+        requires(std::is_convertible_v<U, T>)
+#endif
+        StaticProperty& operator=(U&& value) {
             auto klass = klass_resolver();
             if (!klass) throw NullException(std::string("Class for static property with name: ") + name.data.data() + " is null!");
             auto res = il2cpp_utils::SetPropertyValue<false>(klass, name.data.data(), std::forward<decltype(value)>(value));
@@ -218,7 +227,8 @@ auto& operator op##=(const U& rhs) {        \
             return *res;
         }
 
-        StaticProperty& operator=(T const& value) {
+        template<class U>
+        StaticProperty& operator=(U&& value) {
             auto klass = klass_resolver();
             if (!klass) throw NullException(std::string("Class for static property with name: ") + name.data.data() + " is null!");
             auto res = il2cpp_utils::SetPropertyValue<false>(klass, name.data.data(), std::forward<decltype(value)>(value));
@@ -228,7 +238,7 @@ auto& operator op##=(const U& rhs) {        \
 
         inline auto operator ->() const {
             return this->operator T();
-        } 
+        }
 
         inline auto operator *() const {
             return this->operator T();
@@ -306,7 +316,7 @@ auto& operator op##=(const U& rhs) {        \
 
 #define BINARY_OPERATOR_OP_EQ_FIELD(op)     \
 template<typename U>                        \
-auto& operator op##=(const U& rhs) {        \
+auto& operator op##=(U&& rhs) {             \
     this->operator Ref() op##= rhs;         \
     return *this;                           \
 }
@@ -314,9 +324,13 @@ auto& operator op##=(const U& rhs) {        \
     template<class T, std::size_t offset>
     struct AssignableInstanceField : public InstanceField<T, offset, false> {
         using InstanceField<T, offset, false>::InstanceField;
-        AssignableInstanceField& operator=(T&& t) {
+        template<class U>
+#ifdef HAS_CODEGEN
+        requires(std::is_convertible_v<U, T>)
+#endif
+        AssignableInstanceField& operator=(U&& t) {
             if (instance == nullptr) throw NullException("Instance field assignment failed at offset: " + std::to_string(offset) + " because instance was null!");
-            
+
             if constexpr (il2cpp_utils::has_il2cpp_conversion<T>) {
                 // We only do this if we are a wrapper type!
                 il2cpp_functions::Init();
@@ -376,7 +390,7 @@ auto& operator op##=(const U& rhs) {            \
 
         inline auto operator ->() const {
             return this->operator T();
-        } 
+        }
 
         inline auto operator *() const {
             return this->operator T();
@@ -392,7 +406,11 @@ auto& operator op##=(const U& rhs) {            \
 
     template<class T, internal::NTTPString name, auto klass_resolver>
     struct AssignableStaticField : public StaticField<T, name, klass_resolver, false> {
-        AssignableStaticField& operator=(T&& value) {
+        template<class U>
+#ifdef HAS_CODEGEN
+        requires(std::is_convertible_v<U, T>)
+#endif
+        AssignableStaticField& operator=(U&& value) {
             auto klass = klass_resolver();
             if (!klass) throw NullException(std::string("Class for static field with name: ") + name.data.data() + " is null!");
             auto val = il2cpp_utils::SetFieldValue(klass, name.data.data(), std::forward<decltype(value)>(value));
