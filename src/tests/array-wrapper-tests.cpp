@@ -69,6 +69,10 @@ static void doThing2() {
             std::cout << itr;
         }
     }
+    auto emptyArr = ArrayW<int>::Empty();
+    for (auto& v : emptyArr) {
+        v = 0;
+    }
     il2cpp_utils::RunMethod(arr, "test", arr);
     il2cpp_utils::RunMethodRethrow<ArrayW<Il2CppObject*>>((Il2CppClass*)nullptr, &info);
 }

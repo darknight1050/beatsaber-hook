@@ -426,6 +426,10 @@ struct ArrayW {
         return val != nullptr;
     }
 
+    static ArrayW<T, Ptr> Empty() noexcept {
+        return ArrayW<T, Ptr>(il2cpp_array_size_t(0));
+    }
+
     T First() {
         if (Length() > 0)
             return val->values[0];
