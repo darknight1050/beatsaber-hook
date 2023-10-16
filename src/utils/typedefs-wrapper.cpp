@@ -1,10 +1,10 @@
 #include <string.h>
 #include <locale>
+#include <type_traits>
 #include "../../shared/utils/il2cpp-functions.hpp"
 #include "../../shared/utils/typedefs-string.hpp"
 #include "../../shared/utils/typedefs-wrappers.hpp"
 #include "../../shared/utils/typedefs.h"
-
 
 std::unordered_map<void*, size_t> Counter::addrRefCount;
 std::shared_mutex Counter::mutex;
@@ -20,6 +20,10 @@ struct deletable_facet : Facet {
 
 // Note that char is actually required here over char8_t-- this is due to NDK not having a char8_t specialization for this yet.
 deletable_facet<std::codecvt<char16_t, char8_t, std::mbstate_t>> conv;
+
+template <class T>
+concept is_specialized = std::is_same_v<char16_t, typename T::intern_type>;
+static_assert(is_specialized<std::codecvt<char16_t, char8_t, std::mbstate_t>>);
 
 void convstr(char const* inp, char16_t* outp, int sz) {
     std::mbstate_t state;
