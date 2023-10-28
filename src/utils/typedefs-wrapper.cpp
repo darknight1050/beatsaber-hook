@@ -44,10 +44,19 @@ std::size_t convstr(char16_t const* inp, char* outp, int isz, int osz) {
 
 Il2CppString* alloc_str(std::string_view str) {
     il2cpp_functions::Init();
+
+    if (str.data() == nullptr) {
+        return il2cpp_functions::string_new_len("\0", 0);
+    }
+
     return il2cpp_functions::string_new_len(str.data(), str.size());
 }
 Il2CppString* alloc_str(std::u16string_view str) {
     il2cpp_functions::Init();
+    if (str.data() == nullptr) {
+        return il2cpp_functions::string_new_len("\0", 0);
+    }
+
     return il2cpp_functions::string_new_utf16((Il2CppChar const*)str.data(), str.size());
 }
 
