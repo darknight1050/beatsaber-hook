@@ -87,7 +87,7 @@ namespace il2cpp_utils {
         // if null string input,
         // return an empty allocated il2cpp string
         if (inp.data() == nullptr) {
-            return newcsstr<creationType>("");
+            return newcsstr<creationType>(u"");
         }
 
         if constexpr (creationType == CreationType::Manual) {
