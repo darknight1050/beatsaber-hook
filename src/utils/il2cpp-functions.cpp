@@ -899,7 +899,6 @@ void il2cpp_functions::Init() {
     //     logger.critical("Failed to parse il2cpp_shutdown's implementation address! Could not install shutdown hook for closing file logs.");
     // }
 
-    dlclose(imagehandle);
     initialized = true;
     logger.info("il2cpp_functions: Init: Successfully loaded all il2cpp functions!");
 }
