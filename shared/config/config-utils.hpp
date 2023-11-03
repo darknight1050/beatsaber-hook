@@ -72,7 +72,7 @@ bool parsejson(ConfigDocument& doc, std::string_view js);
 /// @brief Returns a path to the persistent data directory for the provided const ModInfo&.
 /// @param info The const ModInfo& to find a path for.
 /// @return The path to the directory.
-std::string getDataDir(const modloader::ModInfo& info);
+std::string getDataDir(modloader::ModInfo const& info);
 
 /// @brief Returns a path to the persistent data directory for ID.
 /// @param id The id to find a path for.

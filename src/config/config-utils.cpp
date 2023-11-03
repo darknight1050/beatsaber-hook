@@ -14,7 +14,6 @@
 #include "scotland2/shared/loader.hpp"
 #include "scotland2/shared/modloader.h"
 
-
 // CONFIG
 
 bool readJson = false;
@@ -91,7 +90,7 @@ std::string Configuration::getConfigFilePath(const modloader::ModInfo& info) {
 }
 
 static std::optional<std::string> dataDir;
-std::string getDataDir(const CModInfo& info) {
+std::string getDataDir(modloader::ModInfo const& info) {
     if (!dataDir) {
         dataDir = string_format(PERSISTENT_DIR, modloader_get_application_id());
         if (!direxists(*dataDir)) {
