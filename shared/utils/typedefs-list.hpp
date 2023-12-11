@@ -8,11 +8,13 @@
 template<class T, class Ptr = List<T>*>
 struct ListWrapper {
     static_assert(sizeof(Ptr) == sizeof(void*), "Size of Ptr type must be the same as a void*!");
-    
+
+    constexpr ListWrapper() noexcept : ptr(nullptr) {}
+
     // TODO: Consider requirementally constexpr-ifying this call
     // TODO: Apply these il2cpp conversion changes to ArrayW as well, to permit ArrayW to hold wrapper types and not pure pointers
     constexpr ListWrapper(Ptr const& p) noexcept : ptr(p) {}
-    
+
     template<class V = void>
     requires (std::is_pointer_v<Ptr> && !il2cpp_utils::has_il2cpp_conversion<Ptr>)
     constexpr ListWrapper(void* alterInit) noexcept : ptr(reinterpret_cast<Ptr>(alterInit)) {}

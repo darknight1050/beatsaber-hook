@@ -57,7 +57,7 @@ static void test2() {
     std::wstring w3s(w3);
     std::u16string_view w6s(w6);
     Il2CppString* v2(w1);
-    
+
     if (one == w1)
     ;
     if (w1 == one)
@@ -94,7 +94,7 @@ static void test2() {
 
     w1 + "testappend";
     w2 += "testappendinplace";
-    
+
     w1.starts_with("test");
 
     w1[0] = 'A';

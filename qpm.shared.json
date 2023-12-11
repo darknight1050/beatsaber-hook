@@ -21,7 +21,7 @@
       },
       {
         "id": "libil2cpp",
-        "versionRange": ">=0.1.2, <0.3.0",
+        "versionRange": "^0.3.0",
         "additionalData": {}
       },
       {
@@ -44,12 +44,12 @@
     {
       "dependency": {
         "id": "libil2cpp",
-        "versionRange": "=0.2.3",
+        "versionRange": "=0.3.1",
         "additionalData": {
           "headersOnly": true
         }
       },
-      "version": "0.2.3"
+      "version": "0.3.1"
     },
     {
       "dependency": {

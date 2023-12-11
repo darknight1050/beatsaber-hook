@@ -1,5 +1,6 @@
 #ifdef TEST_SAFEPTR
-#include "../../shared/utils/typedefs-wrappers.hpp"
+#include "../../shared/utils/typedefs.h"
+#include <cassert>
 
 static void testRef(SafePtr<int>& ref) {
     *ref = 55;

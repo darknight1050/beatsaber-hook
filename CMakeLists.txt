@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED 20)
 # LTO
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 # define that stores the actual source directory
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -22,57 +23,92 @@ add_compile_definitions(VERSION=\"${MOD_VERSION}\")
 add_compile_definitions(MOD_ID=\"${MOD_ID}\")
 add_compile_definitions(VERSION_NUMBER=300150000)
 add_compile_definitions(UNITY_2019)
+add_compile_definitions(UNITY_2021)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-if (DEFINED TEST_BUILD)
-    MESSAGE(STATUS "Compiling with test defines")
-    add_compile_definitions(TEST_CALLBACKS)
-    add_compile_definitions(TEST_SAFEPTR)
-    add_compile_definitions(TEST_BYREF)
-    add_compile_definitions(TEST_ARRAY)
-    add_compile_definitions(TEST_LIST)
-    add_compile_definitions(TEST_STRING)
-    add_compile_definitions(TEST_HOOK)
-endif()
+function(setup_target target add_test)
+    message(STATUS "Setting up target ${target}")
 
-add_library(
-    ${COMPILE_ID} 
-    SHARED 
+    add_library(
+        ${target}
+        SHARED
+    )
+
+    if (add_test)
+        target_compile_definitions(
+            ${target}
+            PRIVATE
+
+            TEST_CALLBACKS
+            TEST_SAFEPTR
+            TEST_BYREF
+            TEST_ARRAY
+            TEST_LIST
+            TEST_STRING
+            TEST_HOOK
+        )
+    endif()
+
+    # recursively get all src files
+    RECURSE_FILES(cpp_file_list_utils ${SOURCE_DIR}/utils/*.cpp)
+    RECURSE_FILES(c_file_list_utils ${SOURCE_DIR}/utils/*.c)
+    target_sources(${target} PRIVATE ${cpp_file_list_utils})
+    target_sources(${target} PRIVATE ${c_file_list_utils})
+
+    RECURSE_FILES(cpp_file_list_config ${SOURCE_DIR}/config/*.cpp)
+    RECURSE_FILES(c_file_list_config ${SOURCE_DIR}/config/*.c)
+    target_sources(${target} PRIVATE ${cpp_file_list_config})
+    target_sources(${target} PRIVATE ${c_file_list_config})
+
+    if (add_test)
+        message(STATUS "Adding tests source files to target ${target}")
+        RECURSE_FILES(cpp_file_list_tests ${SOURCE_DIR}/tests/*.cpp)
+        RECURSE_FILES(c_file_list_tests ${SOURCE_DIR}/tests/*.c)
+        target_sources(${target} PRIVATE ${cpp_file_list_tests})
+        target_sources(${target} PRIVATE ${c_file_list_tests})
+    endif()
+
+    # add root dir as include dir
+    target_include_directories(${target} PRIVATE ${CMAKE_SOURCE_DIR})
+    # add src dir as include dir
+    target_include_directories(${target} PRIVATE ${SOURCE_DIR})
+    # add include dir as include dir
+    target_include_directories(${target} PRIVATE ${INCLUDE_DIR})
+    # add shared dir as include dir
+    target_include_directories(${target} PUBLIC ${SHARED_DIR})
+
+    target_link_directories(${target} PRIVATE ${EXTERN_DIR}/libs)
+    target_link_libraries(${target} PRIVATE -llog)
+    target_link_options(${target} PRIVATE "-fuse-ld=ld")
+
+    file(GLOB_RECURSE so_libs ${EXTERN_DIR}/libs/*.so)
+    file(GLOB_RECURSE a_libs ${EXTERN_DIR}/libs/*.a)
+
+    target_link_libraries(
+        ${target}
+        PRIVATE
+        ${so_libs}
+        ${a_libs}
+    )
+
+    target_include_directories(${target} PRIVATE ${EXTERN_DIR}/includes)
+    target_include_directories(${target} SYSTEM PRIVATE ${EXTERN_DIR}/includes/libil2cpp/il2cpp/libil2cpp)
+endfunction()
+
+# compile test as one project
+setup_target(${COMPILE_ID}-test YES)
+# regular bs hook
+setup_target(${COMPILE_ID} NO)
+
+target_compile_definitions(
+    ${COMPILE_ID}
+    PRIVATE
+    NO_TEST
 )
 
-# recursively get all src files
-RECURSE_FILES(cpp_file_list_utils ${SOURCE_DIR}/utils/*.cpp)
-RECURSE_FILES(c_file_list_utils ${SOURCE_DIR}/utils/*.c)
-target_sources(${COMPILE_ID} PRIVATE ${cpp_file_list_utils})
-target_sources(${COMPILE_ID} PRIVATE ${c_file_list_utils})
-
-RECURSE_FILES(cpp_file_list_config ${SOURCE_DIR}/config/*.cpp)
-RECURSE_FILES(c_file_list_config ${SOURCE_DIR}/config/*.c)
-target_sources(${COMPILE_ID} PRIVATE ${cpp_file_list_config})
-target_sources(${COMPILE_ID} PRIVATE ${c_file_list_config})
-
-if (DEFINED TEST_BUILD)
-RECURSE_FILES(cpp_file_list_tests ${SOURCE_DIR}/tests/*.cpp)
-RECURSE_FILES(c_file_list_tests ${SOURCE_DIR}/tests/*.c)
-target_sources(${COMPILE_ID} PRIVATE ${cpp_file_list_tests})
-target_sources(${COMPILE_ID} PRIVATE ${c_file_list_tests})
-endif()
-
-# add root dir as include dir
-target_include_directories(${COMPILE_ID} PRIVATE ${CMAKE_SOURCE_DIR})
-# add src dir as include dir
-target_include_directories(${COMPILE_ID} PRIVATE ${SOURCE_DIR})
-# add include dir as include dir
-target_include_directories(${COMPILE_ID} PRIVATE ${INCLUDE_DIR})
-# add shared dir as include dir
-target_include_directories(${COMPILE_ID} PUBLIC ${SHARED_DIR})
-
-target_link_libraries(${COMPILE_ID} PRIVATE -llog)
-target_link_options(${COMPILE_ID} PRIVATE "-fuse-ld=ld")
-
-# add extern stuff like libs and other includes
-include(extern.cmake)
+# make bs hook build depend on the build of bs hook tests
+# add_dependencies(${COMPILE_ID} ${COMPILE_ID}-test)
 
 add_custom_command(TARGET ${COMPILE_ID} POST_BUILD
             COMMAND ${CMAKE_STRIP} -g -S -d --strip-all

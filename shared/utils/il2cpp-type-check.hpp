@@ -107,6 +107,14 @@ namespace il2cpp_utils {
             }
         };
 
+        static inline Il2CppClass* GetGenericTemplateClass(Il2CppGenericClass* generic_class) {
+            #ifdef UNITY_2021
+            return CRASH_UNLESS(il2cpp_functions::type_get_class_or_element_class(generic_class->type));
+            #else
+            return CRASH_UNLESS(il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex(generic_class->typeDefinitionIndex));
+            #endif
+        }
+
         template<typename T>
         #ifndef BS_HOOK_USE_CONCEPTS
         struct il2cpp_no_arg_class<T, typename std::enable_if_t<std::is_base_of_v<NestedType, T> && T::IS_VALUE_TYPE>> {
@@ -121,7 +129,7 @@ namespace il2cpp_utils {
                 Il2CppClass* classWithNested = declaring;
                 if (declaring->generic_class) {
                     // Class::GetNestedTypes refuses to work on generic instances, so get the generic template instead
-                    classWithNested = CRASH_UNLESS(il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex(declaring->generic_class->typeDefinitionIndex));
+                    classWithNested = GetGenericTemplateClass(declaring->generic_class);
                 }
                 #if __has_feature(cxx_rtti)
                 std::string typeName = type_name<T>();
@@ -166,7 +174,7 @@ namespace il2cpp_utils {
                 Il2CppClass* classWithNested = declaring;
                 if (declaring->generic_class) {
                     // Class::GetNestedTypes refuses to work on generic instances, so get the generic template instead
-                    classWithNested = CRASH_UNLESS(il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex(declaring->generic_class->typeDefinitionIndex));
+                    classWithNested = GetGenericTemplateClass(declaring->generic_class);
                 }
                 #if __has_feature(cxx_rtti)
                 std::string typeName = type_name<T>();
@@ -334,7 +342,7 @@ namespace il2cpp_utils {
                 Il2CppClass* classWithNested = declaring;
                 if (declaring->generic_class) {
                     // Class::GetNestedTypes refuses to work on generic instances, so get the generic template instead
-                    classWithNested = CRASH_UNLESS(il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex(declaring->generic_class->typeDefinitionIndex));
+                    classWithNested = GetGenericTemplateClass(declaring->generic_class);
                 }
                 std::string typeName(S<TArgs...>::NESTED_NAME);
 
@@ -364,7 +372,7 @@ namespace il2cpp_utils {
                 Il2CppClass* classWithNested = declaring;
                 if (declaring->generic_class) {
                     // Class::GetNestedTypes refuses to work on generic instances, so get the generic template instead
-                    classWithNested = CRASH_UNLESS(il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex(declaring->generic_class->typeDefinitionIndex));
+                    classWithNested = GetGenericTemplateClass(declaring->generic_class);
                 }
                 std::string typeName(S<TArgs...>::NESTED_NAME);
 

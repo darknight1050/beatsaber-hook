@@ -1,5 +1,6 @@
 #pragma once
 
+#include "utils/typedefs.h"
 #pragma pack(push)
 
 #include "logging.hpp"
@@ -155,12 +156,12 @@ namespace il2cpp_utils {
 
     // Adds the given nested types of the namespaze, parentName, and klass to the hastable
     // Mainly used in AddTypeToNametoClassHashTable
-    void AddNestedTypesToNametoClassHashTable(Il2CppNameToTypeDefinitionIndexHashTable* hashTable, const char *namespaze, const ::std::string& parentName, Il2CppClass *klass);
+    void AddNestedTypesToNametoClassHashTable(Il2CppNameToTypeHandleHashTable* hashTable, const char *namespaze, const ::std::string& parentName, Il2CppClass *klass);
 
     // Adds the given nested types of typeDefinition to the class hash table of a given image
     // Mainly used in AddTypeToNametoClassHashTable
     void AddNestedTypesToNametoClassHashTable(const Il2CppImage* img, const Il2CppTypeDefinition* typeDefinition);
-    
+
     /// @brief This method allows you to check if the parameter is a child or instance of the parent class. E.g (B extends A)
     /// @tparam ParentT The parent class (left hand assignment)
     /// @param subOrInstanceKlass the instance class (right hand assignment)

@@ -173,7 +173,11 @@ namespace il2cpp_utils {
             if constexpr (::std::is_base_of_v<Il2CppObject, ::std::remove_pointer_t<Dt>>) {
                 if (arg) {
                     auto* klass = il2cpp_functions::object_get_class(reinterpret_cast<Il2CppObject*>(arg));
+                    #ifdef UNITY_2021
+                    if (klass && il2cpp_functions::class_is_valuetype(klass)) {
+                    #else
                     if (klass && klass->valuetype) {
+                    #endif
                         // Arg is an Il2CppObject* of a value type. It needs to be unboxed.
                         return il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(arg));
                     }
@@ -201,7 +205,7 @@ namespace il2cpp_utils {
             // Pointer type, grab class and perform deduction for unbox.
             // Must be classof deducible!
             auto* k = classof(Dt);
-            if (k && k->valuetype) {
+            if (k && il2cpp_functions::class_is_valuetype(k)) {
                 // Arg is an Il2CppObject* of a value type. It needs to be unboxed.
                 return il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(arg));
             }
@@ -278,16 +282,30 @@ namespace il2cpp_utils {
         if (method->parameters_count != argSz) {
             return false;
         }
-        auto genCount = (method->is_generic && !method->is_inflated) ? method->genericContainer->type_argc : 0;
+        #ifdef UNITY_2021
+        auto genericContainer = reinterpret_cast<const Il2CppGenericContainer*>(method->genericContainerHandle);
+        #else
+        auto genericContainer = method->genericContainer;
+        #endif
+        auto genCount = (method->is_generic && !method->is_inflated) ? genericContainer->type_argc : 0;
         if (genCount != genSz) {
             // logger.warning("Potential method match had wrong number of generics %i (expected %lu)", genCount, genSz);
             return false;
         }
         // TODO: supply boolStrictMatch and use type_equals instead of IsConvertibleFrom if supplied?
         for (decltype(method->parameters_count) i = 0; i < argSz; i++) {
+            #ifdef UNITY_2021
+            auto* paramType = method->parameters[i];
+            #else
             auto* paramType = method->parameters[i].parameter_type;
+            #endif
+
             if (paramType->type == IL2CPP_TYPE_MVAR) {
+                #ifdef UNITY_2021
+                auto genIdx = il2cpp_functions::MetadataCache_GetGenericParameterIndexFromParameter(paramType->data.genericParameterHandle);
+                #else
                 auto genIdx = paramType->data.genericParameterIndex - method->genericContainer->genericParameterStart;
+                #endif
                 if (genIdx < 0) {
                     logger.warning("Extracted invalid genIdx %i from parameter %i", genIdx, i);
                 } else if (genIdx >= genCount) {
@@ -356,7 +374,7 @@ namespace il2cpp_utils {
 
         // Need to potentially call Class::Init here as well
         // This snippet is almost identical to what libil2cpp does
-        if ((method->flags & METHOD_ATTRIBUTE_STATIC) > 0 && method->klass && method->klass->has_cctor && !method->klass->cctor_finished) {
+        if ((method->flags & METHOD_ATTRIBUTE_STATIC) > 0 && method->klass && !method->klass->cctor_finished_or_no_cctor) {
             il2cpp_functions::Class_Init(method->klass);
         }
         try {
@@ -371,7 +389,7 @@ namespace il2cpp_utils {
                     // Static method
                     reinterpret_cast<void (*)(std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(params..., method);
                 } else {
-                    if (method->klass->valuetype) {
+                    if (il2cpp_functions::class_is_valuetype(method->klass)) {
                         // Value type instance method. Instance parameter is always boxed in some way.
                         auto boxedRepr = instance;
                         if constexpr (sizeof(Il2CppCodeGenModule) <= 104) {
@@ -411,7 +429,7 @@ namespace il2cpp_utils {
                     // Static method
                     return reinterpret_cast<TOut (*)(std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(params..., method);
                 } else {
-                    if (method->klass->valuetype) {
+                    if (il2cpp_functions::class_is_valuetype(method->klass)) {
                         auto boxedRepr = instance;
                         if constexpr (sizeof(Il2CppCodeGenModule) <= 104) {
                             // Boxing is only required if we invoke to adjustor thunks instead of actual impls
@@ -654,7 +672,7 @@ namespace il2cpp_utils {
         auto* createdMethod = RET_NULLOPT_UNLESS(logger, MakeGenericMethod(info, genTypes));
         return RunMethod<TOut, false>(instance, createdMethod, params...);
     }
-    
+
     template<class TOut = Il2CppObject*, class T, class... TArgs>
     ::std::optional<TOut> RunGenericMethod(T&& classOrInstance, ::std::string_view methodName, ::std::vector<Il2CppClass*> genTypes, TArgs&& ...params) noexcept {
         static auto& logger = getLogger();

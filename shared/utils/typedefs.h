@@ -322,6 +322,7 @@ NEED_NO_BOX(Il2CppStackFrame);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionAssemblyName*, assembly_name);
 NEED_NO_BOX(Il2CppReflectionAssemblyName);
 // DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionAssembly*, assembly);
+#ifndef UNITY_2021
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionAssembly*, mono_assembly);
 NEED_NO_BOX(Il2CppReflectionAssembly);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionField*, mono_field);
@@ -329,10 +330,13 @@ NEED_NO_BOX(Il2CppReflectionField);
 // DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionParameter*, parameter_info);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionParameter*, mono_parameter_info);
 NEED_NO_BOX(Il2CppReflectionParameter);
+#endif
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionModule*, module);
 NEED_NO_BOX(Il2CppReflectionModule);
+#ifndef UNITY_2021
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionPointer*, pointer);
 NEED_NO_BOX(Il2CppReflectionPointer);
+#endif
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppSystemException*, system_exception);
 NEED_NO_BOX(Il2CppSystemException);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppArgumentException*, argument_exception);
@@ -357,16 +361,20 @@ DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppThread*, thread);
 NEED_NO_BOX(Il2CppThread);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionRuntimeType*, runtimetype);
 NEED_NO_BOX(Il2CppReflectionRuntimeType);
+#ifndef UNITY_2021
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionMonoEventInfo*, mono_event_info);
 NEED_NO_BOX(Il2CppReflectionMonoEventInfo);
+#endif
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppTypedRef*, typed_reference);
 NEED_NO_BOX(Il2CppTypedRef);
+#ifndef UNITY_2021
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionMethod*, mono_method);
 NEED_NO_BOX(Il2CppReflectionMethod);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppMethodInfo*, mono_method_info);
 NEED_NO_BOX(Il2CppMethodInfo);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppPropertyInfo*, mono_property_info);
 NEED_NO_BOX(Il2CppPropertyInfo);
+#endif
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppException*, exception);
 NEED_NO_BOX(Il2CppException);
 
@@ -400,13 +408,22 @@ struct NamespaceAndNamePairEquals
     }
 };
 
-struct Il2CppNameToTypeDefinitionIndexHashTable : public Il2CppHashMap<std::pair<const char*, const char*>, TypeDefinitionIndex, NamespaceAndNamePairHash, NamespaceAndNamePairEquals>
+struct Il2CppNameToTypeHandleHashTable : public Il2CppHashMap<std::pair<const char*, const char*>, Il2CppMetadataTypeHandle, NamespaceAndNamePairHash, NamespaceAndNamePairEquals>
 {
-    typedef Il2CppHashMap<std::pair<const char*, const char*>, TypeDefinitionIndex, NamespaceAndNamePairHash, NamespaceAndNamePairEquals> Base;
-    Il2CppNameToTypeDefinitionIndexHashTable() : Base()
+    typedef Il2CppHashMap<std::pair<const char*, const char*>, Il2CppMetadataTypeHandle, NamespaceAndNamePairHash, NamespaceAndNamePairEquals> Base;
+    Il2CppNameToTypeHandleHashTable() : Base()
     {
     }
 };
+
+typedef struct Il2CppImageGlobalMetadata
+{
+    TypeDefinitionIndex typeStart;
+    TypeDefinitionIndex exportedTypeStart;
+    CustomAttributeIndex customAttributeStart;
+    MethodIndex entryPointIndex;
+    const Il2CppImage* image;
+} Il2CppImageGlobalMetadata;
 
 #pragma pack(pop)
 
