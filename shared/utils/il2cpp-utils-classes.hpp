@@ -1,6 +1,5 @@
 #pragma once
 
-#include "utils/typedefs.h"
 #pragma pack(push)
 
 #include "logging.hpp"
