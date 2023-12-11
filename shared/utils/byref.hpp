@@ -1,5 +1,6 @@
 #pragma once
 #include "il2cpp-type-check.hpp"
+#include "type-concepts.hpp"
 
 /// @brief Represents a byref parameter.
 /// This is REQUIRED for codegen invokes, as RunMethodThrow can't tell the difference between a reference parameter and a byref on constexpr time.
@@ -33,6 +34,7 @@ struct ByRef {
     }
     static_assert(sizeof(T*) == sizeof(void*));
 };
+MARK_GEN_REF_T(ByRef);
 
 // Type specializations for byref specifics
 // We do not need il2cpp_no_arg_class specialization for ByRef, since it will never get to that point.

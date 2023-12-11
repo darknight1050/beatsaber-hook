@@ -353,7 +353,7 @@ namespace il2cpp_utils {
         }
 
         if constexpr (checkTypes && sizeof...(TArgs) > 0) {
-            std::array<const Il2CppType*, sizeof...(TArgs)> types{ExtractType(params)...};
+            std::array<const Il2CppType*, sizeof...(TArgs)> types{::il2cpp_utils::ExtractType(params)...};
             if (!ParameterMatch(method, types)) {
                 throw RunMethodException("Parameters do not match!", method);
             }
@@ -491,7 +491,7 @@ namespace il2cpp_utils {
         CRASH_UNLESS(method);
 
         if constexpr (checkTypes && sizeof...(TArgs) > 0) {
-            std::array<const Il2CppType*, sizeof...(TArgs)> types{ExtractType(params)...};
+            std::array<const Il2CppType*, sizeof...(TArgs)> types{::il2cpp_utils::ExtractType(params)...};
             if (!ParameterMatch(method, types)) {
                 throw RunMethodException("Parameters do not match!", method);
             }
@@ -565,7 +565,7 @@ namespace il2cpp_utils {
         RET_NULLOPT_UNLESS(logger, method);
 
         if constexpr (checkTypes && sizeof...(TArgs) > 0) {
-            std::array<const Il2CppType*, sizeof...(TArgs)> types{ExtractType(params)...};
+            std::array<const Il2CppType*, sizeof...(TArgs)> types{::il2cpp_utils::ExtractType(params)...};
             RET_NULLOPT_UNLESS(logger, ParameterMatch(method, types));
         }
 
@@ -629,7 +629,7 @@ namespace il2cpp_utils {
     RunMethod(T&& classOrInstance, ::std::string_view methodName, TArgs&& ...params) {
         static auto& logger = getLogger();
         if constexpr (checkTypes) {
-            std::array<const Il2CppType*, sizeof...(TArgs)> types{ExtractType(params)...};
+            std::array<const Il2CppType*, sizeof...(TArgs)> types{::il2cpp_utils::ExtractType(params)...};
             auto* method = RET_NULLOPT_UNLESS(logger, FindMethod(classOrInstance, NoArgClass<TOut>(), methodName, types));
             return RunMethod<TOut, true>(classOrInstance, method, params...);
         }
@@ -676,7 +676,7 @@ namespace il2cpp_utils {
     template<class TOut = Il2CppObject*, class T, class... TArgs>
     ::std::optional<TOut> RunGenericMethod(T&& classOrInstance, ::std::string_view methodName, ::std::vector<Il2CppClass*> genTypes, TArgs&& ...params) noexcept {
         static auto& logger = getLogger();
-        std::array<const Il2CppType*, sizeof...(TArgs)> types{ExtractType(params)...};
+        std::array<const Il2CppType*, sizeof...(TArgs)> types{::il2cpp_utils::ExtractType(params)...};
 
         auto* info = RET_NULLOPT_UNLESS(logger, FindMethod(classOrInstance, NoArgClass<TOut>(), methodName, genTypes, types));
         return RunGenericMethod<TOut>(classOrInstance, info, genTypes, params...);
@@ -730,7 +730,7 @@ namespace il2cpp_utils {
             obj = RET_NULLOPT_UNLESS(logger, createManual(klass));
         }
         // runtime_invoke constructor with right type(s) of arguments, return null if constructor errors
-        std::array<const Il2CppType*, sizeof...(TArgs)> types{ExtractType(args)...};
+        std::array<const Il2CppType*, sizeof...(TArgs)> types{::il2cpp_utils::ExtractType(args)...};
         auto* method = RET_NULLOPT_UNLESS(logger, FindMethod(klass, ".ctor", types));
         RET_NULLOPT_UNLESS(logger, RunMethod(obj, method, args...));
         return FromIl2CppObject<TOut>(obj);

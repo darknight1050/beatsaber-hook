@@ -8,6 +8,7 @@
 #include "il2cpp-type-check.hpp"
 #include "il2cpp-utils-exceptions.hpp"
 #include "utils-functions.h"
+#include "type-concepts.hpp"
 
 
 struct UseBeforeInitError : il2cpp_utils::exceptions::StackTraceException {
@@ -53,16 +54,10 @@ template <int sz>
 struct ConstString {
     // Manually allocated string, dtor destructs in place
     ConstString(const char (&st)[sz]) {
-        if (il2cpp_functions::initialized) {
-            klass = il2cpp_functions::defaults->string_class;
-        }
         length = sz - 1;
         il2cpp_utils::detail::convstr(st, chars, sz - 1);
     }
     constexpr ConstString(const char16_t (&st)[sz]) noexcept {
-        if (il2cpp_functions::initialized) {
-            klass = il2cpp_functions::defaults->string_class;
-        }
         length = sz - 1;
         for (int i = 0; i < sz - 1; i++) {
             chars[i] = st[i];
@@ -125,9 +120,9 @@ struct ConstString {
 
    private:
     void* klass = nullptr;
-    void* monitor;
-    int length;
-    char16_t chars[sz];
+    void* monitor = nullptr;
+    int length = 0;
+    char16_t chars[sz] = {};
 };
 
 struct StringW {
@@ -249,6 +244,7 @@ struct StringW {
    private:
     Il2CppString* inst;
 };
+MARK_REF_T(StringW);
 
 template <typename T>
     requires(!std::is_constructible_v<T, StringW> && (std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::string_view, T>))

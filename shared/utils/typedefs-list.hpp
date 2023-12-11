@@ -4,6 +4,7 @@
 #include <span>
 #include <optional>
 #include "il2cpp-utils-methods.hpp"
+#include "type-concepts.hpp"
 
 template<class T, class Ptr = List<T>*>
 struct ListWrapper {
@@ -118,6 +119,8 @@ struct ListWrapper {
     private:
     Ptr ptr;
 };
+MARK_GEN_REF_T(ListWrapper);
+MARK_GEN_REF_PTR_T(List);
 
 // ListW for the win, just implicitly
 template<class T, class Ptr = List<T>*>

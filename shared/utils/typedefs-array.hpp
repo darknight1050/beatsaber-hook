@@ -3,6 +3,7 @@
 #include <vector>
 #include <span>
 #include "il2cpp-type-check.hpp"
+#include "type-concepts.hpp"
 #include <stdexcept>
 
 #if __has_include(<concepts>)
@@ -238,6 +239,7 @@ struct Array : public Il2CppArray
         return std::span(const_cast<T*>(values), Length());
     }
 };
+MARK_GEN_REF_PTR_T(Array);
 
 template<typename TArg>
 struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Array<TArg>*> {
@@ -433,7 +435,7 @@ struct ArrayW {
     T First() {
         if (Length() > 0)
             return val->values[0];
-        else 
+        else
             throw ArrayException(this, "First called on empty array!");
     }
 
@@ -448,7 +450,7 @@ struct ArrayW {
     T Last() {
         if (Length() > 0)
             return val->values[Length() - 1];
-        else 
+        else
             throw ArrayException(this, "Last called on empty array!");
     }
 
@@ -501,6 +503,8 @@ struct ArrayW {
     private:
     Ptr val;
 };
+MARK_GEN_REF_T(ArrayW);
+
 static_assert(il2cpp_utils::has_il2cpp_conversion<ArrayW<int, Array<int>*>>);
 template<class T, class Ptr>
 struct ::il2cpp_utils::il2cpp_type_check::need_box<ArrayW<T, Ptr>> {

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "type-concepts.hpp"
+
 #ifdef HAS_CODEGEN
 
 #ifdef USE_CODEGEN_FIELDS
@@ -36,4 +38,6 @@ typedef struct Il2CppObject
     };
     MonitorData *monitor;
 } Il2CppObject;
+
+MARK_REF_PTR_T(Il2CppObject);
 #endif

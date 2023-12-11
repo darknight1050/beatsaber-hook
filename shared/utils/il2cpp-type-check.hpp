@@ -117,9 +117,9 @@ namespace il2cpp_utils {
 
         template<typename T>
         #ifndef BS_HOOK_USE_CONCEPTS
-        struct il2cpp_no_arg_class<T, typename std::enable_if_t<std::is_base_of_v<NestedType, T> && T::IS_VALUE_TYPE>> {
+        struct il2cpp_no_arg_class<T, typename std::enable_if_t<std::is_base_of_v<NestedType, T> && T::__IL2CPP_IS_VALUE_TYPE>> {
         #else
-        requires (std::is_base_of_v<NestedType, T> && T::IS_VALUE_TYPE)
+        requires (std::is_base_of_v<NestedType, T> && T::__IL2CPP_IS_VALUE_TYPE)
         struct il2cpp_no_arg_class<T> {
         #endif
             // TODO: make this work on any class with a `using declaring_type`, then remove NestedType
@@ -162,9 +162,9 @@ namespace il2cpp_utils {
         // For non-value types, forward accordingly. Should only apply to T*s that have these properties.
         template<typename T>
         #ifndef BS_HOOK_USE_CONCEPTS
-        struct il2cpp_no_arg_class<T, typename std::enable_if_t<std::is_base_of_v<NestedType, T> && !T::IS_VALUE_TYPE>> {
+        struct il2cpp_no_arg_class<T, typename std::enable_if_t<std::is_base_of_v<NestedType, T> && !T::__IL2CPP_IS_VALUE_TYPE>> {
         #else
-        requires (std::is_base_of_v<NestedType, T> && !T::IS_VALUE_TYPE)
+        requires (std::is_base_of_v<NestedType, T> && !T::__IL2CPP_IS_VALUE_TYPE)
         struct il2cpp_no_arg_class<T*> {
         #endif
             // TODO: make this work on any class with a `using declaring_type`, then remove NestedType
@@ -334,7 +334,7 @@ namespace il2cpp_utils {
         };
 
         template<typename... TArgs, template<typename... ST> class S>
-        requires (S<TArgs...>::IS_VALUE_TYPE && has_get<il2cpp_no_arg_class<typename S<TArgs...>::declaring_type>>)
+        requires (S<TArgs...>::__IL2CPP_IS_VALUE_TYPE && has_get<il2cpp_no_arg_class<typename S<TArgs...>::declaring_type>>)
         struct il2cpp_no_arg_class<S<TArgs...>> {
             static inline Il2CppClass* get() {
                 // Resolve our declaring type
@@ -364,7 +364,7 @@ namespace il2cpp_utils {
         };
 
         template<typename... TArgs, template<typename... ST> class S>
-        requires (!S<TArgs...>::IS_VALUE_TYPE && has_get<il2cpp_no_arg_class<typename S<TArgs...>::declaring_type>>)
+        requires (!S<TArgs...>::__IL2CPP_IS_VALUE_TYPE && has_get<il2cpp_no_arg_class<typename S<TArgs...>::declaring_type>>)
         struct il2cpp_no_arg_class<S<TArgs...>*> {
             static inline Il2CppClass* get() {
                 // Resolve our declaring type
