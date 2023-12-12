@@ -97,9 +97,11 @@ function(setup_target target add_test)
 endfunction()
 
 # compile test as one project
-setup_target(${COMPILE_ID}-test YES)
+setup_target(test-${COMPILE_ID} YES)
 # regular bs hook
 setup_target(${COMPILE_ID} NO)
+
+add_dependencies(${COMPILE_ID} test-${COMPILE_ID})
 
 target_compile_definitions(
     ${COMPILE_ID}
