@@ -497,7 +497,7 @@ struct ArrayW {
     }
 
     constexpr void* convert() const noexcept {
-        return val;
+        return const_cast<void*>(static_cast<void*>(val));
     }
 
     private:

@@ -137,11 +137,8 @@ struct StringW {
     constexpr StringW(std::nullptr_t npt) noexcept : inst(npt) {}
     constexpr StringW() noexcept : inst(nullptr) {}
 
-    constexpr void const* convert() const noexcept {
-        return inst;
-    }
-    constexpr void* convert() noexcept {
-        return inst;
+    constexpr void* convert() const noexcept {
+        return const_cast<void*>(static_cast<void*>(inst));
     }
     constexpr operator Il2CppString const*() const noexcept {
         return inst;
@@ -253,5 +250,6 @@ StringW operator+(T const lhs, StringW const& rhs) noexcept {
 }
 
 static_assert(sizeof(StringW) == sizeof(void*));
+static_assert(il2cpp_utils::has_il2cpp_conversion<StringW>);
 DEFINE_IL2CPP_DEFAULT_TYPE(StringW, string);
 NEED_NO_BOX(StringW);
