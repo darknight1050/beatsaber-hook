@@ -171,7 +171,7 @@ namespace il2cpp_utils {
             }
             std::string genClassName = GenericClassStandardName(genClass);
 
-            auto* typeDefClass = il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex(il2cpp_functions::MetadataCache_GetIndexForTypeDefinition(genClass->cached_class));
+            auto* typeDefClass = il2cpp_functions::GlobalMetadata_GetTypeInfoFromTypeDefinitionIndex(il2cpp_functions::MetadataCache_GetIndexForTypeDefinition(genClass->cached_class));
             if (!typeDefClass) continue;
 
             classToGenericClassMap[typeDefClass][genClassName.c_str()] = genClass;

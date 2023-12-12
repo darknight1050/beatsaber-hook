@@ -137,6 +137,8 @@ API_INIT(bool, gc_has_strict_wbarriers, ());
 API_INIT(void, gc_set_external_allocation_tracker, (void (*func)(void*, size_t, int)));
 API_INIT(void, gc_set_external_wbarrier_tracker, (void (*func)(void**)));
 API_INIT(void, gc_foreach_heap, (void (*func)(void* data, void* userData), void* userData));
+API_INIT(void*, gc_alloc_fixed, (std::size_t size));
+API_INIT(void, gc_free_fixed, (void* addr));
 API_INIT(void, stop_gc_world, ());
 API_INIT(void, start_gc_world, ());
 #endif
@@ -286,9 +288,15 @@ API_INIT(const char*, class_get_name_const, (const Il2CppClass* klass));
 
 // SELECT NON-API LIBIL2CPP FUNCTIONS:
 API_INIT(bool, Class_Init, (Il2CppClass * klass));
-
-API_INIT(Il2CppClass*, MetadataCache_GetTypeInfoFromTypeDefinitionIndex, (TypeDefinitionIndex index));
+#ifdef UNITY_2021
+API_INIT(Il2CppClass*, MetadataCache_GetTypeInfoFromHandle, (Il2CppMetadataTypeHandle index));
+#endif
 API_INIT(Il2CppClass*, MetadataCache_GetTypeInfoFromTypeIndex, (TypeIndex index));
+
+#ifdef UNITY_2021
+API_INIT(Il2CppClass*, GlobalMetadata_GetTypeInfoFromTypeDefinitionIndex, (TypeDefinitionIndex index));
+API_INIT(Il2CppClass*, GlobalMetadata_GetTypeInfoFromHandle, (TypeDefinitionIndex index));
+#endif
 
 #if defined(UNITY_2019) || defined(UNITY_2021)
 API_INIT(std::string, _Type_GetName_, (const Il2CppType* type, Il2CppTypeNameFormat format));
@@ -366,7 +374,7 @@ Il2CppClass* il2cpp_functions::MetadataCache_GetNestedTypeFromIndex(NestedTypeIn
     IL2CPP_ASSERT(index >= 0 && static_cast<uint32_t>(index) <= s_GlobalMetadataHeader->nestedTypesCount / sizeof(TypeDefinitionIndex));
     auto nestedTypeIndices = (const TypeDefinitionIndex*)((const char*)s_GlobalMetadata + s_GlobalMetadataHeader->nestedTypesOffset);
 
-    return il2cpp_functions::MetadataCache_GetTypeInfoFromTypeDefinitionIndex(nestedTypeIndices[index]);
+    return il2cpp_functions::GlobalMetadata_GetTypeInfoFromTypeDefinitionIndex(nestedTypeIndices[index]);
 }
 
 TypeDefinitionIndex il2cpp_functions::MetadataCache_GetIndexForTypeDefinition(const Il2CppTypeDefinition* typeDefinition) {
@@ -403,13 +411,6 @@ GenericParameterIndex il2cpp_functions::MetadataCache_GetGenericContainerIndex(I
     return MetadataCache_GetTypeDefinition(klass)->genericContainerIndex;
 }
 
-Il2CppClass* il2cpp_functions::MetadataCache_GetTypeInfoFromHandle(Il2CppMetadataTypeHandle handle) {
-    const Il2CppTypeDefinition* typeDefinition = reinterpret_cast<const Il2CppTypeDefinition*>(handle);
-    auto typeIndex = MetadataCache_GetIndexForTypeDefinition(typeDefinition);
-    return MetadataCache_GetTypeInfoFromTypeDefinitionIndex(typeIndex);
-}
-
-
 char* il2cpp_functions::Type_GetName(const Il2CppType* type, Il2CppTypeNameFormat format) {
     if (!il2cpp__Type_GetName_) return nullptr;
     // TODO debug the ref/lifetime weirdness with _Type_GetName_ to avoid the need for explicit allocation
@@ -423,32 +424,15 @@ static std::optional<uint32_t*> blrFind(cs_insn* insn) {
     return insn->id == ARM64_INS_BLR ? std::optional<uint32_t*>(reinterpret_cast<uint32_t*>(insn->address)) : std::nullopt;
 }
 
-bool il2cpp_functions::find_GC_free(const uint32_t* Runtime_Shutdown) {
-    bool multipleMatches;
-    auto sigMatch = findUniquePatternInLibil2cpp(multipleMatches,
-                                                 "f8 5f bc a9 f6 57 01 a9 f4 4f 02 a9 "
-                                                 "fd 7b 03 a9 fd c3 00 91 a0 08 00 b4 f3 03 00 aa ?? ?? ?? ?? 69 82 56 d3 4a ?? ?? 91 4b 0d 09 8b 49 55 40 f9 "
-                                                 "0a 9c 9c 52 0a 04 a0 72 00 cc 74 92 68 fe 56 d3 6c 01 0a 8b 0a 03 84 52",
-                                                 "GC_free");
-    if (sigMatch && !multipleMatches) {
-        il2cpp_functions::il2cpp_GC_free = reinterpret_cast<decltype(il2cpp_functions::il2cpp_GC_free)>(sigMatch);
-        return true;
-    }
+bool il2cpp_functions::find_GC_free() {
     static auto logger = il2cpp_functions::getFuncLogger().WithContext("find_GC_free");
+    auto gc_free_fixed = cs::findNthB<1>(reinterpret_cast<uint32_t*>(il2cpp_functions::il2cpp_gc_free_fixed));
+    if (!gc_free_fixed) SAFE_ABORT_MSG("Failed to find GarbageCollector::FreeFixed!");
 
-    auto blrStart = cs::find_through_hooks(Runtime_Shutdown, 4096, [](auto... pairs) {
-        std::array tracked{ pairs... };
-        // Find first blr
-        return cs::findNth(tracked, 1, -1, blrFind, cs::insnMatch<>);
-    });
-    if (!blrStart) return false;
-    // 4th bl is call to (inlined) GarbageCollector_FreeFixed (after the blr, which we wish to skip)
-    auto callAddr = cs::findNthBl<4>(*blrStart + 1);
-    if (!callAddr) return false;
-    // GarbageCollector_FreeFixed has one b to GC_Free
-    auto gc_free_b = cs::findNthB<1>(*callAddr);
-    if (!gc_free_b) return false;
-    il2cpp_GC_free = reinterpret_cast<decltype(il2cpp_GC_free)>(*gc_free_b);
+    auto gc_free = cs::findNthB<1>(*gc_free_fixed);
+    if (!gc_free) SAFE_ABORT_MSG("Failed to find GC_free!");
+
+    il2cpp_GC_free = reinterpret_cast<decltype(il2cpp_GC_free)>(*gc_free);
     return true;
 }
 
@@ -654,6 +638,8 @@ void il2cpp_functions::Init() {
     API_SYM(gc_set_external_allocation_tracker);
     API_SYM(gc_set_external_wbarrier_tracker);
     API_SYM(gc_foreach_heap);
+    API_SYM(gc_free_fixed);
+    API_SYM(gc_alloc_fixed);
     API_SYM(stop_gc_world);
     API_SYM(start_gc_world);
 #endif
@@ -815,24 +801,81 @@ void il2cpp_functions::Init() {
     }
 
     {
-        auto MetadataCache_HasAttribute_addr = cs::findNthB<1, false, -1, 1024>(reinterpret_cast<uint32_t*>(il2cpp_custom_attrs_has_attr));
-        if (!MetadataCache_HasAttribute_addr) SAFE_ABORT_MSG("Failed to find MetadataCache::HasAttribute!");
-        auto typeinfo = cs::findNthBl<1>(*MetadataCache_HasAttribute_addr);
-        if (!typeinfo) SAFE_ABORT_MSG("Failed to find MetadataCache::GetTypeInfoFromTypeIndex!");
-        il2cpp_MetadataCache_GetTypeInfoFromTypeIndex = reinterpret_cast<decltype(il2cpp_MetadataCache_GetTypeInfoFromTypeIndex)>(*typeinfo);
+        /*
+            Path to method:
+            il2cpp_image_get_class
+                Image::GetType
+                    MetadataCache::GetTypeInfoFromHandle
+        */
+        logger.debug("il2cpp_image_get_class offset: %lX", reinterpret_cast<uintptr_t>(il2cpp_image_get_class) - getRealOffset(0));
+        auto Image_GetType_addr = cs::findNthB<1, false, -1, 1024>(reinterpret_cast<uint32_t*>(il2cpp_image_get_class));
+        if (!Image_GetType_addr) SAFE_ABORT_MSG("Failed to find Image::GetType!");
+        logger.debug("Image::GetType found? offset: %lX", reinterpret_cast<uintptr_t>(*Image_GetType_addr) - getRealOffset(0));
+        auto MetadataCache_GetTypeInfoFromHandle_addr = cs::findNthB<1, false, -1, 1024>(*Image_GetType_addr);
+        if (!MetadataCache_GetTypeInfoFromHandle_addr) SAFE_ABORT_MSG("Failed to find MetadataCache::GetTypeInfoFromHandle!");
+        il2cpp_MetadataCache_GetTypeInfoFromHandle = reinterpret_cast<decltype(il2cpp_MetadataCache_GetTypeInfoFromHandle)>(*MetadataCache_GetTypeInfoFromHandle_addr);
+        // MetadataCache::GetTypeInfoFromHandle. offset 0x84F764 in 1.5, 0x9F5250 in 1.7.0, 0xA7A79C in 1.8.0b1
+        logger.debug("MetadataCache::GetTypeInfoFromHandle found? offset: %lX", reinterpret_cast<uintptr_t>(il2cpp_MetadataCache_GetTypeInfoFromHandle) - getRealOffset(0));
+    }
+
+    {
+        /*
+            Path to method:
+            il2cpp_field_get_value_object
+                Field::GetValueObject
+                    Field::GetValueObjectForThread
+                        Field::GetDefaultFieldValue
+                            BlobReader::GetConstantValueFromBlob
+                                MetadataCache::GetTypeInfoFromTypeIndex
+        */
+        logger.debug("il2cpp_field_get_value_object offset: %lX", reinterpret_cast<uintptr_t>(il2cpp_field_get_value_object) - getRealOffset(0));
+        auto Field_GetValueObject_addr = cs::findNthB<1, false, -1, 1024>(reinterpret_cast<uint32_t*>(il2cpp_field_get_value_object));
+        if (!Field_GetValueObject_addr) SAFE_ABORT_MSG("Failed to find Field::GetValueObject!");
+        logger.debug("Field::GetValueObject found? offset: %lX", reinterpret_cast<uintptr_t>(*Field_GetValueObject_addr) - getRealOffset(0));
+
+        auto Field_GetDefaultFieldValue_addr = cs::findNthBl<4, 1>(*Field_GetValueObject_addr);
+        if (!Field_GetDefaultFieldValue_addr) SAFE_ABORT_MSG("Failed to find Field::GetDefaultFieldValue!");
+        logger.debug("Field::GetDefaultFieldValue found? offset: %lX", reinterpret_cast<uintptr_t>(*Field_GetDefaultFieldValue_addr) - getRealOffset(0));
+
+        auto BlobReader_GetConstantValueFromBlob_addr = cs::findNthBl<2, 1>(*Field_GetDefaultFieldValue_addr);
+        if (!BlobReader_GetConstantValueFromBlob_addr) SAFE_ABORT_MSG("Failed to find BlobReader::GetConstantValueFromBlob!");
+        logger.debug("Image::GetConstantValueFromBlob found? offset: %lX", reinterpret_cast<uintptr_t>(*BlobReader_GetConstantValueFromBlob_addr) - getRealOffset(0));
+
+        auto BlobReader_GetConstantValueFromBlob2_addr = cs::findNthBl<1, 1>(*BlobReader_GetConstantValueFromBlob_addr);
+        if (!BlobReader_GetConstantValueFromBlob2_addr) SAFE_ABORT_MSG("Failed to find BlobReader::GetConstantValueFromBlob!");
+        logger.debug("Image::GetConstantValueFromBlob2 found? offset: %lX", reinterpret_cast<uintptr_t>(*BlobReader_GetConstantValueFromBlob2_addr) - getRealOffset(0));
+
+        auto MetadataCache_GetTypeInfoFromTypeIndex_addr = cs::findNthBl<2, 1>(*BlobReader_GetConstantValueFromBlob2_addr);
+        if (!MetadataCache_GetTypeInfoFromTypeIndex_addr) SAFE_ABORT_MSG("Failed to find MetadataCache::GetTypeInfoFromTypeIndex!");
+        il2cpp_MetadataCache_GetTypeInfoFromTypeIndex = reinterpret_cast<decltype(il2cpp_MetadataCache_GetTypeInfoFromTypeIndex)>(*MetadataCache_GetTypeInfoFromTypeIndex_addr);
         // MetadataCache::GetTypeInfoFromTypeIndex. offset 0x84F764 in 1.5, 0x9F5250 in 1.7.0, 0xA7A79C in 1.8.0b1
         logger.debug("MetadataCache::GetTypeInfoFromTypeIndex found? offset: %lX", reinterpret_cast<uintptr_t>(il2cpp_MetadataCache_GetTypeInfoFromTypeIndex) - getRealOffset(0));
     }
 
     {
-        auto Type_GetClassOrElementClass_addr = cs::findNthB<1, false, -1, 1024>(reinterpret_cast<uint32_t*>(il2cpp_type_get_class_or_element_class));
-        if (!Type_GetClassOrElementClass_addr) SAFE_ABORT_MSG("Failed to find Type::GetClassOrElementClass!");
-        auto result = cs::findNthB<5, false, 0>(*Type_GetClassOrElementClass_addr);
-        if (!result) SAFE_ABORT_MSG("Failed to find MetadataCache::GetTypeInfoFromDefinitionIndex!");
-        il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex = reinterpret_cast<decltype(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex)>(*result);
-        // MetadataCache::GetTypeInfoFromTypeDefinitionIndex. offset 0x84FBA4 in 1.5, 0x9F5690 in 1.7.0, 0xA75958 in 1.8.0b1
-        logger.debug("MetadataCache::GetTypeInfoFromTypeDefinitionIndex found? offset: %p, %lX", il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex,
-                     reinterpret_cast<uintptr_t>(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex) - getRealOffset(0));
+        /*
+            Path to method:
+            MetadataCache::GetTypeInfoFromHandle
+                GlobalMetadata::GetTypeInfoFromHandle
+        */
+        logger.debug("MetadataCache::GetTypeInfoFromHandle offset: %lX", reinterpret_cast<uintptr_t>(il2cpp_MetadataCache_GetTypeInfoFromHandle) - getRealOffset(0));
+        auto GlobalMetadata_GetTypeInfoFromHandle_addr = cs::findNthB<1, false, -1, 1024>(reinterpret_cast<uint32_t*>(il2cpp_MetadataCache_GetTypeInfoFromHandle));
+        if (!GlobalMetadata_GetTypeInfoFromHandle_addr) SAFE_ABORT_MSG("Failed to find GlobalMetadata::GetTypeInfoFromHandle!");
+        il2cpp_GlobalMetadata_GetTypeInfoFromHandle = reinterpret_cast<decltype(il2cpp_GlobalMetadata_GetTypeInfoFromHandle)>(*GlobalMetadata_GetTypeInfoFromHandle_addr);
+        logger.debug("GlobalMetadata::GetTypeInfoFromHandle found? offset: %lX", reinterpret_cast<uintptr_t>(il2cpp_GlobalMetadata_GetTypeInfoFromHandle) - getRealOffset(0));
+    }
+
+    {
+        /*
+            Path to method:
+            GlobalMetadata::GetTypeInfoFromHandle
+                GlobalMetadata::GetTypeInfoFromTypeDefinitionIndex
+        */
+        logger.debug("GlobalMetadata::GetTypeInfoFromHandle offset: %lX", reinterpret_cast<uintptr_t>(il2cpp_GlobalMetadata_GetTypeInfoFromHandle) - getRealOffset(0));
+        auto GlobalMetadata_GetTypeInfoFromTypeDefinitionIndex_addr = cs::findNthB<1, false, -1, 1024>(reinterpret_cast<uint32_t*>(il2cpp_GlobalMetadata_GetTypeInfoFromHandle));
+        if (!GlobalMetadata_GetTypeInfoFromTypeDefinitionIndex_addr) SAFE_ABORT_MSG("Failed to find GlobalMetadata::GetTypeInfoFromTypeDefinitionIndex!");
+        il2cpp_GlobalMetadata_GetTypeInfoFromTypeDefinitionIndex = reinterpret_cast<decltype(il2cpp_GlobalMetadata_GetTypeInfoFromTypeDefinitionIndex)>(*GlobalMetadata_GetTypeInfoFromTypeDefinitionIndex_addr);
+        logger.debug("GlobalMetadata::GetTypeInfoFromTypeDefinitionIndex found? offset: %lX", reinterpret_cast<uintptr_t>(il2cpp_GlobalMetadata_GetTypeInfoFromTypeDefinitionIndex) - getRealOffset(0));
     }
 
     {
@@ -847,26 +890,24 @@ void il2cpp_functions::Init() {
         auto result = cs::findNthB<1, false, -1, 1024>(reinterpret_cast<uint32_t*>(il2cpp_class_from_il2cpp_type));
         if (!result) SAFE_ABORT_MSG("Failed to find Class::FromIl2CppType!");
         il2cpp_Class_FromIl2CppType = reinterpret_cast<decltype(il2cpp_Class_FromIl2CppType)>(*result);
+        logger.debug("Class::FromIl2CppType found? offset: %lX", ((uintptr_t)il2cpp_Class_FromIl2CppType) - getRealOffset(0));
     }
 
     {
         // GenericClass::GetClass. offset 0x88DF64 in 1.5, 0xA34F20 in 1.7.0, 0xA6E4EC in 1.8.0b1
-        // Skip found br
-        auto caseStart = cs::evalswitch<1, 1, IL2CPP_TYPE_GENERICINST>(reinterpret_cast<uint32_t*>(il2cpp_Class_FromIl2CppType));
-        if (!caseStart) SAFE_ABORT_MSG("Failed to find case for IL2CPP_TYPE_GENERICINST!");
-        auto result = cs::findNthB<1>(*caseStart);
-        if (!result) SAFE_ABORT_MSG("Failed to find GenericClass::GetClass!");
-        il2cpp_GenericClass_GetClass = reinterpret_cast<decltype(il2cpp_GenericClass_GetClass)>(*result);
+        // Instead of evaluating the switch, we get the 6th b
+        auto GenericClass_GetClass_addr = cs::findNthB<6, false, -1, 1024>(reinterpret_cast<uint32_t*>(il2cpp_Class_FromIl2CppType));
+        if (!GenericClass_GetClass_addr) SAFE_ABORT_MSG("Failed to find GenericClass::GetClass!");
+        il2cpp_GenericClass_GetClass = reinterpret_cast<decltype(il2cpp_GenericClass_GetClass)>(*GenericClass_GetClass_addr);
         logger.debug("GenericClass::GetClass found? offset: %lX", ((uintptr_t)il2cpp_GenericClass_GetClass) - getRealOffset(0));
     }
 
     {
-        // Class::GetPtrClass.
-        auto ptrCase = cs::evalswitch<1, 1, IL2CPP_TYPE_PTR>(reinterpret_cast<const uint32_t*>(il2cpp_Class_FromIl2CppType));
-        if (!ptrCase) SAFE_ABORT_MSG("Failed to find case for IL2CPP_TYPE_PTR!");
-        auto result = cs::findNthB<1>(*ptrCase);
-        if (!result) SAFE_ABORT_MSG("Failed to find Class::GetPtrClass!");
-        il2cpp_Class_GetPtrClass = reinterpret_cast<decltype(il2cpp_Class_GetPtrClass)>(*result);
+        // Class::GetPtrClass(Il2CppClass*)
+        // instead of evaluating the switch, we look for the 4th b
+        auto Class_GetPtrClass_addr = cs::findNthB<4, false>(reinterpret_cast<uint32_t*>(il2cpp_Class_FromIl2CppType));
+        if (!Class_GetPtrClass_addr) SAFE_ABORT_MSG("Failed to find Class_GetPtrClass!");
+        il2cpp_Class_GetPtrClass = reinterpret_cast<decltype(il2cpp_Class_GetPtrClass)>(*Class_GetPtrClass_addr);
         logger.debug("Class::GetPtrClass(Il2CppClass*) found? offset: %lX", ((uintptr_t)il2cpp_Class_GetPtrClass) - getRealOffset(0));
     }
 
@@ -881,9 +922,7 @@ void il2cpp_functions::Init() {
     {
         CRASH_UNLESS(il2cpp_shutdown);
         // GC_free
-        auto Runtime_Shutdown = cs::findNthB<1>(reinterpret_cast<const uint32_t*>(il2cpp_shutdown));
-        if (!Runtime_Shutdown) SAFE_ABORT_MSG("Failed to find Runtime::Shutdown!");
-        if (find_GC_free(*Runtime_Shutdown)) {
+        if (find_GC_free()) {
             logger.debug("gc::GarbageCollector::FreeFixed found? offset: %lX", ((uintptr_t)il2cpp_GC_free) - getRealOffset(0));
         }
         // GarbageCollector::SetWriteBarrier(void*)
@@ -900,30 +939,34 @@ void il2cpp_functions::Init() {
     hasGCFuncs = il2cpp_GarbageCollector_AllocateFixed != nullptr && il2cpp_GC_free != nullptr;
 
     {
+        /*
+            il2cpp_init
+            Runtime::Init -> 2nd bl
+        */
         // il2cpp_defaults. Runtime::Init is 3rd bl from init_utf16
-        auto runtimeInit = cs::findNthBl<3>(reinterpret_cast<const uint32_t*>(il2cpp_init_utf16));
-        if (!runtimeInit) SAFE_ABORT_MSG("Failed to find Runtime::InitUtf16!");
+        auto runtimeInit = cs::findNthBl<2>(reinterpret_cast<const uint32_t*>(il2cpp_init));
+        if (!runtimeInit) SAFE_ABORT_MSG("Failed to find Runtime::Init!");
         // alternatively, could just get the 1st ADRP in Runtime::Init with dest reg x20 (or the 9th ADRP)
         // We DO need to skip at least one ret, though.
-        auto ldr = cs::findNth<6, &loadFind, &cs::insnMatch<>, 1>(*runtimeInit);
-        if (!ldr) SAFE_ABORT_MSG("Failed to find 6th load in Runtime::InitUtf16!");
+        auto ldr = cs::findNth<8, &loadFind, &cs::insnMatch<>, 1>(*runtimeInit);
+        if (!ldr) SAFE_ABORT_MSG("Failed to find 8th load in Runtime::Init!");
         auto defaults_addr = cs::getpcaddr<1, 1>(*ldr);
-        if (!defaults_addr) SAFE_ABORT_MSG("Failed to find pcaddr around 6th load in Runtime::InitUtf16!");
+        if (!defaults_addr) SAFE_ABORT_MSG("Failed to find pcaddr around 8th load in Runtime::Init!");
         defaults = reinterpret_cast<decltype(defaults)>(std::get<2>(*defaults_addr));
         logger.debug("il2cpp_defaults found: %p (offset: %lX)", defaults, ((uintptr_t)defaults) - getRealOffset(0));
 
         // FIELDS
         // Extract locations of s_GlobalMetadataHeader, s_Il2CppMetadataRegistration, & s_GlobalMetadata
 
-        auto tmp = cs::getpcaddr<3, 1>(reinterpret_cast<const uint32_t*>(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex));
+        auto tmp = cs::getpcaddr<3, 1>(reinterpret_cast<const uint32_t*>(il2cpp_GlobalMetadata_GetTypeInfoFromTypeDefinitionIndex));
         if (!tmp) SAFE_ABORT_MSG("Failed to find 3rd pcaddr for s_GlobalMetadataHeaderPtr!");
         s_GlobalMetadataHeaderPtr = reinterpret_cast<decltype(s_GlobalMetadataHeaderPtr)>(std::get<2>(*tmp));
 
-        tmp = cs::getpcaddr<4, 1>(reinterpret_cast<const uint32_t*>(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex));
+        tmp = cs::getpcaddr<4, 1>(reinterpret_cast<const uint32_t*>(il2cpp_GlobalMetadata_GetTypeInfoFromTypeDefinitionIndex));
         if (!tmp) SAFE_ABORT_MSG("Failed to find 4th pcaddr for s_Il2CppMetadataRegistrationPtr!");
         s_Il2CppMetadataRegistrationPtr = reinterpret_cast<decltype(s_Il2CppMetadataRegistrationPtr)>(std::get<2>(*tmp));
 
-        tmp = cs::getpcaddr<5, 1>(reinterpret_cast<const uint32_t*>(il2cpp_MetadataCache_GetTypeInfoFromTypeDefinitionIndex));
+        tmp = cs::getpcaddr<5, 1>(reinterpret_cast<const uint32_t*>(il2cpp_GlobalMetadata_GetTypeInfoFromTypeDefinitionIndex));
         if (!tmp) SAFE_ABORT_MSG("Failed to find 5th pcaddr for s_GlobalMetadataPtr!");
         s_GlobalMetadataPtr = reinterpret_cast<decltype(s_GlobalMetadataPtr)>(std::get<2>(*tmp));
         logger.debug("%p %p %p metadata pointers", s_GlobalMetadataHeaderPtr, s_Il2CppMetadataRegistrationPtr, s_GlobalMetadataPtr);

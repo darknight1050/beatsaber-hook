@@ -257,6 +257,8 @@ class il2cpp_functions {
     API_FUNC(void, gc_set_external_allocation_tracker, (void(*func)(void*, size_t, int)));
     API_FUNC(void, gc_set_external_wbarrier_tracker, (void(*func)(void**)));
     API_FUNC(void, gc_foreach_heap, (void(*func)(void* data, void* userData), void* userData));
+    API_FUNC(void*, gc_alloc_fixed, (std::size_t size));
+    API_FUNC(void, gc_free_fixed, (void* addr));
     API_FUNC(void, stop_gc_world, ());
     API_FUNC(void, start_gc_world, ());
     #endif
@@ -405,8 +407,12 @@ class il2cpp_functions {
     // SELECT NON-API LIBIL2CPP FUNCTIONS:
     API_FUNC_VISIBLE(bool, Class_Init, (Il2CppClass* klass));
 
-    API_FUNC_VISIBLE(Il2CppClass*, MetadataCache_GetTypeInfoFromTypeDefinitionIndex, (TypeDefinitionIndex index));
+    API_FUNC_VISIBLE(Il2CppClass*, MetadataCache_GetTypeInfoFromHandle, (Il2CppMetadataTypeHandle index));
     API_FUNC_VISIBLE(Il2CppClass*, MetadataCache_GetTypeInfoFromTypeIndex, (TypeIndex index));
+
+    API_FUNC_VISIBLE(Il2CppClass*, GlobalMetadata_GetTypeInfoFromTypeDefinitionIndex, (TypeDefinitionIndex index));
+    API_FUNC_VISIBLE(Il2CppClass*, GlobalMetadata_GetTypeInfoFromHandle, (TypeDefinitionIndex index));
+
 
 #if defined(UNITY_2019) || defined(UNITY_2021)
     API_FUNC_VISIBLE(std::string, _Type_GetName_, (const Il2CppType *type, Il2CppTypeNameFormat format));
@@ -424,7 +430,7 @@ class il2cpp_functions {
     API_FUNC_VISIBLE(AssemblyVector*, Assembly_GetAllAssemblies, ());
 
     private:
-    static bool find_GC_free(const uint32_t* Runtime_Shutdown);
+    static bool find_GC_free();
     static bool find_GC_SetWriteBarrier(const uint32_t* set_wbarrier_field);
     static bool trace_GC_AllocFixed(const uint32_t* DomainGetCurrent);
     static bool find_GC_AllocFixed(const uint32_t* DomainGetCurrent);
@@ -472,7 +478,6 @@ class il2cpp_functions {
     static GenericParameterIndex MetadataCache_GetGenericParameterIndexFromParameter(Il2CppMetadataGenericParameterHandle handle);
     static const Il2CppTypeDefinition* MetadataCache_GetTypeDefinition(Il2CppClass* klass);
     static GenericParameterIndex MetadataCache_GetGenericContainerIndex(Il2CppClass* klass);
-    static Il2CppClass* MetadataCache_GetTypeInfoFromHandle(Il2CppMetadataTypeHandle handle);
 
     // Whether all of the il2cpp functions have been initialized or not
     static bool initialized;

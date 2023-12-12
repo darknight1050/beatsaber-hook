@@ -1,6 +1,7 @@
 #include "../../shared/utils/typedefs.h"
 #include "../../shared/utils/il2cpp-utils-methods.hpp"
 #include "../../shared/utils/hashing.hpp"
+#include "utils/il2cpp-functions.hpp"
 #include <sstream>
 
 namespace std {
@@ -88,6 +89,9 @@ namespace il2cpp_utils {
 
     const MethodInfo* ResolveVtableSlot(Il2CppClass* klass, Il2CppClass* declaringClass, uint16_t slot) noexcept {
         il2cpp_functions::Init();
+        if (!klass->initialized_and_no_error) il2cpp_functions::Class_Init(klass);
+        if (!declaringClass->initialized_and_no_error) il2cpp_functions::Class_Init(klass);
+
         static auto logger = getLogger().WithContext("ResolveVtableSlot");
         if(il2cpp_functions::class_is_interface(declaringClass)) {
             RET_DEFAULT_UNLESS(logger, slot < declaringClass->vtable_count);
@@ -106,7 +110,7 @@ namespace il2cpp_utils {
         }
         return nullptr;
     }
-    
+
     const MethodInfo* ResolveVtableSlot(Il2CppClass* klass, std::string_view declaringNamespace, std::string_view declaringClassName, uint16_t slot) noexcept {
         return ResolveVtableSlot(klass, GetClassFromName(declaringNamespace, declaringClassName), slot);
     }
