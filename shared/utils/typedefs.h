@@ -122,19 +122,24 @@ DEFINE_IL2CPP_ARG_TYPE_GENERIC_CLASS(List, "System.Collections.Generic", "List`1
 #ifdef HAS_CODEGEN
 // TODO: QiCache and Il2CppComObject ("System.__Il2CppComObject (dummy type that replaces System.__ComObject)")
 
-#include "System/AppDomain.hpp"
+#if __has_include("System/zzzz__AppDomain_def.hpp")
+#include "System/zzzz__AppDomain_def.hpp"
 // self-typedef'd in il2cpp-class-internals.h
 struct Il2CppAppDomain : public System::AppDomain {};
 NEED_NO_BOX(Il2CppAppDomain);
+#endif
 
-#include "System/AppDomainSetup.hpp"
+#if __has_include("System/zzzz__AppDomainSetup_def.hpp")
+#include "System/zzzz__AppDomainSetup_def.hpp"
 // self-typedef'd in il2cpp-class-internals.h
 struct Il2CppAppDomainSetup : public System::AppDomainSetup {};
 NEED_NO_BOX(Il2CppAppDomainSetup);
+#endif
 
-#include "System/ArgumentException.hpp"
+#if __has_include("System/zzzz__ArgumentException_def.hpp")
+#include "System/zzzz__ArgumentException_def.hpp"
 typedef System::ArgumentException Il2CppArgumentException;
-
+#endif
 // TODO: Il2CppDecimal is System::Decimal?
 
 typedef enum Il2CppDecimalCompareResult
@@ -146,164 +151,379 @@ typedef enum Il2CppDecimalCompareResult
 
 // TODO: Il2CppDouble, Il2CppDouble_double are System::Double?
 
-#include "System/Exception.hpp"
+#if __has_include("System/zzzz__Exception_def.hpp")
+#include "System/zzzz__Exception_def.hpp"
 // self-typedef'd in il2cpp-api-types.h
 struct Il2CppException : public System::Exception {};
+#endif
 
-#include "System/IOAsyncResult.hpp"
+#if __has_include("System/zzzz__IOAsyncResult_def.hpp")
+#include "System/zzzz__IOAsyncResult_def.hpp"
 typedef System::IOAsyncResult Il2CppIOAsyncResult;
+#endif
 
+#if __has_include("System/zzzz__IOSelectorJob_def.hpp")
 #include "System/IOSelectorJob.hpp"
 typedef System::IOSelectorJob Il2CppIOSelectorJob;
+#endif
 
-#include "System/MarshalByRefObject.hpp"
+#if __has_include("System/zzzz__MarshalByRefObject_def.hpp")
+#include "System/zzzz__MarshalByRefObject_def.hpp"
 typedef System::MarshalByRefObject Il2CppMarshalByRefObject;
+#endif
 
-#include "System/MonoAsyncCall.hpp"
+#if __has_include("System/zzzz__MonoAsyncCall_def.hpp")
+#include "System/zzzz__MonoAsyncCall_def.hpp"
 typedef System::MonoAsyncCall Il2CppAsyncCall;
+#endif
 
-#include "System/MonoType.hpp"
+#if __has_include("System/zzzz__MonoType_def.hpp")
+#include "System/zzzz__MonoType_def.hpp"
 struct Il2CppReflectionMonoType : public System::MonoType {
-    const Il2CppType* GetIl2CppType() const {
-        return reinterpret_cast<Il2CppType*>(impl.value.m_value);
-    }
+    const Il2CppType* GetIl2CppType() const;
 };
+#endif
 
-#include "System/RuntimeType.hpp"
+#if __has_include("System/zzzz__RuntimeType_def.hpp")
+#include "System/zzzz__RuntimeType_def.hpp"
 struct Il2CppReflectionRuntimeType : public System::RuntimeType {};
+#endif
 
 // TODO: Il2CppSingle, Il2CppSingle_float are System::Single?
 
-#include "System/SystemException.hpp"
+#if __has_include("System/zzzz__SystemException_def.hpp")
+#include "System/zzzz__SystemException_def.hpp"
 typedef System::SystemException Il2CppSystemException;
+#endif
 
-#include "System/Type.hpp"
+#if __has_include("System/zzzz__Type_def.hpp")
+#include "System/zzzz__Type_def.hpp"
 // self-typedef'd in il2cpp-api-types.h
 struct Il2CppReflectionType : public System::Type {};
+#endif
 
-#include "System/TypedReference.hpp"
+#if __has_include("System/zzzz__TypedReference_def.hpp")
+#include "System/zzzz__TypedReference_def.hpp"
 typedef System::TypedReference Il2CppTypedRef;
+#endif
 
-#include "System/Diagnostics/StackFrame.hpp"
+#if __has_include("System/Diagnostics/zzzz__StackFrame_def.hpp")
+#include "System/Diagnostics/zzzz__StackFrame_def.hpp"
 typedef System::Diagnostics::StackFrame Il2CppStackFrame;
+#endif
 
 // TODO: Il2CppCalendarData is System::Globalization::CalendarData minus 4 fields at the end?
 
 // TODO: Il2CppCultureData is System::Globalization::CultureData minus 13 fields at the end?
 
-#include "System/Globalization/CultureInfo.hpp"
+#if __has_include("System/Globalization/zzzz__CultureInfo_def.hpp")
+#include "System/Globalization/zzzz__CultureInfo_def.hpp"
 typedef System::Globalization::CultureInfo Il2CppCultureInfo;
+#endif
 
-#include "System/Globalization/DateTimeFormatInfo.hpp"
+#if __has_include("System/Globalization/zzzz__DateTimeFormatInfo_def.hpp")
+#include "System/Globalization/zzzz__DateTimeFormatInfo_def.hpp"
 typedef System::Globalization::DateTimeFormatInfo Il2CppDateTimeFormatInfo;
+#endif
 
-#include "System/Globalization/NumberFormatInfo.hpp"
+#if __has_include("System/Globalization/zzzz__NumberFormatInfo_def.hpp")
+#include "System/Globalization/zzzz__NumberFormatInfo_def.hpp"
 typedef System::Globalization::NumberFormatInfo Il2CppNumberFormatInfo;
+#endif
 
-#include "System/Globalization/RegionInfo.hpp"
+#if __has_include("System/Globalization/zzzz__RegionInfo_def.hpp")
+#include "System/Globalization/zzzz__RegionInfo_def.hpp"
 typedef System::Globalization::RegionInfo Il2CppRegionInfo;
+#endif
 
-#include "System/Globalization/SortKey.hpp"
+#if __has_include("System/Globalization/zzzz__SortKey_def.hpp")
+#include "System/Globalization/zzzz__SortKey_def.hpp"
 typedef System::Globalization::SortKey Il2CppSortKey;
+#endif
 
-#include "System/Net/SocketAddress.hpp"
+#if __has_include("System/Net/zzzz__SocketAddress_def.hpp")
+#include "System/Net/zzzz__SocketAddress_def.hpp"
 typedef System::Net::SocketAddress Il2CppSocketAddress;
+#endif
 
 // "Corresponds to Mono's internal System.Net.Sockets.Socket.SocketAsyncResult class. Has no relation to Il2CppAsyncResult."
-#include "System/Net/Sockets/SocketAsyncResult.hpp"
+#if __has_include("System/Net/Sockets/zzzz__SocketAsyncResult_def.hpp")
+#include "System/Net/Sockets/zzzz__SocketAsyncResult_def.hpp"
 typedef System::Net::Sockets::SocketAsyncResult Il2CppSocketAsyncResult;
+#endif
 
-#include "System/Reflection/EventInfo.hpp"
+#if __has_include("System/Reflection/zzzz__EventInfo_def.hpp")
+#include "System/Reflection/zzzz__EventInfo_def.hpp"
 typedef System::Reflection::EventInfo Il2CppReflectionEvent;
+#endif
 
-#include "System/Reflection/MonoEvent.hpp"
+#if __has_include("System/Reflection/zzzz__MonoEvent_def.hpp")
+#include "System/Reflection/zzzz__MonoEvent_def.hpp"
 typedef System::Reflection::MonoEvent Il2CppReflectionMonoEvent;
+#endif
 
-#include "System/Reflection/MonoEventInfo.hpp"
+#if __has_include("System/Reflection/zzzz__MonoEventInfo_def.hpp")
+#include "System/Reflection/zzzz__MonoEventInfo_def.hpp"
 typedef System::Reflection::MonoEventInfo Il2CppReflectionMonoEventInfo;
+#endif
 
-#include "System/Reflection/MonoField.hpp"
+#if __has_include("System/Reflection/zzzz__MonoField_def.hpp")
+#include "System/Reflection/zzzz__MonoField_def.hpp"
 typedef System::Reflection::MonoField Il2CppReflectionField;
+#endif
 
-#include "System/Reflection/MonoProperty.hpp"
+#if __has_include("System/Reflection/zzzz__MonoProperty_def.hpp")
+#include "System/Reflection/zzzz__MonoProperty_def.hpp"
 typedef System::Reflection::MonoProperty Il2CppReflectionProperty;
+#endif
 
-#include "System/Reflection/MonoMethod.hpp"
+#if __has_include("System/Reflection/zzzz__MonoMethod_def.hpp")
+#include "System/Reflection/zzzz__MonoMethod_def.hpp"
 // self-typedef'd in il2cpp-api-types.h
 struct Il2CppReflectionMethod : public System::Reflection::MonoMethod {};
+#endif
 
-#if __has_include("System/Reflection/MonoGenericMethod.hpp")
-#include "System/Reflection/MonoGenericMethod.hpp"
+#if __has_include("System/Reflection/zzzz__MonoGenericMethod_def.hpp")
+#include "System/Reflection/zzzz__MonoGenericMethod_def.hpp"
 typedef System::Reflection::MonoGenericMethod Il2CppReflectionGenericMethod;
 #endif
 
-#include "System/Reflection/MonoMethodInfo.hpp"
+#if __has_include("System/Reflection/zzzz__MonoMethodInfo_def.hpp")
+#include "System/Reflection/zzzz__MonoMethodInfo_def.hpp"
 typedef System::Reflection::MonoMethodInfo Il2CppMethodInfo;
+#endif
 
-#include "System/Reflection/MonoPropertyInfo.hpp"
+#if __has_include("System/Reflection/zzzz__MonoPropertyInfo_def.hpp")
+#include "System/Reflection/zzzz__MonoPropertyInfo_def.hpp"
 typedef System::Reflection::MonoPropertyInfo Il2CppPropertyInfo;
+#endif
 
-#include "System/Reflection/ParameterInfo.hpp"
+#if __has_include("System/Reflection/zzzz__ParameterInfo_def.hpp")
+#include "System/Reflection/zzzz__ParameterInfo_def.hpp"
 typedef System::Reflection::ParameterInfo Il2CppReflectionParameter;
+#endif
 
-#include "System/Reflection/Module.hpp"
+#if __has_include("System/Reflection/zzzz__Module_def.hpp")
+#include "System/Reflection/zzzz__Module_def.hpp"
 typedef System::Reflection::Module Il2CppReflectionModule;
+#endif
 
-#include "System/Reflection/AssemblyName.hpp"
+#if __has_include("System/Reflection/zzzz__AssemblyName_def.hpp")
+#include "System/Reflection/zzzz__AssemblyName_def.hpp"
 typedef System::Reflection::AssemblyName Il2CppReflectionAssemblyName;
+#endif
 
-#include "System/Reflection/Assembly.hpp"
+#if __has_include("System/Reflection/zzzz__Assembly_def.hpp")
+#include "System/Reflection/zzzz__Assembly_def.hpp"
 typedef System::Reflection::Assembly Il2CppReflectionAssembly;
+#endif
 
-#include "System/Reflection/Emit/UnmanagedMarshal.hpp"
+#if __has_include("System/Reflection/Emit/zzzz__UnmanagedMarshal_def.hpp")
+#include "System/Reflection/Emit/zzzz__UnmanagedMarshal_def.hpp"
 typedef System::Reflection::Emit::UnmanagedMarshal Il2CppReflectionMarshal;
+#endif
 
 /* Stripped in 1.13.5 Update
-#include "System/Reflection/ManifestResourceInfo.hpp"
-typedef System::Reflection::ManifestResourceInfo Il2CppManifestResourceInfo;
+#include "System/Reflection/zzzz__ManifestResourceInfo_def.hpp"
+typedef System::Reflection::zzzz__ManifestResourceInfo_def Il2CppManifestResourceInfo;
 */
 
-#include "System/Reflection/Pointer.hpp"
+#if __has_include("System/Reflection/zzzz__Pointer_def.hpp")
+#include "System/Reflection/zzzz__Pointer_def.hpp"
 typedef System::Reflection::Pointer Il2CppReflectionPointer;
+#endif
 
 // TODO: Il2CppResourceLocation seems to be the System.Reflection.ResourceLocation enum
 
-#include "System/Runtime/InteropServices/ErrorWrapper.hpp"
+#if __has_include("System/Runtime/InteropServices/zzzz__ErrorWrapper_def.hpp")
+#include "System/Runtime/InteropServices/zzzz__ErrorWrapper_def.hpp"
 typedef System::Runtime::InteropServices::ErrorWrapper Il2CppErrorWrapper;
+#endif
 
 // "Inherited by Microsoft.Win32.SafeHandles.SafeWaitHandle"
-#include "System/Runtime/InteropServices/SafeHandle.hpp"
+#if __has_include("System/Runtime/InteropServices/zzzz__SafeHandle_def.hpp")
+#include "System/Runtime/InteropServices/zzzz__SafeHandle_def.hpp"
 typedef System::Runtime::InteropServices::SafeHandle Il2CppSafeHandle;
+#endif
 
-#include "System/Runtime/Remoting/Contexts/Context.hpp"
+#if __has_include("System/Runtime/Remoting/Contexts/zzzz__Context_def.hpp")
+#include "System/Runtime/Remoting/Contexts/zzzz__Context_def.hpp"
 // self-typedef'd in il2cpp-class-internals.h
 struct Il2CppAppContext : public System::Runtime::Remoting::Contexts::Context {};
 NEED_NO_BOX(Il2CppAppContext);
+#endif
 
-#include "System/Runtime/Remoting/Messaging/AsyncResult.hpp"
+#if __has_include("System/Runtime/Remoting/Messaging/zzzz__AsyncResult_def.hpp")
+#include "System/Runtime/Remoting/Messaging/zzzz__AsyncResult_def.hpp"
 // self-typedef'd in il2cpp-api-types.h
 struct Il2CppAsyncResult : public System::Runtime::Remoting::Messaging::AsyncResult {};
 NEED_NO_BOX(Il2CppAsyncResult);
+#endif
 
 // TODO: Il2CppCallType which "is a copy of System.Runtime.Remoting.Messaging.CallType" enum
 
 // TODO: Il2CppMethodMessage is System::Runtime::Remoting::Messaging::MonoMethodMessage minus 4 fields at the end?
 
-#include "System/Text/StringBuilder.hpp"
+#if __has_include("System/Text/zzzz__StringBuilder_def.hpp")
+#include "System/Text/zzzz__StringBuilder_def.hpp"
 typedef System::Text::StringBuilder Il2CppStringBuilder;
+#endif
 
-#include "System/Threading/InternalThread.hpp"
+#if __has_include("System/Threading/zzzz__InternalThread_def.hpp")
+#include "System/Threading/zzzz__InternalThread_def.hpp"
 typedef System::Threading::InternalThread Il2CppInternalThread;
+#endif
 
-#include "System/Threading/Thread.hpp"
+#if __has_include("System/Threading/zzzz__Thread_def.hpp")
+#include "System/Threading/zzzz__Thread_def.hpp"
 // self-typedef'd in il2cpp-api-types.h
 struct Il2CppThread : public System::Threading::Thread {};
+#endif
 
 #ifndef _HAD_CODEGEN_FIELDS
 #undef USE_CODEGEN_FIELDS
 #endif
 
 #undef _HAD_CODEGEN_FIELDS
+
+// include impls
+#if __has_include("System/zzzz__AppDomain_impl.hpp")
+#include "System/zzzz__AppDomain_impl.hpp"
+#endif
+#if __has_include("System/zzzz__AppDomainSetup_impl.hpp")
+#include "System/zzzz__AppDomainSetup_impl.hpp"
+#endif
+#if __has_include("System/zzzz__ArgumentException_impl.hpp")
+#include "System/zzzz__ArgumentException_impl.hpp"
+#endif
+#if __has_include("System/zzzz__Exception_impl.hpp")
+#include "System/zzzz__Exception_impl.hpp"
+#endif
+#if __has_include("System/zzzz__IOAsyncResult_impl.hpp")
+#include "System/zzzz__IOAsyncResult_impl.hpp"
+#endif
+#if __has_include("System/IOSelectorJob.hpp")
+#include "System/IOSelectorJob.hpp"
+#endif
+#if __has_include("System/zzzz__MarshalByRefObject_impl.hpp")
+#include "System/zzzz__MarshalByRefObject_impl.hpp"
+#endif
+#if __has_include("System/zzzz__MonoAsyncCall_impl.hpp")
+#include "System/zzzz__MonoAsyncCall_impl.hpp"
+#endif
+#if __has_include("System/zzzz__MonoType_impl.hpp")
+#include "System/zzzz__MonoType_impl.hpp"
+// include required for this implementation
+#include "System/zzzz__RuntimeTypeHandle_impl.hpp"
+inline const Il2CppType* Il2CppReflectionMonoType::GetIl2CppType() const {
+    return reinterpret_cast<Il2CppType*>(_impl.value);
+}
+#endif
+#if __has_include("System/zzzz__RuntimeType_impl.hpp")
+#include "System/zzzz__RuntimeType_impl.hpp"
+#endif
+#if __has_include("System/zzzz__SystemException_impl.hpp")
+#include "System/zzzz__SystemException_impl.hpp"
+#endif
+#if __has_include("System/zzzz__Type_impl.hpp")
+#include "System/zzzz__Type_impl.hpp"
+#endif
+#if __has_include("System/zzzz__TypedReference_impl.hpp")
+#include "System/zzzz__TypedReference_impl.hpp"
+#endif
+#if __has_include("System/Diagnostics/zzzz__StackFrame_impl.hpp")
+#include "System/Diagnostics/zzzz__StackFrame_impl.hpp"
+#endif
+#if __has_include("System/Globalization/zzzz__CultureInfo_impl.hpp")
+#include "System/Globalization/zzzz__CultureInfo_impl.hpp"
+#endif
+#if __has_include("System/Globalization/zzzz__DateTimeFormatInfo_impl.hpp")
+#include "System/Globalization/zzzz__DateTimeFormatInfo_impl.hpp"
+#endif
+#if __has_include("System/Globalization/zzzz__NumberFormatInfo_impl.hpp")
+#include "System/Globalization/zzzz__NumberFormatInfo_impl.hpp"
+#endif
+#if __has_include("System/Globalization/zzzz__RegionInfo_impl.hpp")
+#include "System/Globalization/zzzz__RegionInfo_impl.hpp"
+#endif
+#if __has_include("System/Globalization/zzzz__SortKey_impl.hpp")
+#include "System/Globalization/zzzz__SortKey_impl.hpp"
+#endif
+#if __has_include("System/Net/zzzz__SocketAddress_impl.hpp")
+#include "System/Net/zzzz__SocketAddress_impl.hpp"
+#endif
+#if __has_include("System/Net/Sockets/zzzz__SocketAsyncResult_impl.hpp")
+#include "System/Net/Sockets/zzzz__SocketAsyncResult_impl.hpp"
+#endif
+#if __has_include("System/Reflection/zzzz__EventInfo_impl.hpp")
+#include "System/Reflection/zzzz__EventInfo_impl.hpp"
+#endif
+#if __has_include("System/Reflection/zzzz__MonoEvent_impl.hpp")
+#include "System/Reflection/zzzz__MonoEvent_impl.hpp"
+#endif
+#if __has_include("System/Reflection/zzzz__MonoEventInfo_impl.hpp")
+#include "System/Reflection/zzzz__MonoEventInfo_impl.hpp"
+#endif
+#if __has_include("System/Reflection/zzzz__MonoField_impl.hpp")
+#include "System/Reflection/zzzz__MonoField_impl.hpp"
+#endif
+#if __has_include("System/Reflection/zzzz__MonoProperty_impl.hpp")
+#include "System/Reflection/zzzz__MonoProperty_impl.hpp"
+#endif
+#if __has_include("System/Reflection/zzzz__MonoMethod_impl.hpp")
+#include "System/Reflection/zzzz__MonoMethod_impl.hpp"
+#endif
+#if __has_include("System/Reflection/zzzz__MonoGenericMethod_impl.hpp")
+#include "System/Reflection/zzzz__MonoGenericMethod_impl.hpp"
+#endif
+#if __has_include("System/Reflection/zzzz__MonoMethodInfo_impl.hpp")
+#include "System/Reflection/zzzz__MonoMethodInfo_impl.hpp"
+#endif
+#if __has_include("System/Reflection/zzzz__MonoPropertyInfo_impl.hpp")
+#include "System/Reflection/zzzz__MonoPropertyInfo_impl.hpp"
+#endif
+#if __has_include("System/Reflection/zzzz__ParameterInfo_impl.hpp")
+#include "System/Reflection/zzzz__ParameterInfo_impl.hpp"
+#endif
+#if __has_include("System/Reflection/zzzz__Module_impl.hpp")
+#include "System/Reflection/zzzz__Module_impl.hpp"
+#endif
+#if __has_include("System/Reflection/zzzz__AssemblyName_impl.hpp")
+#include "System/Reflection/zzzz__AssemblyName_impl.hpp"
+#endif
+#if __has_include("System/Reflection/zzzz__Assembly_impl.hpp")
+#include "System/Reflection/zzzz__Assembly_impl.hpp"
+#endif
+#if __has_include("System/Reflection/Emit/zzzz__UnmanagedMarshal_impl.hpp")
+#include "System/Reflection/Emit/zzzz__UnmanagedMarshal_impl.hpp"
+#endif
+#if __has_include("System/Reflection/zzzz__ManifestResourceInfo_impl.hpp")
+#include "System/Reflection/zzzz__ManifestResourceInfo_impl.hpp"
+#endif
+#if __has_include("System/Reflection/zzzz__Pointer_impl.hpp")
+#include "System/Reflection/zzzz__Pointer_impl.hpp"
+#endif
+#if __has_include("System/Runtime/InteropServices/zzzz__ErrorWrapper_impl.hpp")
+#include "System/Runtime/InteropServices/zzzz__ErrorWrapper_impl.hpp"
+#endif
+#if __has_include("System/Runtime/InteropServices/zzzz__SafeHandle_impl.hpp")
+#include "System/Runtime/InteropServices/zzzz__SafeHandle_impl.hpp"
+#endif
+#if __has_include("System/Runtime/Remoting/Contexts/zzzz__Context_impl.hpp")
+#include "System/Runtime/Remoting/Contexts/zzzz__Context_impl.hpp"
+#endif
+#if __has_include("System/Runtime/Remoting/Messaging/zzzz__AsyncResult_impl.hpp")
+#include "System/Runtime/Remoting/Messaging/zzzz__AsyncResult_impl.hpp"
+#endif
+#if __has_include("System/Text/zzzz__StringBuilder_impl.hpp")
+#include "System/Text/zzzz__StringBuilder_impl.hpp"
+#endif
+#if __has_include("System/Threading/zzzz__InternalThread_impl.hpp")
+#include "System/Threading/zzzz__InternalThread_impl.hpp"
+#endif
+#if __has_include("System/Threading/zzzz__Thread_impl.hpp")
+#include "System/Threading/zzzz__Thread_impl.hpp"
+#endif
 
 #else
 // From Runtime.cpp (some may need the * removed):
@@ -352,6 +572,7 @@ NEED_NO_BOX(Il2CppErrorWrapper);
 // TODO: attempt to move out of this conditional if codegen ever gets an Il2CppComObject?
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppComObject*, il2cpp_com_object);
 NEED_NO_BOX(Il2CppComObject);
+DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppTypedRef, typed_reference);
 #endif
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppDelegate*, delegate);
 NEED_NO_BOX(Il2CppDelegate);
@@ -364,10 +585,6 @@ NEED_NO_BOX(Il2CppReflectionRuntimeType);
 #ifndef UNITY_2021
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionMonoEventInfo*, mono_event_info);
 NEED_NO_BOX(Il2CppReflectionMonoEventInfo);
-#endif
-DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppTypedRef*, typed_reference);
-NEED_NO_BOX(Il2CppTypedRef);
-#ifndef UNITY_2021
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppReflectionMethod*, mono_method);
 NEED_NO_BOX(Il2CppReflectionMethod);
 DEFINE_IL2CPP_DEFAULT_TYPE(Il2CppMethodInfo*, mono_method_info);
@@ -381,7 +598,7 @@ NEED_NO_BOX(Il2CppException);
 DEFINE_IL2CPP_ARG_TYPE(long double, "System", "Decimal");
 
 template<class T, class Ptr>
-struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<ListWrapper<T, Ptr>> {
+struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<ListW<T, Ptr>> {
     static inline Il2CppClass* get() {
         static auto klass = ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<List<T>*>::get();
         return klass;

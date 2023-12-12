@@ -7,20 +7,20 @@
 #include "type-concepts.hpp"
 
 template<class T, class Ptr = List<T>*>
-struct ListWrapper {
+struct ListW {
     static_assert(sizeof(Ptr) == sizeof(void*), "Size of Ptr type must be the same as a void*!");
 
-    constexpr ListWrapper() noexcept : ptr(nullptr) {}
+    constexpr ListW() noexcept : ptr(nullptr) {}
 
     // TODO: Consider requirementally constexpr-ifying this call
     // TODO: Apply these il2cpp conversion changes to ArrayW as well, to permit ArrayW to hold wrapper types and not pure pointers
-    constexpr ListWrapper(Ptr const& p) noexcept : ptr(p) {}
+    constexpr ListW(Ptr const& p) noexcept : ptr(p) {}
 
     template<class V = void>
     requires (std::is_pointer_v<Ptr> && !il2cpp_utils::has_il2cpp_conversion<Ptr>)
-    constexpr ListWrapper(void* alterInit) noexcept : ptr(reinterpret_cast<Ptr>(alterInit)) {}
+    constexpr ListW(void* alterInit) noexcept : ptr(reinterpret_cast<Ptr>(alterInit)) {}
 
-    constexpr ListWrapper(std::span<T> const p) : ptr(il2cpp_utils::NewSpecific<Ptr>(p.size())) {
+    constexpr ListW(std::span<T> const p) : ptr(il2cpp_utils::NewSpecific<Ptr>(p.size())) {
         std::copy(p.begin(), p.end(), begin());
     }
 
@@ -119,15 +119,11 @@ struct ListWrapper {
     private:
     Ptr ptr;
 };
-MARK_GEN_REF_T(ListWrapper);
+MARK_GEN_REF_T(ListW);
 MARK_GEN_REF_PTR_T(List);
 
-// ListW for the win, just implicitly
-template<class T, class Ptr = List<T>*>
-using ListW = ListWrapper<T, Ptr>;
-
-static_assert(il2cpp_utils::has_il2cpp_conversion<ListWrapper<int, List<int>*>>);
+static_assert(il2cpp_utils::has_il2cpp_conversion<ListW<int, List<int>*>>);
 template<class T, class Ptr>
-struct ::il2cpp_utils::il2cpp_type_check::need_box<ListWrapper<T, Ptr>> {
+struct ::il2cpp_utils::il2cpp_type_check::need_box<ListW<T, Ptr>> {
     constexpr static bool value = false;
 };

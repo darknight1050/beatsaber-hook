@@ -155,20 +155,20 @@ namespace il2cpp_utils {
         // Already cached in defaults, no need to re-cache
         Il2CppException* allocEx = CRASH_UNLESS(New<Il2CppException*>(classof(Il2CppException*)));
         #if __has_feature(cxx_rtti)
-        const char* tName = typeid(T).name();
-        int status;
-        char *demangled_name = abi::__cxa_demangle(tName, NULL, NULL, &status);
-        if (!status) {
-            allocEx->className = newcsstr(demangled_name);
-            std::free(demangled_name);
-        } else {
-            allocEx->className = newcsstr(tName);
-        }
+            #ifdef HAS_CODEGEN
+            allocEx->_className = newcsstr(type_name<T>());
+            #else
+            allocEx->className = newcsstr(type_name<T>());
+            #endif
         #else
         #warning "Do not raise C++ exceptions without rtti!"
         #endif
         if constexpr (what_able<T>) {
+            #ifdef HAS_CODEGEN
+            allocEx->_message = newcsstr(arg.what());
+            #else
             allocEx->message = newcsstr(arg.what());
+            #endif
         }
         #if defined(UNITY_2019) || defined(UNITY_2021)
         raise(allocEx);

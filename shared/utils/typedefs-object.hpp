@@ -10,7 +10,7 @@
 #define USE_CODEGEN_FIELDS
 #endif
 
-#include "System/Object.hpp"
+#include "System/zzzz__Object_def.hpp"
 #ifndef _HAD_CODEGEN_FIELDS
 #undef USE_CODEGEN_FIELDS
 #endif
@@ -26,6 +26,7 @@ struct Il2CppObject : public System::Object {
     };
     MonitorData *monitor;
 };
+#include "System/zzzz__Object_impl.hpp"
 #else
 typedef Il2CppClass Il2CppVTable;
 struct MonitorData;
@@ -38,6 +39,5 @@ typedef struct Il2CppObject
     };
     MonitorData *monitor;
 } Il2CppObject;
-
-MARK_REF_PTR_T(Il2CppObject);
 #endif
+MARK_REF_PTR_T(Il2CppObject);
