@@ -727,9 +727,18 @@ class BasicEventCallback {
 
    public:
     void invoke(TArgs... args) const {
+#ifndef NO_EVENT_CALLBACK_INVOKE_SAFETY
+        // copy the callbacks so an unsubscribe during invoke of the container doesn't cause UB
+        auto cbs = callbacks;
+        for (auto& callback : cbs) {
+            callback(args...);
+        }
+#else
+        // no safety requested, just run it from the callbacks as
         for (auto& callback : callbacks) {
             callback(args...);
         }
+#endif
     }
 
     BasicEventCallback& operator+=(ThinVirtualLayer<void(void*, TArgs...)> callback) {
