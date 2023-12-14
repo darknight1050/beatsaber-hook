@@ -36,10 +36,10 @@ struct ListW {
         return ptr->size;
     }
     T& operator[](size_t i) {
-        return ptr->items->values[i];
+        return get_items()->values[i];
     }
     const T& operator[](size_t i) const {
-        return ptr->items->values[i];
+        return get_items()->values[i];
     }
 
     /// @brief Get a given index, performs bound checking and throws std::runtime_error on failure.
@@ -47,14 +47,14 @@ struct ListW {
     /// @return The reference to the item.
     T& get(size_t i) {
         THROW_UNLESS(i < size() && i >= 0);
-        return ptr->items->values[i];
+        return get_items()->values[i];
     }
     /// @brief Get a given index, performs bound checking and throws std::runtime_error on failure.
     /// @param i The index to get.
     /// @return The const reference to the item.
     const T& get(size_t i) const {
         THROW_UNLESS(i < size() && i >= 0);
-        return ptr->items->values[i];
+        return get_items()->values[i];
     }
     /// @brief Tries to get a given index, performs bound checking and returns a std::nullopt on failure.
     /// @param i The index to get.
@@ -63,7 +63,7 @@ struct ListW {
         if (i >= size() || i < 0) {
             return std::nullopt;
         }
-        return WrapperRef(ptr->items->values[i]);
+        return WrapperRef(get_items()->values[i]);
     }
     /// @brief Tries to get a given index, performs bound checking and returns a std::nullopt on failure.
     /// @param i The index to get.
@@ -72,20 +72,20 @@ struct ListW {
         if (i >= size() || i < 0) {
             return std::nullopt;
         }
-        return WrapperRef(ptr->items->values[i]);
+        return WrapperRef(get_items()->values[i]);
     }
 
     iterator begin() {
-        return ptr->items->values;
+        return get_items()->values;
     }
     iterator end() {
-        return &ptr->items->values[size()];
+        return &get_items()->values[size()];
     }
     const_iterator begin() const {
-        return ptr->items->values;
+        return get_items()->values;
     }
     const_iterator end() const {
-        return &ptr->items->values[size()];
+        return &get_items()->values[size()];
     }
 
     operator std::span<T const> const() const {
@@ -117,6 +117,21 @@ struct ListW {
     }
 
     private:
+    #ifdef HAS_CODEGEN
+    auto get_items() const {
+        return ptr->_items;
+    }
+    auto get_items() {
+        return ptr->_items;
+    }
+    #else
+    auto get_items() const {
+        return ptr->items;
+    }
+    auto get_items() {
+        return ptr->items;
+    }
+    #endif
     Ptr ptr;
 };
 MARK_GEN_REF_T(ListW);
