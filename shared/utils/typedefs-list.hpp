@@ -33,7 +33,11 @@ struct ListW {
     using const_iterator = const_pointer;
 
     [[nodiscard]] constexpr int size() const {
+        #ifdef HAS_CODEGEN
+        return ptr->_size;
+        #else
         return ptr->size;
+        #endif
     }
     T& operator[](size_t i) {
         return get_items()->values[i];
