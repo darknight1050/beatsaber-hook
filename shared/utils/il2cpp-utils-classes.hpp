@@ -7,6 +7,7 @@
 #include "il2cpp-functions.hpp"
 #include "il2cpp-utils-methods.hpp"
 #include "base-wrapper-type.hpp"
+#include "type-concepts.hpp"
 #include <optional>
 #include <vector>
 
@@ -37,7 +38,7 @@ namespace il2cpp_utils {
         }
         if constexpr (::std::is_pointer_v<TOut>) {
             return static_cast<TOut>(val);
-        } else if constexpr (has_il2cpp_conversion<TOut>) {
+        } else if constexpr (il2cpp_reference_type_wrapper<TOut>) {
             return TOut(static_cast<void*>(val));
         }
         else {
