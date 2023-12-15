@@ -1,7 +1,10 @@
 #pragma once
+
 #include <cstddef>
 #include <array>
 #include "type-concepts.hpp"
+#include "il2cpp-type-check.hpp"
+#include "il2cpp-functions.hpp"
 
 namespace bs_hook {
     template<std::size_t sz>
@@ -41,6 +44,15 @@ namespace bs_hook {
     };
 
 }
+
+template<>
+struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<::bs_hook::VTPtr> {
+    static inline Il2CppClass* get() {
+        auto enumClass = il2cpp_utils::GetClassFromName("System", "ValueType");
+        static auto ptrKlass = il2cpp_functions::il2cpp_Class_GetPtrClass(enumClass);
+        return ptrKlass;
+    }
+};
 
 template<std::size_t sz>
 struct ::il2cpp_utils::ValueTypeTrait<::bs_hook::ValueTypeWrapper<sz>> {

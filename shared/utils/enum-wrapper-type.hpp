@@ -1,6 +1,9 @@
 #pragma once
 
 #include "value-wrapper-type.hpp"
+#include "il2cpp-type-check.hpp"
+#include "il2cpp-functions.hpp"
+
 
 namespace bs_hook {
     // 0 special case, but otherwise the size should be an actual amount of bytes it could be
@@ -28,6 +31,15 @@ namespace bs_hook {
         explicit EnumPtr(void* i) : VTPtr(i) {};
     };
 }
+
+template<>
+struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<::bs_hook::EnumPtr> {
+    static inline Il2CppClass* get() {
+        auto enumClass = il2cpp_utils::GetClassFromName("System", "Enum");
+        static auto ptrKlass = il2cpp_functions::il2cpp_Class_GetPtrClass(enumClass);
+        return ptrKlass;
+    }
+};
 
 template<std::size_t sz>
 struct ::il2cpp_utils::ValueTypeTrait<::bs_hook::EnumTypeWrapper<sz>> {
