@@ -389,10 +389,12 @@ TypeDefinitionIndex il2cpp_functions::MetadataCache_GetIndexForTypeDefinition(co
 }
 
 TypeDefinitionIndex il2cpp_functions::MetadataCache_GetIndexForTypeDefinition(const Il2CppClass* klass) {
+    CheckS_GlobalMetadata();
     return MetadataCache_GetIndexForTypeDefinition(reinterpret_cast<const Il2CppTypeDefinition*>(klass->typeMetadataHandle));
 }
 
 GenericParameterIndex il2cpp_functions::MetadataCache_GetGenericParameterIndexFromParameter(Il2CppMetadataGenericParameterHandle handle) {
+    CheckS_GlobalMetadata();
     const Il2CppGenericParameter* genericParameter = reinterpret_cast<const Il2CppGenericParameter*>(handle);
     const Il2CppGenericParameter* genericParameters = (const Il2CppGenericParameter*)((const char*)s_GlobalMetadata + s_GlobalMetadataHeader->genericParametersOffset);
 
@@ -404,10 +406,12 @@ GenericParameterIndex il2cpp_functions::MetadataCache_GetGenericParameterIndexFr
 }
 
 const Il2CppTypeDefinition* il2cpp_functions::MetadataCache_GetTypeDefinition(Il2CppClass* klass) {
+    CheckS_GlobalMetadata();
     return reinterpret_cast<const Il2CppTypeDefinition*>(klass->typeMetadataHandle);
 }
 
 GenericParameterIndex il2cpp_functions::MetadataCache_GetGenericContainerIndex(Il2CppClass* klass) {
+    CheckS_GlobalMetadata();
     return MetadataCache_GetTypeDefinition(klass)->genericContainerIndex;
 }
 
