@@ -273,10 +273,14 @@ struct SafePtr {
         // Otherwise, some other SafePtr is currently holding a reference to this instance, so keep it around.
         if (internalHandle.count() <= 1) {
             il2cpp_functions::Init();
+            #ifdef UNITY_2021
+            il2cpp_functions::gc_free_fixed(internalHandle.__internal_get());
+            #else
             if (!il2cpp_functions::hasGCFuncs) {
                 SAFE_ABORT_MSG("Cannot use SafePtr without GC functions!");
             }
             il2cpp_functions::GC_free(internalHandle.__internal_get());
+            #endif
         }
     }
 
@@ -425,15 +429,24 @@ struct SafePtr {
     struct SafePointerWrapper {
         static SafePointerWrapper* New(T* instance) {
             il2cpp_functions::Init();
+            // It should be safe to assume that gc_alloc_fixed returns a non-null pointer. If it does return null, we have a pretty big issue.
+            static constexpr auto sz = sizeof(SafePointerWrapper);
+
+            #ifdef UNITY_2021
+            auto* wrapper = reinterpret_cast<SafePointerWrapper*>(il2cpp_functions::gc_alloc_fixed(sz));
+
+            #else
+
             if (!il2cpp_functions::hasGCFuncs) {
-#if __has_feature(cxx_exceptions)
+                #if __has_feature(cxx_exceptions)
                 throw CreatedTooEarlyException();
-#else
+                #else
                 SAFE_ABORT_MSG("Cannot use a SafePtr this early/without GC functions!");
-#endif
+                #endif
             }
-            // It should be safe to assume that GC_AllocateFixed returns a non-null pointer. If it does return null, we have a pretty big issue.
-            auto* wrapper = reinterpret_cast<SafePointerWrapper*>(il2cpp_functions::GarbageCollector_AllocateFixed(sizeof(SafePointerWrapper), nullptr));
+            auto* wrapper = reinterpret_cast<SafePointerWrapper*>(il2cpp_functions::GarbageCollector_AllocateFixed(sz, nullptr));
+            #endif
+
             CRASH_UNLESS(wrapper);
             wrapper->instancePointer = instance;
             return wrapper;
