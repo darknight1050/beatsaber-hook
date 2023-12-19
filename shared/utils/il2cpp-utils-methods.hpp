@@ -184,7 +184,7 @@ namespace il2cpp_utils {
                 }
             }
             return arg;
-        } else if constexpr (has_il2cpp_conversion<T>) {
+        } else if constexpr (has_il2cpp_conversion<Dt>) {
             return arg.convert();
         }
         else {
