@@ -146,7 +146,7 @@ namespace il2cpp_utils {
     requires (!::std::is_same_v<T, Il2CppClass*>)
     #endif
     const MethodInfo* ResolveVtableSlot(T&& instance, TArgs&&... args) noexcept {
-        return ResolveVtableSlot(ExtractClass(instance), args...);
+        return ResolveVtableSlot(::il2cpp_utils::ExtractClass(instance), args...);
     }
 
     template<class T>
@@ -158,7 +158,7 @@ namespace il2cpp_utils {
             return nullptr;
         }
         static auto& logger = getLogger();
-        auto* klass = RET_0_UNLESS(logger, ExtractClass(arg));
+        auto* klass = RET_0_UNLESS(logger, ::il2cpp_utils::ExtractClass(arg));
         return il2cpp_functions::value_box(klass, &arg);
     }
 
@@ -222,8 +222,8 @@ namespace il2cpp_utils {
 
     template<class T, class... TArgs>
     ::std::vector<void*> ExtractValues(T&& arg, TArgs&& ...args) {
-        auto* firstVal = ExtractValue(arg);
-        auto otherVals = ExtractValues(args...);
+        auto* firstVal = ::il2cpp_utils::ExtractValue(arg);
+        auto otherVals = ::il2cpp_utils::ExtractValues(args...);
         otherVals.insert(otherVals.begin(), firstVal);  // inserts at front
         return otherVals;
     }
@@ -505,9 +505,9 @@ namespace il2cpp_utils {
             }
         }
 
-        void* inst = ExtractValue(instance);  // null is allowed (for T = Il2CppType* or Il2CppClass*)
+        void* inst = ::il2cpp_utils::ExtractValue(instance);  // null is allowed (for T = Il2CppType* or Il2CppClass*)
         Il2CppException* exp = nullptr;
-        std::array<void*, sizeof...(params)> invokeParams{ExtractTypeValue(params)...};
+        std::array<void*, sizeof...(params)> invokeParams{::il2cpp_utils::ExtractTypeValue(params)...};
         il2cpp_functions::Init();
         auto* ret = il2cpp_functions::runtime_invoke(method, inst, invokeParams.data(), &exp);
 
@@ -569,9 +569,9 @@ namespace il2cpp_utils {
             RET_NULLOPT_UNLESS(logger, ParameterMatch(method, types));
         }
 
-        void* inst = ExtractValue(instance);  // null is allowed (for T = Il2CppType* or Il2CppClass*)
+        void* inst = ::il2cpp_utils::ExtractValue(instance);  // null is allowed (for T = Il2CppType* or Il2CppClass*)
         Il2CppException* exp = nullptr;
-        std::array<void*, sizeof...(params)> invokeParams{ExtractValue(params)...};
+        std::array<void*, sizeof...(params)> invokeParams{::il2cpp_utils::ExtractValue(params)...};
         il2cpp_functions::Init();
         auto* ret = il2cpp_functions::runtime_invoke(method, inst, invokeParams.data(), &exp);
 
