@@ -706,6 +706,7 @@ namespace il2cpp_utils {
             /// @param pred the predicate to use in the thread
             /// @param args the args used
             template<typename Predicate, typename... TArgs>
+            requires(std::is_invocable_v<Predicate, std::decay_t<TArgs>...>)
             static void internal_thread(Predicate&& pred, TArgs&&... args) {
                 il2cpp_functions::Init();
                 std::stringstream loggerContext; loggerContext << "Thread " << std::this_thread::get_id();
@@ -716,11 +717,7 @@ namespace il2cpp_utils {
                 auto thread = il2cpp_functions::thread_attach(domain);
 
                 logger.info("Invoking predicate");
-                if constexpr (sizeof...(TArgs) > 0) {
-                    std::invoke(std::forward<Predicate>(pred), std::forward<TArgs>(args)...);
-                } else {
-                    std::invoke(std::forward<Predicate>(pred));
-                }
+                std::invoke(std::forward<Predicate>(pred), std::forward<std::decay_t<TArgs>>(args)...);
 
                 logger.info("Detaching thread");
                 il2cpp_functions::thread_detach(thread);
@@ -731,6 +728,7 @@ namespace il2cpp_utils {
             /// @param args the arguments to pass to the thread (& predicate)
             /// @return created thread, which is the same as you creating a default one
             template<typename Predicate, typename... TArgs>
+            requires(std::is_invocable_v<Predicate, std::decay_t<TArgs>...>)
             explicit il2cpp_aware_thread(Predicate&& pred, TArgs&&... args) :
                 std::thread(
                     &internal_thread<Predicate, std::decay_t<TArgs>...>,
@@ -739,6 +737,10 @@ namespace il2cpp_utils {
                 )
             {}
 
+            /// @brief defaulted move ctor
+            il2cpp_aware_thread(il2cpp_aware_thread&&) = default;
+
+            /// @brief if joinable and destructed, join
             ~il2cpp_aware_thread() {
                 if (joinable()) join();
             }
