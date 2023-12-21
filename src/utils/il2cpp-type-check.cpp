@@ -13,6 +13,32 @@ namespace il2cpp_utils {
     static std::unordered_map<std::pair<std::string, std::string>, Il2CppClass*, hash_pair> namesToClassesCache;
     static std::mutex nameHashLock;
 
+    Il2CppClass* FindNested(Il2CppClass* declaring, std::string_view typeName) {
+        static auto logger = getLogger().WithContext("FindNested");
+        // logger.info("trying to find: %s ", typeName.data());
+
+        if (!declaring) return nullptr;
+        auto token = typeName.find("/");
+        bool deeperNested = token != std::string::npos;
+
+        auto subTypeName = deeperNested ? typeName : typeName.substr(0, token);
+
+        void* myIter = nullptr;
+        Il2CppClass* found = nullptr;
+        while (Il2CppClass* nested = il2cpp_functions::class_get_nested_types(declaring, &myIter)) {
+            if (subTypeName == nested->name) {
+                found = nested;
+                break;
+            }
+        }
+
+        if (deeperNested) {
+            return FindNested(found, typeName.substr(token + 1));
+        } else {
+            return found;
+        }
+    }
+
     Il2CppClass* GetClassFromName(std::string_view name_space, std::string_view type_name) {
         il2cpp_functions::Init();
         static auto logger = getLogger().WithContext("GetClassFromName");
@@ -46,6 +72,26 @@ namespace il2cpp_utils {
                 return klass;
             }
         }
+
+        // we failed to find the class directly, time to check if it is a nested class, and if so look for it
+        auto token = type_name.find("/");
+        bool nested = token != std::string::npos;
+        if (nested) { // this is a nested name
+            // get the first part of the nested type_name
+            auto declaringTypeName = std::string(type_name.substr(0, token));
+            // get the first class, which is the declaring class
+            auto declaring = GetClassFromName(name_space, declaringTypeName);
+            // recursively look through the nested classes of the declaring class until we run out of tokens ('/') or we run into a problem where we don't find a class
+            auto klass = FindNested(declaring, type_name.substr(token + 1));
+
+            if (klass) {
+                nameHashLock.lock();
+                namesToClassesCache.emplace(key, klass);
+                nameHashLock.unlock();
+                return klass;
+            }
+        }
+
         logger.error("Could not find class with namepace: %s and name: %s",
             name_space.data(), type_name.data());
         return nullptr;
