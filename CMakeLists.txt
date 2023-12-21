@@ -47,6 +47,7 @@ function(setup_target target add_test)
             TEST_LIST
             TEST_STRING
             TEST_HOOK
+            TEST_THREAD
         )
     endif()
 
