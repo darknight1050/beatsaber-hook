@@ -1,7 +1,6 @@
 #ifndef IL2CPP_UTILS_H
 #define IL2CPP_UTILS_H
 
-#include <thread>
 #pragma pack(push)
 
 #include <stdio.h>
@@ -702,6 +701,7 @@ namespace il2cpp_utils {
 
     struct il2cpp_aware_thread : public std::thread {
         public:
+
             /// @brief method executed by the thread created in il2cpp_aware_thread
             /// @param pred the predicate to use in the thread
             /// @param args the args used
@@ -709,7 +709,7 @@ namespace il2cpp_utils {
             requires(std::is_invocable_v<Predicate, std::decay_t<TArgs>...>)
             static void internal_thread(Predicate&& pred, TArgs&&... args) {
                 il2cpp_functions::Init();
-                std::stringstream loggerContext; loggerContext << "Thread " << std::this_thread::get_id();
+                std::stringstream loggerContext; loggerContext << "internal_thread_" << std::this_thread::get_id();
                 auto logger = getLogger().WithContext(loggerContext.str()); // logger is per thread id, can't be static
 
                 logger.info("Attaching thread");
@@ -717,7 +717,28 @@ namespace il2cpp_utils {
                 auto thread = il2cpp_functions::thread_attach(domain);
 
                 logger.info("Invoking predicate");
-                std::invoke(std::forward<Predicate>(pred), std::forward<std::decay_t<TArgs>>(args)...);
+                try {
+                    std::invoke(std::forward<Predicate>(pred), std::forward<std::decay_t<TArgs>>(args)...);
+                } catch(RunMethodException const& e) {
+                    logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught RunMethodException! what(): %s", e.what());
+                    e.log_backtrace();
+                    if (e.ex) e.rethrow();
+                    il2cpp_functions::thread_detach(thread);
+                    SAFE_ABORT();
+                } catch(exceptions::StackTraceException const& e) {
+                    logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught StackTraceException! what(): %s", e.what());
+                    e.log_backtrace();
+                    il2cpp_functions::thread_detach(thread);
+                    SAFE_ABORT();
+                } catch(std::exception& e) {
+                    logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught C++ exception! type name: %s, what(): %s", typeid(e).name(), e.what());
+                    il2cpp_functions::thread_detach(thread);
+                    SAFE_ABORT();
+                } catch(...) {
+                    logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught, unknown C++ exception (not std::exception) with no known what() method!");
+                    il2cpp_functions::thread_detach(thread);
+                    SAFE_ABORT();
+                }
 
                 logger.info("Detaching thread");
                 il2cpp_functions::thread_detach(thread);
