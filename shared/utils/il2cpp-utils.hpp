@@ -1,6 +1,7 @@
 #ifndef IL2CPP_UTILS_H
 #define IL2CPP_UTILS_H
 
+#include <thread>
 #pragma pack(push)
 
 #include <stdio.h>
@@ -23,6 +24,7 @@
 #include "il2cpp-utils-fields.hpp"
 #include <string>
 #include <string_view>
+#include <sstream>
 #include <optional>
 #include <functional>
 #include <type_traits>
@@ -695,6 +697,67 @@ namespace il2cpp_utils {
             throw il2cpp_utils::RunMethodException(string_format("Failed to resolve_icall for icall: %s!", icallName.data()), nullptr);
         }
         return out;
+    }
+
+    /// @brief method executed by the thread created in il2cpp_aware_thread
+    /// @param pred the predicate to use in the thread
+    /// @param args the args used
+    template<class Predicate, typename... TArgs>
+    void il2cpp_aware_thread_method(Predicate pred, TArgs&&... args) {
+        std::stringstream loggerContext; loggerContext << "Thread " << std::this_thread::get_id();
+        auto logger = getLogger().WithContext(loggerContext.str()); // logger is per thread id, can't be static
+
+        logger.info("Attaching thread");
+        auto domain = il2cpp_functions::domain_get();
+        auto thread = il2cpp_functions::thread_attach(domain);
+
+        logger.info("Invoking predicate");
+        pred(args...);
+
+        logger.info("Detaching thread");
+        il2cpp_functions::thread_detach(thread);
+    }
+
+    /// @brief method executed by the thread created in il2cpp_aware_thread
+    /// @param pred the predicate to use in the thread
+    /// @param args the args used
+    template<typename T, typename U, typename... TArgs>
+    requires(std::is_convertible_v<T, U>)
+    void il2cpp_aware_thread_method(T& instance, void (U::*method)(TArgs...), TArgs&&... args) {
+        std::stringstream loggerContext; loggerContext << "Thread " << std::this_thread::get_id();
+        auto logger = getLogger().WithContext(loggerContext.str()); // logger is per thread id, can't be static
+
+        logger.info("Attaching thread");
+        auto domain = il2cpp_functions::domain_get();
+        auto thread = il2cpp_functions::thread_attach(domain);
+
+        logger.info("Invoking predicate");
+        instance->*method(args...);
+
+        logger.info("Detaching thread");
+        il2cpp_functions::thread_detach(thread);
+    }
+
+    /// @brief creates a thread that automatically will register with il2cpp and deregister once it exits, ensure your args live longer than the thread if they're by reference!
+    /// @param pred the predicate to use for the thread
+    /// @param args the arguments to pass to the thread (& predicate)
+    /// @return created thread, which is the same as you creating a default one
+    template<class Predicate, typename... TArgs>
+    inline std::thread il2cpp_aware_thread(Predicate pred, TArgs&&... args) {
+        il2cpp_functions::Init();
+        return std::thread(&il2cpp_aware_thread_method<Predicate, TArgs...>, pred, std::forward(args)...);
+    }
+
+    /// @brief creates a thread that automatically will register with il2cpp and deregister once it exits, ensure your args live longer than the thread if they're by reference!
+    /// @param instance the instance on which the method will be called
+    /// @param method the member method to call
+    /// @param args the arguments to pass to the method
+    /// @return created thread, which is the same as you creating a default one
+    template<class T, typename U, typename... TArgs>
+    requires(std::is_convertible_v<T, U>)
+    inline std::thread il2cpp_aware_thread(T& instance, void (U::*method)(TArgs...), TArgs&&... args) {
+        il2cpp_functions::Init();
+        return std::thread(&il2cpp_aware_thread_method<T, U, TArgs...>, instance, method, std::forward(args)...);
     }
 }
 
