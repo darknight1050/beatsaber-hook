@@ -5,6 +5,7 @@
 #include "../../shared/utils/typedefs-string.hpp"
 #include "../../shared/utils/typedefs-wrappers.hpp"
 #include "../../shared/utils/typedefs.h"
+#include "utils/typedefs-string.hpp"
 
 std::unordered_map<void*, size_t> Counter::addrRefCount;
 std::shared_mutex Counter::mutex;
@@ -340,64 +341,3 @@ bool strend(Il2CppString const* lhs, Il2CppString const* rhs) noexcept {
 
 }  // namespace detail
 }  // namespace il2cpp_utils
-
-template <typename Ptr>
-StringWrapper<Ptr>::operator std::string() const {
-    std::string val(inst->length * sizeof(wchar_t) + 1, '\0');
-    auto resSize = il2cpp_utils::detail::convstr(inst->chars, val.data(), inst->length, val.size());
-    val.resize(resSize);
-    return val;
-}
-
-template <typename Ptr>
-StringWrapper<Ptr>::operator std::u16string() const {
-    return { inst->chars, inst->chars + inst->length };
-}
-
-template <typename Ptr>
-StringWrapper<Ptr>::operator std::wstring() const {
-    return { inst->chars, inst->chars + inst->length };
-}
-
-template <typename Ptr>
-StringWrapper<Ptr>::operator std::u16string_view const() const {
-    return { inst->chars, static_cast<std::size_t>(inst->length) };
-}
-
-template <typename Ptr>
-StringWrapper<Ptr>::operator std::u16string_view() {
-    return { inst->chars, static_cast<std::size_t>(inst->length) };
-}
-
-template <typename Ptr>
-StringWrapper<Ptr>::iterator StringWrapper<Ptr>::begin() {
-    return inst->chars;
-}
-template <typename Ptr>
-StringWrapper<Ptr>::const_iterator StringWrapper<Ptr>::begin() const {
-    return inst->chars;
-}
-template <typename Ptr>
-StringWrapper<Ptr>::iterator StringWrapper<Ptr>::end() {
-    return inst->chars + inst->length;
-}
-template <typename Ptr>
-StringWrapper<Ptr>::const_iterator StringWrapper<Ptr>::end() const {
-    return inst->chars + inst->length;
-}
-template <typename Ptr>
-StringWrapper<Ptr>::operator std::span<Il2CppChar>() {
-    return { begin(), end() };
-}
-template <typename Ptr>
-StringWrapper<Ptr>::operator std::span<Il2CppChar const> const() const {
-    return { begin(), end() };
-}
-template <typename Ptr>
-Il2CppChar const& StringWrapper<Ptr>::operator[](size_t const& idx) const {
-    return inst->chars[idx];
-}
-template <typename Ptr>
-Il2CppChar& StringWrapper<Ptr>::operator[](size_t const& idx) {
-    return inst->chars[idx];
-}

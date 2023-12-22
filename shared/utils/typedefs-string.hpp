@@ -10,6 +10,8 @@
 #include "utils-functions.h"
 #include "type-concepts.hpp"
 
+#include "manual-il2cpp-typedefs.h"
+
 struct UseBeforeInitError : il2cpp_utils::exceptions::StackTraceException {
     UseBeforeInitError(const char* v) : il2cpp_utils::exceptions::StackTraceException(v) {}
 };
@@ -20,6 +22,25 @@ namespace il2cpp_utils {
 namespace detail {
 void convstr(char const* inp, char16_t* outp, int sz);
 std::size_t convstr(char16_t const* inp, char* outp, int isz, int osz);
+
+static std::string to_string(Il2CppString* str) {
+    std::string val(str->length * sizeof(wchar_t) + 1, '\0');
+    auto resSize = il2cpp_utils::detail::convstr(str->chars, val.data(), str->length, val.size());
+    val.resize(resSize);
+    return val;
+}
+static std::u16string to_u16string(Il2CppString* str) {
+    return { str->chars, static_cast<std::size_t>(str->length) };
+}
+static std::wstring to_wstring(Il2CppString* str) {
+    return { str->chars, str->chars + str->length };
+}
+static std::u16string_view to_u16string_view(Il2CppString* inst) {
+    return { inst->chars, inst->chars + inst->length };
+}
+static std::u16string_view to_u16string_view(Il2CppString const* inst) {
+    return { inst->chars, inst->chars + inst->length };
+}
 
 Il2CppString* alloc_str(std::string_view str);
 Il2CppString* alloc_str(std::u16string_view str);
@@ -233,20 +254,46 @@ struct StringWrapper {
     using iterator = Il2CppChar*;
     using const_iterator = Il2CppChar const*;
 
-    iterator begin();
-    const_iterator begin() const;
-    iterator end();
-    const_iterator end() const;
-    operator std::span<Il2CppChar>();
-    operator std::span<Il2CppChar const> const() const;
+    iterator begin() {
+        return inst->chars;
+    }
+    const_iterator begin() const {
+        return inst->chars;
+    }
+    iterator end() {
+        return inst->chars + inst->length;
+    }
+    const_iterator end() const {
+        return inst->chars + inst->length;
+    }
+    operator std::span<Il2CppChar>() {
+        return { begin(), end() };
+    }
+    operator std::span<Il2CppChar const> const() const {
+        return { begin(), end() };
+    }
 
-    Il2CppChar const& operator[](size_t const& idx) const;
-    Il2CppChar& operator[](size_t const& idx);
-    operator std::string() const;
-    operator std::u16string() const;
-    operator std::wstring() const;
-    operator std::u16string_view();
-    operator std::u16string_view const() const;
+    Il2CppChar const& operator[](size_t const& idx) const {
+        return inst->chars[idx];
+    }
+    Il2CppChar& operator[](size_t const& idx) {
+        return inst->chars[idx];
+    }
+    operator std::string() const {
+        return il2cpp_utils::detail::to_string(inst);
+    }
+    operator std::u16string() const {
+        return il2cpp_utils::detail::to_u16string(inst);
+    }
+    operator std::wstring() const {
+        return il2cpp_utils::detail::to_wstring(inst);
+    }
+    operator std::u16string_view() {
+        return il2cpp_utils::detail::to_u16string_view(inst);
+    }
+    operator std::u16string_view const() const {
+        return il2cpp_utils::detail::to_u16string_view(inst);
+    }
     
    private:
     Il2CppString* inst;
