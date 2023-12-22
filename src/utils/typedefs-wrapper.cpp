@@ -341,50 +341,63 @@ bool strend(Il2CppString const* lhs, Il2CppString const* rhs) noexcept {
 }  // namespace detail
 }  // namespace il2cpp_utils
 
-StringW::operator std::string() const {
+template <typename Ptr>
+StringWrapper<Ptr>::operator std::string() const {
     std::string val(inst->length * sizeof(wchar_t) + 1, '\0');
     auto resSize = il2cpp_utils::detail::convstr(inst->chars, val.data(), inst->length, val.size());
     val.resize(resSize);
     return val;
 }
 
-StringW::operator std::u16string() const {
+template <typename Ptr>
+StringWrapper<Ptr>::operator std::u16string() const {
     return { inst->chars, inst->chars + inst->length };
 }
 
-StringW::operator std::wstring() const {
+template <typename Ptr>
+StringWrapper<Ptr>::operator std::wstring() const {
     return { inst->chars, inst->chars + inst->length };
 }
 
-StringW::operator std::u16string_view const() const {
+template <typename Ptr>
+StringWrapper<Ptr>::operator std::u16string_view const() const {
     return { inst->chars, static_cast<std::size_t>(inst->length) };
 }
 
-StringW::operator std::u16string_view() {
+template <typename Ptr>
+StringWrapper<Ptr>::operator std::u16string_view() {
     return { inst->chars, static_cast<std::size_t>(inst->length) };
 }
 
-StringW::iterator StringW::begin() {
+template <typename Ptr>
+StringWrapper<Ptr>::iterator StringWrapper<Ptr>::begin() {
     return inst->chars;
 }
-StringW::const_iterator StringW::begin() const {
+template <typename Ptr>
+StringWrapper<Ptr>::const_iterator StringWrapper<Ptr>::begin() const {
     return inst->chars;
 }
-StringW::iterator StringW::end() {
+template <typename Ptr>
+StringWrapper<Ptr>::iterator StringWrapper<Ptr>::end() {
     return inst->chars + inst->length;
 }
-StringW::const_iterator StringW::end() const {
+template <typename Ptr>
+StringWrapper<Ptr>::const_iterator StringWrapper<Ptr>::end() const {
     return inst->chars + inst->length;
 }
-StringW::operator std::span<Il2CppChar>() {
+template <typename Ptr>
+StringWrapper<Ptr>::operator std::span<Il2CppChar>() {
     return { begin(), end() };
 }
-StringW::operator std::span<Il2CppChar const> const() const {
+template <typename Ptr>
+StringWrapper<Ptr>::operator std::span<Il2CppChar const> const() const {
     return { begin(), end() };
 }
-Il2CppChar const& StringW::operator[](size_t const& idx) const {
+template <typename Ptr>
+Il2CppChar const& StringWrapper<Ptr>::operator[](size_t const& idx) const {
     return inst->chars[idx];
 }
-Il2CppChar& StringW::operator[](size_t const& idx) {
+template <typename Ptr>
+Il2CppChar& StringWrapper<Ptr>::operator[](size_t const& idx) {
     return inst->chars[idx];
 }
