@@ -94,7 +94,20 @@ namespace il2cpp_utils {
 
         static auto logger = getLogger().WithContext("ResolveVtableSlot");
         if(il2cpp_functions::class_is_interface(declaringClass)) {
-            RET_DEFAULT_UNLESS(logger, slot < declaringClass->vtable_count);
+            // if the declaring class is an interface,
+            // vtable_count means nothing and instead method_count should be used
+            // their vtables are just as valid though!
+            if (slot >= declaringClass->method_count) { // we tried looking for a slot that is outside the bounds of the interface vtable
+                // dump some info so the user can know which method was attempted to be resolved
+                logger.error("Declaring class has a vtable that's too small, dumping resolve info:");
+                logger.error("Instance class:                   %s::%s", klass->namespaze, klass->name);
+                logger.error("Instance class vtable slots:      %u", klass->vtable_count);
+                logger.error("Declaring class:                  %s::%s", declaringClass->namespaze, declaringClass->name);
+                logger.error("Declaring class vtable slots:     %u", declaringClass->vtable_count);
+                logger.error("Attempted slot:                   %u", slot);
+                return {};
+            }
+
             for (uint16_t i = 0; i < klass->interface_offsets_count; i++) {
                 if(klass->interfaceOffsets[i].interfaceType == declaringClass) {
                     int32_t offset = klass->interfaceOffsets[i].offset;
