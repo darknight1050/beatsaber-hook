@@ -115,9 +115,15 @@ namespace il2cpp_utils {
                     return klass->vtable[offset + slot].method;
                 }
             }
+
+            // if klass is an interface itself, and we haven't found the method yet, we should look in klass->methods anyway
+            if (il2cpp_functions::class_is_interface(klass)) {
+                RET_DEFAULT_UNLESS(logger, slot < klass->method_count);
+                return klass->methods[slot];
+            }
+
             logger.error("could not find method in slot %i of interface '%s' in class '%s'!", slot, ClassStandardName(declaringClass).c_str(), ClassStandardName(klass).c_str());
-        }
-        else {
+        } else {
             RET_DEFAULT_UNLESS(logger, slot < klass->vtable_count);
             return klass->vtable[slot].method;
         }
