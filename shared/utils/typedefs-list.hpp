@@ -12,8 +12,8 @@
 // System.Collections.Generic.List
 template <class T>
 struct List : Il2CppObject {
-    Array<T>* items;
-    int size;
+    Array<T>* _items;
+    int _size;
     int version;
     Il2CppObject* syncRoot;
 };
@@ -46,11 +46,7 @@ struct ListW {
     using const_iterator = const_pointer;
 
     [[nodiscard]] constexpr int size() const {
-        #ifdef HAS_CODEGEN
         return ptr->_size;
-        #else
-        return ptr->size;
-        #endif
     }
     T& operator[](size_t i) {
         return get_items()->values[i];
@@ -132,23 +128,18 @@ struct ListW {
     Ptr const operator ->() const noexcept {
         return ptr;
     }
+    
+    constexpr ListW& operator=(Ptr const& ptr) {
+        this->ptr = ptr;
+    }
 
     private:
-    #ifdef HAS_CODEGEN
     auto get_items() const {
         return ptr->_items;
     }
     auto get_items() {
         return ptr->_items;
     }
-    #else
-    auto get_items() const {
-        return ptr->items;
-    }
-    auto get_items() {
-        return ptr->items;
-    }
-    #endif
     Ptr ptr;
 };
 MARK_GEN_REF_T(ListW);
