@@ -4,7 +4,18 @@
 #include <type_traits>
 #include <concepts>
 
+#ifndef BS_HOOKS_ALWAYS_INLINE
+// always inline attribute
+#define BS_HOOKS_ALWAYS_INLINE __attribute__((alwaysinline))
+#endif
+
+#ifndef BS_HOOKS_HIDDEN
+// hidden attribute
+#define BS_HOOKS_HIDDEN __attribute__((visibility("hidden")))
+#endif
+
 namespace il2cpp_utils {
+namespace {
     template<typename T, typename U>
     concept convertible_to = std::is_convertible_v<T, U>;
 
@@ -44,7 +55,7 @@ namespace il2cpp_utils {
     concept il2cpp_value_type_requirements = requires(T const& t) {
         requires(std::is_same_v<decltype(t.instance), std::array<std::byte, sizeof(t.instance)>>);
         requires(std::is_constructible_v<T, decltype(t.instance)>);
-        requires(il2cpp_utils::value_marker_check_v<T, true>);
+        requires(::il2cpp_utils::value_marker_check_v<T, true>);
     };
 
     /// @brief mark a T explicitly as value type, default is false
@@ -162,34 +173,35 @@ namespace il2cpp_utils {
         }
     }
 
+}
+}
+
 #define MARK_REF_T(...) \
-    template<> struct ::il2cpp_utils::RefTypeTrait<__VA_ARGS__> { static constexpr bool value = true; }; \
-    template<> struct ::il2cpp_utils::ValueTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }; \
-    template<> struct ::il2cpp_utils::RefPtrTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::RefTypeTrait<__VA_ARGS__> { static constexpr bool value = true; }; \
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::ValueTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }; \
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::RefPtrTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }
 
 #define MARK_REF_PTR_T(...) \
-    template<> struct ::il2cpp_utils::RefTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }; \
-    template<> struct ::il2cpp_utils::ValueTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }; \
-    template<> struct ::il2cpp_utils::RefPtrTypeTrait<__VA_ARGS__> { static constexpr bool value = true; }
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::RefTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }; \
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::ValueTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }; \
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::RefPtrTypeTrait<__VA_ARGS__> { static constexpr bool value = true; }
 
 #define MARK_VAL_T(...) \
-    template<> struct ::il2cpp_utils::RefTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }; \
-    template<> struct ::il2cpp_utils::ValueTypeTrait<__VA_ARGS__> { static constexpr bool value = true; }; \
-    template<> struct ::il2cpp_utils::RefPtrTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::RefTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }; \
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::ValueTypeTrait<__VA_ARGS__> { static constexpr bool value = true; }; \
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::RefPtrTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }
 
 #define MARK_GEN_REF_T(...) \
-    template<> struct ::il2cpp_utils::GenRefTypeTrait<__VA_ARGS__> { static constexpr bool value = true; }; \
-    template<> struct ::il2cpp_utils::GenValueTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }; \
-    template<> struct ::il2cpp_utils::GenRefPtrTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::GenRefTypeTrait<__VA_ARGS__> { static constexpr bool value = true; }; \
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::GenValueTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }; \
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::GenRefPtrTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }
 
 #define MARK_GEN_REF_PTR_T(...) \
-    template<> struct ::il2cpp_utils::GenRefTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }; \
-    template<> struct ::il2cpp_utils::GenValueTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }; \
-    template<> struct ::il2cpp_utils::GenRefPtrTypeTrait<__VA_ARGS__> { static constexpr bool value = true; }
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::GenRefTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }; \
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::GenValueTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }; \
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::GenRefPtrTypeTrait<__VA_ARGS__> { static constexpr bool value = true; }
 
 #define MARK_GEN_VAL_T(...) \
-    template<> struct ::il2cpp_utils::GenRefTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }; \
-    template<> struct ::il2cpp_utils::GenValueTypeTrait<__VA_ARGS__> { static constexpr bool value = true; }; \
-    template<> struct ::il2cpp_utils::GenRefPtrTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }
-
-}
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::GenRefTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }; \
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::GenValueTypeTrait<__VA_ARGS__> { static constexpr bool value = true; }; \
+    template<> struct BS_HOOKS_HIDDEN ::il2cpp_utils::GenRefPtrTypeTrait<__VA_ARGS__> { static constexpr bool value = false; }

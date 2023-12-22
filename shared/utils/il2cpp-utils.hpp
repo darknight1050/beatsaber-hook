@@ -29,8 +29,8 @@
 #include <functional>
 #include <type_traits>
 
-template<>
-struct std::hash<std::pair<Il2CppMethodPointer, bool>> {
+template <>
+struct BS_HOOKS_HIDDEN std::hash<std::pair<Il2CppMethodPointer, bool>> {
     size_t operator()(const std::pair<Il2CppMethodPointer, bool>& p) const {
         return std::hash<Il2CppMethodPointer>{}(p.first) ^ std::hash<bool>{}(p.first);
     }

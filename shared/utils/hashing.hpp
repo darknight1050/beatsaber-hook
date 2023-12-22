@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+#include <utility>
+
 // TODO: Make this into a static class
 namespace il2cpp_utils {
     // A hash function used to hash a pair of any kind
