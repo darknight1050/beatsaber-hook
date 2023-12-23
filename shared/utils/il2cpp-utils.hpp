@@ -29,8 +29,8 @@
 #include <functional>
 #include <type_traits>
 
-template<>
-struct std::hash<std::pair<Il2CppMethodPointer, bool>> {
+template <>
+struct BS_HOOKS_HIDDEN std::hash<std::pair<Il2CppMethodPointer, bool>> {
     size_t operator()(const std::pair<Il2CppMethodPointer, bool>& p) const {
         return std::hash<Il2CppMethodPointer>{}(p.first) ^ std::hash<bool>{}(p.first);
     }
@@ -157,20 +157,12 @@ namespace il2cpp_utils {
         // Already cached in defaults, no need to re-cache
         Il2CppException* allocEx = CRASH_UNLESS(New<Il2CppException*>(classof(Il2CppException*)));
         #if __has_feature(cxx_rtti)
-            #ifdef HAS_CODEGEN
-            allocEx->_className = newcsstr(type_name<T>());
-            #else
             allocEx->className = newcsstr(type_name<T>());
-            #endif
         #else
         #warning "Do not raise C++ exceptions without rtti!"
         #endif
         if constexpr (what_able<T>) {
-            #ifdef HAS_CODEGEN
-            allocEx->_message = newcsstr(arg.what());
-            #else
             allocEx->message = newcsstr(arg.what());
-            #endif
         }
         #if defined(UNITY_2019) || defined(UNITY_2021)
         raise(allocEx);

@@ -6,6 +6,19 @@
 #include "il2cpp-utils-methods.hpp"
 #include "type-concepts.hpp"
 
+#include "typedefs-array.hpp"
+#include "typedefs-object.hpp"
+
+// System.Collections.Generic.List
+template <class T>
+struct List : Il2CppObject {
+    Array<T>* _items;
+    int _size;
+    int version;
+    Il2CppObject* syncRoot;
+};
+DEFINE_IL2CPP_ARG_TYPE_GENERIC_CLASS(List, "System.Collections.Generic", "List`1");
+
 template<class T, class Ptr = List<T>*>
 struct ListW {
     static_assert(sizeof(Ptr) == sizeof(void*), "Size of Ptr type must be the same as a void*!");
@@ -33,11 +46,7 @@ struct ListW {
     using const_iterator = const_pointer;
 
     [[nodiscard]] constexpr int size() const {
-        #ifdef HAS_CODEGEN
         return ptr->_size;
-        #else
-        return ptr->size;
-        #endif
     }
     T& operator[](size_t i) {
         return get_items()->values[i];
@@ -119,30 +128,25 @@ struct ListW {
     Ptr const operator ->() const noexcept {
         return ptr;
     }
+    
+    constexpr ListW& operator=(Ptr const& ptr) {
+        this->ptr = ptr;
+    }
 
     private:
-    #ifdef HAS_CODEGEN
     auto get_items() const {
         return ptr->_items;
     }
     auto get_items() {
         return ptr->_items;
     }
-    #else
-    auto get_items() const {
-        return ptr->items;
-    }
-    auto get_items() {
-        return ptr->items;
-    }
-    #endif
     Ptr ptr;
 };
 MARK_GEN_REF_T(ListW);
 MARK_GEN_REF_PTR_T(List);
 
 static_assert(il2cpp_utils::has_il2cpp_conversion<ListW<int, List<int>*>>);
-template<class T, class Ptr>
-struct ::il2cpp_utils::il2cpp_type_check::need_box<ListW<T, Ptr>> {
+template <class T, class Ptr>
+struct BS_HOOKS_HIDDEN ::il2cpp_utils::il2cpp_type_check::need_box<ListW<T, Ptr>> {
     constexpr static bool value = false;
 };

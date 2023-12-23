@@ -35,8 +35,10 @@ namespace std {
 #include <experimental/concepts>
 #endif
 
-template <typename Container> struct is_vector : std::false_type { };
-template <typename... Ts> struct is_vector<std::vector<Ts...> > : std::true_type { };
+#include "type-concepts.hpp"
+
+template <typename Container> struct BS_HOOKS_HIDDEN is_vector : std::false_type { };
+template <typename... Ts> struct BS_HOOKS_HIDDEN is_vector<std::vector<Ts...> > : std::true_type { };
 // TODO: figure out how to write an is_vector_v that compiles properly?
 
 #define MACRO_WRAP(...) do { \
@@ -54,7 +56,7 @@ struct is_instance<U<Ts...>, U> : public std::true_type {};
 // from https://gcc.gnu.org/bugzilla//show_bug.cgi?id=71579#c4, leading underscores removed
 namespace std {
     template <class _Tp>
-    struct is_complete_impl
+    struct BS_HOOKS_HIDDEN is_complete_impl
     {
         template <class _Up, size_t = sizeof(_Up)>
         static true_type _S_test(int);
@@ -76,7 +78,7 @@ namespace std {
 struct Il2CppObject;
 
 template<class T, class Enable = void>
-struct is_value_type : std::integral_constant< 
+struct BS_HOOKS_HIDDEN is_value_type : std::integral_constant< 
     bool,
     (std::is_arithmetic_v<T> || std::is_enum_v<T> || std::is_pointer_v<T> || std::is_standard_layout_v<T>) && !std::is_base_of_v<Il2CppObject, T>
 > {};
@@ -202,10 +204,10 @@ template <class...> constexpr std::false_type false_t{};
 #ifdef __cplusplus
 
 template<typename T>
-struct identity {};
+struct BS_HOOKS_HIDDEN identity {};
 
 template<typename Ret, typename C, typename... TArgs>
-struct identity<Ret(C::*)(TArgs...) const> {
+struct BS_HOOKS_HIDDEN identity<Ret(C::*)(TArgs...) const> {
     using type = std::function<Ret(TArgs...)>;
 };
 

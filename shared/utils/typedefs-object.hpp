@@ -1,6 +1,7 @@
 #pragma once
 
 #include "type-concepts.hpp"
+#include "il2cpp-config.h"
 
 typedef Il2CppClass Il2CppVTable;
 struct MonitorData;

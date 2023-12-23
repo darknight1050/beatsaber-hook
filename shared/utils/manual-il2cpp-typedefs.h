@@ -52,6 +52,7 @@ namespace os
 typedef struct Il2CppReflectionAssembly Il2CppReflectionAssembly;
 
 #include "typedefs-array.hpp"
+#include "typedefs-object.hpp"
 
 // System.String
 typedef struct Il2CppString

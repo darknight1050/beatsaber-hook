@@ -3,6 +3,7 @@
 #include "type-concepts.hpp"
 
 namespace il2cpp_utils {
+namespace {
     /// @brief any builtins will just have the same size as in cpp
     template<typename T>
     struct il2cpp_size {
@@ -56,6 +57,7 @@ namespace il2cpp_utils {
     /// @brief shorthand to get the size check value
     template<typename T>
     static constexpr bool is_il2cpp_size_safe_v = is_il2cpp_size_safe<T>::value;
+    }  // namespace il2cpp_utils
 }
 
 #define il2cpp_sizeof(...) (::il2cpp_utils::il2cpp_size<__VA_ARGS__>::value)

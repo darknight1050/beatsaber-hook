@@ -5,7 +5,7 @@
 #include "logging.hpp"
 #include "il2cpp-type-check.hpp"
 #include "il2cpp-functions.hpp"
-#include "il2cpp-utils-methods.hpp"
+#include "il2cpp-utils-exceptions.hpp"
 #include "base-wrapper-type.hpp"
 #include "type-concepts.hpp"
 #include <optional>
