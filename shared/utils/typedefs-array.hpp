@@ -269,7 +269,7 @@ struct ArrayW {
     /// @brief Constructs an ArrayW that wraps a null value
     constexpr ArrayW(std::nullptr_t nptr) noexcept : val(nptr) {}
     /// @brief Default constructor wraps a nullptr array
-    ArrayW() noexcept : val(nullptr) {}
+    constexpr ArrayW() noexcept : val(nullptr) {}
     template<class U>
     requires (!std::is_same_v<std::nullptr_t, U> && std::is_convertible_v<U, T>)
     ArrayW(std::initializer_list<U> vals) : val(Array<T>::New(vals)) {}
