@@ -9,6 +9,12 @@
 #include "typedefs-array.hpp"
 #include "typedefs-object.hpp"
 
+/// @brief Represents an exception thrown from usage of a List
+struct ListException : il2cpp_utils::exceptions::StackTraceException {
+    void* arrayInstance;
+    ListException(void* instance, std::string_view msg) : il2cpp_utils::exceptions::StackTraceException(msg.data()), arrayInstance(instance) {}
+};
+
 // System.Collections.Generic.List
 template <class T>
 struct List : Il2CppObject {
@@ -16,24 +22,60 @@ struct List : Il2CppObject {
     int _size;
     int version;
     Il2CppObject* syncRoot;
+
+    // Add an item to this list
+    void Add(T item) {
+        if (!static_cast<void*>(this)) throw ListException(nullptr, "Running instance method on nullptr instance!");
+        il2cpp_functions::Init();
+
+        auto klass = il2cpp_functions::object_get_class(this);
+        auto* ___internal_method = THROW_UNLESS(
+            il2cpp_utils::FindMethod(
+                klass,
+                "Add",
+                std::vector<Il2CppClass*>{},
+                ::std::vector<const Il2CppType*>{::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_type<T>::get()}
+            )
+        );
+        il2cpp_utils::RunMethodRethrow<void, false>(this, ___internal_method, item);
+    }
+
+    // Ensure the capacity of this list
+    void EnsureCapacity(int min) {
+        if (!static_cast<void*>(this)) throw ListException(nullptr, "Running instance method on nullptr instance!");
+        il2cpp_functions::Init();
+
+        auto klass = il2cpp_functions::object_get_class(this);
+        auto* ___internal_method = THROW_UNLESS(
+            il2cpp_utils::FindMethod(
+                klass,
+                "EnsureCapacity",
+                std::vector<Il2CppClass*>{},
+                ::std::vector<const Il2CppType*>{::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_type<int32_t>::get()}
+            )
+        );
+
+        il2cpp_utils::RunMethodRethrow<void, false>(this, ___internal_method, min);
+    }
 };
 DEFINE_IL2CPP_ARG_TYPE_GENERIC_CLASS(List, "System.Collections.Generic", "List`1");
 
 template<class T, class Ptr = List<T>*>
-struct ListW {
+struct ListWrapper {
     static_assert(sizeof(Ptr) == sizeof(void*), "Size of Ptr type must be the same as a void*!");
+    using WrappedType = Ptr;
 
-    constexpr ListW() noexcept : ptr(nullptr) {}
+    constexpr ListWrapper() noexcept : ptr(nullptr) {}
 
     // TODO: Consider requirementally constexpr-ifying this call
     // TODO: Apply these il2cpp conversion changes to ArrayW as well, to permit ArrayW to hold wrapper types and not pure pointers
-    constexpr ListW(Ptr const& p) noexcept : ptr(p) {}
+    constexpr ListWrapper(Ptr const& p) noexcept : ptr(p) {}
 
     template<class V = void>
     requires (std::is_pointer_v<Ptr> && !il2cpp_utils::has_il2cpp_conversion<Ptr>)
-    constexpr ListW(void* alterInit) noexcept : ptr(reinterpret_cast<Ptr>(alterInit)) {}
+    constexpr ListWrapper(void* alterInit) noexcept : ptr(reinterpret_cast<Ptr>(alterInit)) {}
 
-    constexpr ListW(std::span<T> const p) : ptr(il2cpp_utils::NewSpecific<Ptr>(p.size())) {
+    constexpr ListWrapper(std::span<T> const p) : ptr(il2cpp_utils::NewSpecific<Ptr>(p.size())) {
         std::copy(p.begin(), p.end(), begin());
     }
 
@@ -128,9 +170,33 @@ struct ListW {
     Ptr const operator ->() const noexcept {
         return ptr;
     }
-    
-    constexpr ListW& operator=(Ptr const& ptr) {
+
+    constexpr ListWrapper& operator=(Ptr const& ptr) {
         this->ptr = ptr;
+    }
+
+    // method to create a new list easily
+    template<il2cpp_utils::CreationType creationType = il2cpp_utils::CreationType::Temporary>
+    static ListWrapper<T, Ptr> New() {
+        il2cpp_functions::Init();
+        auto ls = il2cpp_utils::New<Ptr, creationType>();
+        if (!ls) throw ListException(nullptr, "Could not create list!");
+
+        return {*ls};
+    }
+
+    // method to create a new list easily
+    template<typename U, il2cpp_utils::CreationType creationType = il2cpp_utils::CreationType::Temporary>
+    requires(std::is_convertible_v<U, T>)
+    static ListWrapper<T, Ptr> New(std::initializer_list<U> values) {
+        il2cpp_functions::Init();
+        auto ls = il2cpp_utils::New<Ptr, creationType>();
+        if (!ls) throw ListException(nullptr, "Could not create list!");
+
+        ls->EnsureCapacity(values.size());
+        for (auto& v : values) ls->Add(v);
+
+        return {*ls};
     }
 
     private:
@@ -142,11 +208,30 @@ struct ListW {
     }
     Ptr ptr;
 };
-MARK_GEN_REF_T(ListW);
+MARK_GEN_REF_T(ListWrapper);
 MARK_GEN_REF_PTR_T(List);
 
-static_assert(il2cpp_utils::has_il2cpp_conversion<ListW<int, List<int>*>>);
+static_assert(il2cpp_utils::has_il2cpp_conversion<ListWrapper<int, List<int>*>>);
 template <class T, class Ptr>
-struct BS_HOOKS_HIDDEN ::il2cpp_utils::il2cpp_type_check::need_box<ListW<T, Ptr>> {
+struct BS_HOOKS_HIDDEN ::il2cpp_utils::il2cpp_type_check::need_box<ListWrapper<T, Ptr>> {
     constexpr static bool value = false;
 };
+
+// if system list exists, we can use it in ListW, but with a compile definition it can be disabled
+#if !defined(NO_CODEGEN_WRAPPERS) && __has_include("System/Collections/Generic/List_1.hpp")
+namespace System::Collections::Generic {
+    template<typename T>
+    class List_1;
+}
+// forward declare usage
+template<typename T>
+using ListW = ListWrapper<T, System::Collections::Generic::List_1<T>*>;
+
+// include header
+#include "System/Collections/Generic/List_1.hpp"
+#else
+template<typename T>
+using ListW = ListWrapper<T, List<T>*>;
+#endif
+
+static_assert(il2cpp_utils::has_il2cpp_conversion<ListW<int>>);

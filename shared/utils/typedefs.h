@@ -37,16 +37,23 @@ extern "C" {
 
 #include "manual-il2cpp-typedefs.h"
 
-
 #include "il2cpp-functions.hpp"
 #include "il2cpp-utils-methods.hpp"
 #include "il2cpp-type-check.hpp"
 
+// forward declarations of the list wrapper
+template<typename T, typename Ptr>
+struct ListWrapper;
+
+// forward declaration of the string wrapper
+template<typename Ptr>
+struct StringWrapper;
+
 #include "typedefs-array.hpp"
 #include "typedefs-delegate.hpp"
+#include "typedefs-string.hpp"
 #include "typedefs-list.hpp"
 #include "typedefs-wrappers.hpp"
-
 
 #include <stdint.h>
 
@@ -158,10 +165,10 @@ NEED_NO_BOX(Il2CppException);
 
 DEFINE_IL2CPP_ARG_TYPE(long double, "System", "Decimal");
 
-template<class T, class Ptr>
-struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<ListW<T, Ptr>> {
+template<class T>
+struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<ListW<T>> {
     static inline Il2CppClass* get() {
-        static auto klass = ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<List<T>*>::get();
+        static auto klass = ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<typename ListW<T>::WrappedType>::get();
         return klass;
     }
 };

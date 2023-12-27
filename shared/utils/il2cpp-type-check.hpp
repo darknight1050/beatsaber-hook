@@ -40,7 +40,29 @@ constexpr bool has_get = std::experimental::is_detected_v<get_t, T>;
 #ifndef csTypeOf
 // Returns the Il2CppReflectionType* of the provided type T.
 // Should be a pointer type if it is a reference type, otherwise it should be a value type.
-#define csTypeOf(...) (::il2cpp_utils::GetSystemType(classof(__VA_ARGS__)))
+#if !defined(NO_CODEGEN_MACROS) && __has_include("System/Type.hpp")
+namespace System {
+    class Type;
+}
+#endif
+
+/// @brief wrapper for the return of csTypeOf so it can be more easily used with codegen
+struct Il2CppCsTypeWrapper {
+    constexpr inline Il2CppCsTypeWrapper(void* t) noexcept : t(t) {}
+    constexpr inline void* convert() const noexcept { return const_cast<void*>(t); }
+
+    constexpr inline Il2CppCsTypeWrapper(Il2CppReflectionType* t) noexcept : t(static_cast<void*>(t)) {}
+    constexpr inline operator Il2CppReflectionType*() const noexcept { return static_cast<Il2CppReflectionType*>(const_cast<void*>(t)); }
+
+    #if !defined(NO_CODEGEN_MACROS) && __has_include("System/Type.hpp")
+    constexpr inline Il2CppCsTypeWrapper(System::Type* t) noexcept : t(static_cast<void*>(t)) {}
+    constexpr inline operator System::Type*() const noexcept { return static_cast<System::Type*>(const_cast<void*>(t)); }
+    #endif
+
+    void* t;
+};
+
+#define csTypeOf(...) (Il2CppCsTypeWrapper(::il2cpp_utils::GetSystemType(classof(__VA_ARGS__))))
 #endif
 
 namespace il2cpp_utils {

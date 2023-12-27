@@ -294,7 +294,7 @@ struct StringWrapper {
     operator std::u16string_view const() const {
         return il2cpp_utils::detail::to_u16string_view(inst);
     }
-    
+
    private:
     Il2CppString* inst;
 };
@@ -312,7 +312,19 @@ struct BS_HOOKS_HIDDEN ::il2cpp_utils::il2cpp_type_check::need_box<StringWrapper
     constexpr static bool value = false;
 };
 
+// if system string exists, we can use it in StringW, but with a compile definition it can be disabled
+#if !defined(NO_CODEGEN_WRAPPERS) && __has_include("System/String.hpp")
+// forward declare
+namespace System {
+    class String;
+}
+// put using statement
+using StringW = StringWrapper<System::String*>;
+// include actual type
+#include "System/String.hpp"
+#else
 using StringW = StringWrapper<Il2CppString*>;
+#endif
 
 static_assert(sizeof(StringW) == sizeof(void*));
 static_assert(il2cpp_utils::has_il2cpp_conversion<StringW>);

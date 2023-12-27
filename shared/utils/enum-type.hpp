@@ -1,9 +1,9 @@
 #pragma once
 
-namespace bs_hook {
-    #pragma pack(push, 1)
-    struct EnumType {
+#include "enum-wrapper-type.hpp"
 
-    };
-    #pragma pack(pop)
+namespace bs_hook {
+    #pragma pack(push, et, 0)
+    struct EnumType {};
+    #pragma pack(pop, et)
 }
