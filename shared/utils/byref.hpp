@@ -36,14 +36,27 @@ struct ByRef {
 };
 MARK_GEN_REF_T(ByRef);
 
+namespace il2cpp_utils {
+    template<typename T>
+    concept has_no_arg_class = requires {
+        { ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<T>::get() } -> il2cpp_utils::convertible_to<Il2CppClass*>;
+    };
+}
+
 // Type specializations for byref specifics
 // We do not need il2cpp_no_arg_class specialization for ByRef, since it will never get to that point.
 
 template<typename T>
 struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_type<ByRef<T>> {
     static inline const Il2CppType* get() {
-        static auto* typ = &::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<T>::get()->this_arg;
-        return typ;
+        // if T has an arg class, look it up by the this_arg
+        if constexpr (has_no_arg_class<T>) {
+            static auto* typ = &::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<T>::get()->this_arg;
+            return typ;
+        } else {
+            // if not try using the type getter directly for T
+            return ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_type<T>::get();
+        }
     }
 };
 
