@@ -87,6 +87,22 @@ namespace il2cpp_utils {
         return inflatedInfo;
     }
 
+    const MethodInfo* ResolveMethodWithSlot(Il2CppClass* klass, uint16_t slot) noexcept {
+        il2cpp_functions::Init();
+        if (!klass->initialized_and_no_error) il2cpp_functions::Class_Init(klass);
+
+        static auto logger = getLogger().WithContext("ResolveMethodWithSlot");
+
+        auto mend = klass->methods + klass->method_count;
+        for (auto itr = klass->methods; itr != mend; itr++) {
+            if ((*itr)->slot == slot) {
+                return *itr;
+            }
+        }
+
+        return nullptr;
+    }
+
     const MethodInfo* ResolveVtableSlot(Il2CppClass* klass, Il2CppClass* declaringClass, uint16_t slot) noexcept {
         il2cpp_functions::Init();
         if (!klass->initialized_and_no_error) il2cpp_functions::Class_Init(klass);
@@ -125,7 +141,21 @@ namespace il2cpp_utils {
             logger.error("could not find method in slot %i of interface '%s' in class '%s'!", slot, ClassStandardName(declaringClass).c_str(), ClassStandardName(klass).c_str());
         } else {
             RET_DEFAULT_UNLESS(logger, slot < klass->vtable_count);
-            return klass->vtable[slot].method;
+            auto method = klass->vtable[slot].method;
+
+            if (method->slot != slot) {
+                logger.warning("Resolving vtable slot led to a method info with a different slot! is this method abstract?");
+                logger.warning("Looking for: %d, resolved to: %d", slot, method->slot);
+
+                method = ResolveMethodWithSlot(klass, slot);
+                logger.info("After resolving method with slot: found method %p", method);
+
+            }
+
+            // resolved method slot should be the slot we asked for if it came from a non-interface
+            RET_DEFAULT_UNLESS(logger, method && slot == method->slot);
+
+            return method;
         }
         return nullptr;
     }

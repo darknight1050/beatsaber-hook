@@ -134,6 +134,8 @@ namespace il2cpp_utils {
             : FindMethodInfo(GetClassFromName(namespaceName, className), args...) { }
     };
 
+    const MethodInfo* ResolveMethodWithSlot(Il2CppClass* klass, uint16_t slot) noexcept;
+
     const MethodInfo* ResolveVtableSlot(Il2CppClass* klass, Il2CppClass* declaringClass, uint16_t slot) noexcept;
 
     const MethodInfo* ResolveVtableSlot(Il2CppClass* klass, ::std::string_view declaringNamespace, ::std::string_view declaringClassName, uint16_t slot) noexcept;
