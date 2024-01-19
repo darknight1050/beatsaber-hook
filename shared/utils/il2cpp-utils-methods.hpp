@@ -3,6 +3,7 @@
 
 #include <initializer_list>
 #include <type_traits>
+#include "utils/il2cpp-utils-classes.hpp"
 #pragma pack(push)
 
 #include "il2cpp-functions.hpp"
@@ -67,70 +68,34 @@ namespace il2cpp_utils {
 
     struct FindMethodInfo {
         Il2CppClass* klass = nullptr;
-        ::std::string name;
-        Il2CppClass* returnType = nullptr;
-        ::std::vector<const Il2CppClass*> genTypes;
-        ::std::vector<const Il2CppType*> argTypes;
+        ::std::string_view const name;
+        ::std::span<const Il2CppClass*> const genTypes;
+        ::std::span<const Il2CppType*> const argTypes;
 
-        #ifndef BS_HOOK_USE_CONCEPTS
-        template <typename T, typename... TParams,
-            ::std::enable_if_t<!::std::is_convertible_v<T, ::std::string_view>, int> = 0>
-        #else
-        template<typename T, typename... TParams>
-        requires (!::std::is_convertible_v<T, std::string_view>)
-        #endif
-        FindMethodInfo(T&& classOrInstance, ::std::string_view methodName, std::span<. paramTypes) {
-            klass = ExtractClass(classOrInstance);
-            name = methodName;
+        constexpr FindMethodInfo() = delete;
+        constexpr FindMethodInfo(FindMethodInfo&&) = default;
+        constexpr FindMethodInfo(FindMethodInfo const&) = default;
+        constexpr FindMethodInfo(Il2CppClass* klass, ::std::string_view const name, ::std::span<const Il2CppClass*> const genTypes,
+                                 ::std::span<const Il2CppType*> argTypes)
+            : klass(klass),
+              name(name),
+              genTypes(genTypes),
+              argTypes(argTypes){
 
-            if constexpr (sizeof...(TParams) > 0) {
-                if constexpr (sizeof...(TParams) == 1 && (... && std::is_convertible_v<TParams, std::span<TParams>>))
-                    argTypes = ::il2cpp_utils::TypesFrom(std::forward<TParams>(paramTypes)...);
-                else {
-                    std::array paramTypesArr( std::forward<TParams>(paramTypes)... );
-                    argTypes = ::il2cpp_utils::TypesFrom(std::span(paramTypesArr));
-                }
-            }
-        }
+              };
 
-        template<typename T, size_t sz>
-        FindMethodInfo(T&& classOrInstance, ::std::string_view methodName, std::array<const Il2CppType*, sz>& params) {
-            klass = ExtractClass(classOrInstance);
-            name = methodName;
+        bool operator==(FindMethodInfo const& o) const {
+            if (this->klass != o.klass) return false;
+            if (this->name != o.name) return false;
+            
+            auto argTypesContentEquality = std::equal(this->argTypes.begin(), this->argTypes.end(), o.argTypes.begin(), o.argTypes.end());
+            if (!argTypesContentEquality) return false;
 
-            argTypes = std::vector<const Il2CppType*>(params.begin(), params.end());
-        }
-
-        #ifndef BS_HOOK_USE_CONCEPTS
-        template <typename T, typename G, typename... TArgs,
-            ::std::enable_if_t<!::std::is_convertible_v<Il2CppType*, G>, int> = 0>
-        #else
-        template<typename T, typename G, typename... TArgs>
-        requires (!::std::is_convertible_v<G, Il2CppType*> && !::std::is_convertible_v<G, const Il2CppType*>)
-        #endif
-        FindMethodInfo(T&& classOrInstance, ::std::string_view methodName, ::std::span<G> genericArgs, TArgs&&... args)
-            : FindMethodInfo(classOrInstance, methodName, args...)
-        {
-            genTypes = ClassesFrom(genericArgs);
-        }
-
-        #ifndef BS_HOOK_USE_CONCEPTS
-        template <typename T, typename R, typename... TArgs,
-            ::std::enable_if_t<!::std::is_convertible_v<R, ::std::string_view>, int> = 0>
-        #else
-        template<typename T, typename R, typename... TArgs>
-        requires (!::std::is_convertible_v<R, std::string_view>)
-        #endif
-        FindMethodInfo(T&& classOrInstance, R returnTypeOrClass, ::std::string_view methodName, TArgs&&... args)
-            : FindMethodInfo(classOrInstance, methodName, args...)
-        {
-            returnType = ExtractClass(returnTypeOrClass);
-        }
-
-        template <typename... TArgs>
-        FindMethodInfo(::std::string_view namespaceName, ::std::string_view className, TArgs&&... args) : FindMethodInfo(GetClassFromName(namespaceName, className), args...) {}
-
-        bool operator==(FindMethodInfo const&) const = default;
+            auto genTypesContentEquality = std::equal(this->genTypes.begin(), this->genTypes.end(), o.genTypes.begin(), o.genTypes.end());
+            if (!genTypesContentEquality) return false;
+            
+            return true;
+        };
         bool operator!=(FindMethodInfo const&) const = default;
     };
 
@@ -256,15 +221,31 @@ namespace il2cpp_utils {
     /// @param argsCount The number of arguments to match (or -1 to not match at all)
     const MethodInfo* FindMethodUnsafe(::std::string_view nameSpace, ::std::string_view className, ::std::string_view methodName, int argsCount);
     const MethodInfo* FindMethod(FindMethodInfo& info);
-    #ifndef BS_HOOK_USE_CONCEPTS
-    template <typename... TArgs, ::std::enable_if_t<(... && !::std::is_convertible_v<TArgs, FindMethodInfo>), int> = 0>
-    #else
-    template<typename... TArgs>
-    requires (... && !::std::is_convertible_v<TArgs, FindMethodInfo>)
-    #endif
-    const MethodInfo* FindMethod(TArgs&&... args) {
-        auto info = FindMethodInfo(args...);
+
+    /// helper constructor
+    template <typename T, typename GT, typename AT>
+    // requires(
+    //     std::is_constructible_v<std::span<const Il2CppClass*>, GT> && 
+    //     std::is_constructible_v<std::span<const Il2CppType*>, AT>
+    // )
+    inline const MethodInfo* FindMethod(T&& instance, ::std::string_view const name, GT&& genTypes, AT&& argTypes) {
+        auto klass = ExtractClass(std::forward<T>(instance));
+        auto genTypesSpan = std::span<const Il2CppClass*>(std::forward<GT>(genTypes));
+        auto argTypesSpan = std::span<const Il2CppType*>(std::forward<AT>(argTypes));
+        auto info = FindMethodInfo(klass, name, genTypesSpan, argTypesSpan);
         return FindMethod(info);
+    }
+
+    /// no gen args
+    template <typename T, typename AT>
+    inline const MethodInfo* FindMethod(T&& instance, ::std::string_view methodName, AT&& argTypes) {
+        return FindMethod<T>(instance, methodName, std::span<const Il2CppClass*>(), std::forward<AT>(argTypes));
+    }
+
+    /// no args
+    template <typename T>
+    inline const MethodInfo* FindMethod(T&& instance, ::std::string_view methodName) {
+        return FindMethod<T>(std::forward<T>(instance), methodName, std::span<const Il2CppType*>());
     }
 
     bool IsConvertibleFrom(const Il2CppType* to, const Il2CppType* from, bool asArgs = true);
@@ -667,19 +648,14 @@ namespace il2cpp_utils {
         return RunMethod<TOut, false>(static_cast<Il2CppClass*>(nullptr), method, params...);
     }
 
-    template<class TOut = Il2CppObject*, bool checkTypes = true, class T, class... TArgs>
+    template <class TOut = Il2CppObject*, bool checkTypes = true, class T, class... TArgs>
     // Runs a (static) method with the specified method name, with return type TOut.
     // Checks the types of the parameters against the candidate methods.
-    #ifndef BS_HOOK_USE_CONCEPTS
-    ::std::enable_if_t<!::std::is_convertible_v<T, ::std::string_view>, ::std::optional<TOut>>
-    #else
-    requires (!::std::is_convertible_v<T, ::std::string_view>) ::std::optional<TOut>
-    #endif
-    RunMethod(T&& classOrInstance, ::std::string_view methodName, TArgs&& ...params) {
+    ::std::optional<TOut> RunMethod(T&& classOrInstance, ::std::string_view methodName, TArgs&&... params) {
         static auto& logger = getLogger();
         if constexpr (checkTypes) {
             std::array<const Il2CppType*, sizeof...(TArgs)> types{::il2cpp_utils::ExtractType(params)...};
-            auto* method = RET_NULLOPT_UNLESS(logger, FindMethod(classOrInstance, NoArgClass<TOut>(), methodName, types));
+            auto* method = RET_NULLOPT_UNLESS(logger, FindMethod(classOrInstance, methodName, types));
             return RunMethod<TOut, true>(classOrInstance, method, params...);
         }
         // TODO: We should probably change how FindMethod is called/isn't called

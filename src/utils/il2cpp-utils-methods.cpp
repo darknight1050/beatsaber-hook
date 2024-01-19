@@ -28,18 +28,24 @@ namespace std {
             return hash_seq(seq);
         }
     };
+    template<class T> struct hash<std::span<T>> {
+        std::size_t operator()(std::span<T> const& seq) const noexcept {
+            return hash_seq(seq);
+        }
+    };
     // Specializes std::hash for std::vector
     template <>
     struct hash<il2cpp_utils::FindMethodInfo> {
         std::size_t operator()(il2cpp_utils::FindMethodInfo const& info) const noexcept {
             auto hashPtr = std::hash<void*>{};
 
-            auto hashSeqClass = std::hash<vector<const Il2CppClass*>>{};
-            auto hashSeqType = std::hash<vector<const Il2CppType*>>{};
+            auto hashSeqClass = std::hash<span<const Il2CppClass*>>{};
+            auto hashSeqType = std::hash<span<const Il2CppType*>>{};
 
             auto hashStr = std::hash<std::string_view>{};
 
-            return hashPtr(info.klass) ^ hashPtr(info.returnType) ^ hashStr(info.name) ^ hashSeqType(info.argTypes) ^ hashSeqClass(info.genTypes);
+            return hashPtr(info.klass) ^ //hashPtr(info.returnType) ^
+                   hashStr(info.name) ^ hashSeqType(info.argTypes) ^ hashSeqClass(info.genTypes);
         }
     };
 }
@@ -276,27 +282,27 @@ namespace il2cpp_utils {
                 continue;
             }
             // check return type
-            if (info.returnType) {
-                auto* returnClass = il2cpp_functions::class_from_il2cpp_type(current->return_type);
-                if (info.returnType == returnClass) {
-                    if (perfectMatch) {
-                        multiplePerfectMatches = true;
-                        logger.error("Multiple perfect matches???");
-                    } else
-                        perfectMatch = current;
-                }
-                if (il2cpp_functions::class_is_assignable_from(info.returnType, returnClass)) {
-                    if (returnMatch) {
-                        logger.debug("Multiple return type matches.");
-                        multipleReturnMatches = true;
-                    } else
-                        returnMatch = current;
-                }
+            // if (info.returnType) {
+            //     auto* returnClass = il2cpp_functions::class_from_il2cpp_type(current->return_type);
+            //     if (info.returnType == returnClass) {
+            //         if (perfectMatch) {
+            //             multiplePerfectMatches = true;
+            //             logger.error("Multiple perfect matches???");
+            //         } else
+            //             perfectMatch = current;
+            //     }
+            //     if (il2cpp_functions::class_is_assignable_from(info.returnType, returnClass)) {
+            //         if (returnMatch) {
+            //             logger.debug("Multiple return type matches.");
+            //             multipleReturnMatches = true;
+            //         } else
+            //             returnMatch = current;
+            //     }
 
-                if (!perfectMatch && !returnMatch) {
-                    logger.debug("Return type does not match for method %s", current->name);
-                }
-            }
+            //     if (!perfectMatch && !returnMatch) {
+            //         logger.debug("Return type does not match for method %s", current->name);
+            //     }
+            // }
             if (methodInfo)
                 multipleBasicMatches = true;
             else

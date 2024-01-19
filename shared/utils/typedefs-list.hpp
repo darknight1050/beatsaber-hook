@@ -40,7 +40,7 @@ struct List : Il2CppObject {
             il2cpp_utils::FindMethod(
                 klass,
                 "Add",
-                ::std::array<::Il2CppClass*, 0>{},
+                ::std::array<const ::Il2CppClass*, 0>{},
                 ::std::array<const Il2CppType*, 1>{::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_type<T>::get()}
             )
         );
@@ -380,7 +380,7 @@ struct ListWrapper {
 
     template <typename... TArgs>
     void emplace_back(TArgs&&... args) {
-        this->as_il2cpp_list()->Add(T(std::forward<TArgs>(args)...));
+        this->push_back(T(std::forward<TArgs>(args)...));
     }
 
     /**
