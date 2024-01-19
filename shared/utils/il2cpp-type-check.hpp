@@ -66,6 +66,28 @@ struct Il2CppCsTypeWrapper {
 
 namespace il2cpp_utils {
 
+
+    // instant return
+    inline ::std::vector<Il2CppClass*>& ClassesFrom(::std::vector<Il2CppClass*>& classes) {
+        return classes;
+    }
+    inline ::std::vector<Il2CppClass*> const& ClassesFrom(::std::vector<Il2CppClass*> const& classes) {
+        return classes;
+    }
+    ::std::vector<Il2CppClass*> ClassesFrom(::std::span<::std::string_view> strings);
+
+
+    ::std::vector<const Il2CppType*> TypesFrom(::std::span<const Il2CppClass*> classes);
+    ::std::vector<const Il2CppType*> TypesFrom(::std::span<::std::string_view> strings);
+
+    // instant return
+    inline std::vector<const Il2CppType*>& TypesFrom(std::vector<const Il2CppType*>& types) {
+        return types;
+    }
+    inline std::vector<const Il2CppType*> const& TypesFrom(std::vector<const Il2CppType*> const& types) {
+        return types;
+    }
+
     // Returns the il2cpp_utils logger context singleton.
     LoggerContextObject& getLogger();
 

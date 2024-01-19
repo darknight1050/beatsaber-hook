@@ -1,16 +1,24 @@
 {
   "config": {
+    "version": "0.1.0",
     "sharedDir": "shared",
     "dependenciesDir": "extern",
     "info": {
       "name": "beatsaber-hook",
       "id": "beatsaber-hook",
-      "version": "1.2.3",
+      "version": "5.0.0",
       "url": "https://github.com/sc2ad/beatsaber-hook",
       "additionalData": {
         "soLink": "https://github.com/sc2ad/beatsaber-hook/releases/download/v0.5.8/libbeatsaber-hook.so",
         "debugSoLink": "https://github.com/sc2ad/beatsaber-hook/releases/download/v0.5.8/debug_libbeatsaber-hook.so",
         "branchName": "master"
+      }
+    },
+    "workspace": {
+      "scripts": {
+        "build": [
+          "pwsh ./build.ps1"
+        ]
       }
     },
     "dependencies": [
@@ -31,14 +39,7 @@
           "private": true
         }
       }
-    ],
-    "workspace": {
-      "scripts": {
-        "build": [
-          "pwsh ./build.ps1"
-        ]
-      }
-    }
+    ]
   },
   "restoredDependencies": [
     {

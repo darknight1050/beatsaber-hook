@@ -18,6 +18,8 @@ set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 # compile options used
 add_compile_options(-frtti -fPIE -fPIC -fexceptions -flto)
 add_compile_options(-Wall -Wextra -Werror -Wno-unused-function)
+# clangd bug https://github.com/clangd/clangd/issues/1167
+add_compile_options(-Wno-pragma-pack)
 # compile definitions used
 add_compile_definitions(VERSION=\"${MOD_VERSION}\")
 add_compile_definitions(MOD_ID=\"${MOD_ID}\")

@@ -1,6 +1,7 @@
 #ifndef IL2CPP_UTILS_METHODS
 #define IL2CPP_UTILS_METHODS
 
+#include <initializer_list>
 #include <type_traits>
 #pragma pack(push)
 
@@ -10,6 +11,7 @@
 #include "il2cpp-utils-exceptions.hpp"
 #include "il2cpp-utils-classes.hpp"
 #include "il2cpp-type-check.hpp"
+#include "il2cpp-utils-boxing.hpp"
 #include "utils.h"
 #include "il2cpp-tabledefs.h"
 #include <array>
@@ -77,15 +79,17 @@ namespace il2cpp_utils {
         template<typename T, typename... TParams>
         requires (!::std::is_convertible_v<T, std::string_view>)
         #endif
-        FindMethodInfo(T&& classOrInstance, ::std::string_view methodName, TParams&&... paramTypes) {
+        FindMethodInfo(T&& classOrInstance, ::std::string_view methodName, std::span<. paramTypes) {
             klass = ExtractClass(classOrInstance);
             name = methodName;
 
             if constexpr (sizeof...(TParams) > 0) {
-                if constexpr (sizeof...(TParams) == 1 && (... && is_vector<::std::decay_t<TParams>>::value))
-                    argTypes = TypesFrom(paramTypes...);
-                else
-                    argTypes = TypesFrom({paramTypes...});
+                if constexpr (sizeof...(TParams) == 1 && (... && std::is_convertible_v<TParams, std::span<TParams>>))
+                    argTypes = ::il2cpp_utils::TypesFrom(std::forward<TParams>(paramTypes)...);
+                else {
+                    std::array paramTypesArr( std::forward<TParams>(paramTypes)... );
+                    argTypes = ::il2cpp_utils::TypesFrom(std::span(paramTypesArr));
+                }
             }
         }
 
@@ -540,11 +544,31 @@ namespace il2cpp_utils {
             throw RunMethodException(exp, method);
         }
 
-        if constexpr (!std::is_same_v<TOut, void>) {
-            auto re = FromIl2CppObject<TOut>(ret);
-            // Return type must be convertible from an Il2CppObject to TOut!
-            CRASH_UNLESS(re);
-            return *re;
+        if constexpr (!std::is_same_v<void, TOut>) {
+            // return type is not void, we should return something!
+            // type check boxing
+            // TODO: Type check boxing is needed?
+            // if constexpr (checkTypes && ret != nullptr) {
+            //     auto constexpr must_box = ::il2cpp_utils::il2cpp_type_check::need_box<TOut>::value;
+            //     auto is_boxed = il2cpp_functions::class_is_valuetype(ret->klass);
+            //     if (is_boxed != must_box) {
+            //         throw RunMethodException(string_format("Klass %s requires boxing: %i Klass %s is boxed %i",
+            //                                                ::il2cpp_utils::ClassStandardName(classof(TOut)), must_box,
+            //                                                ::il2cpp_utils::ClassStandardName(ret->klass), is_boxed));
+            //     }
+            // }
+
+            // FIXME: what if the return type is a ByRef<T> ?
+            if constexpr (::il2cpp_utils::il2cpp_type_check::need_box<TOut>::value) {  // value type returns from runtime invoke are boxed
+                // FIXME: somehow allow the gc free as an out of scope instead of having to temporarily save the retval?
+                auto retval = ::il2cpp_utils::Unbox<TOut>(ret);
+                il2cpp_functions::il2cpp_GC_free(ret);
+                return retval;
+            } else if constexpr (::il2cpp_utils::il2cpp_reference_type_wrapper<TOut>) {  // ref type returns are just that, ref type returns
+                return TOut(ret);
+            } else {  // probably ref type pointer
+                return static_cast<TOut>(static_cast<void*>(ret));
+            }
         }
     }
     #else
