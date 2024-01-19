@@ -249,6 +249,27 @@ namespace il2cpp_utils {
 
     bool IsConvertibleFrom(const Il2CppType* to, const Il2CppType* from, bool asArgs = true);
 
+    inline const Il2CppGenericContainer* GetGenericContainer(MethodInfo const* method) {
+        if (!method->is_generic) {
+            SAFE_ABORT_MSG("METHOD IS NOT GENERIC");
+        }
+
+        if (method->is_inflated) {
+            auto genMethodInfo = method->genericMethod;
+#ifdef UNITY_2021
+            return reinterpret_cast<const Il2CppGenericContainer*>(genMethodInfo->methodDefinition->genericContainerHandle);
+#else
+            return genMethodInfo->methodDefinition->genericContainerHandle;
+#endif
+        } else {
+#ifdef UNITY_2021
+            return reinterpret_cast<const Il2CppGenericContainer*>(method->genericContainerHandle);
+#else
+            return = method->genericContainer;
+#endif
+        }
+    }
+    
     // Returns if a given MethodInfo's parameters match the Il2CppType vector
     template<size_t genSz, size_t argSz>
     bool ParameterMatch(const MethodInfo* method, std::span<const Il2CppClass* const, genSz> const genTypes, std::span<const Il2CppType* const, argSz> const argTypes) {
@@ -263,20 +284,7 @@ namespace il2cpp_utils {
 
         int32_t genCount = 0;
         if (method->is_generic) {
-            if (method->is_inflated) {
-                auto genMethodInfo = method->genericMethod;
-#ifdef UNITY_2021
-                genContainer = reinterpret_cast<const Il2CppGenericContainer*>(genMethodInfo->methodDefinition->genericContainerHandle);
-#else
-                genContainer = genMethodInfo->methodDefinition->genericContainerHandle;
-#endif
-            } else {
-#ifdef UNITY_2021
-                genContainer = reinterpret_cast<const Il2CppGenericContainer*>(method->genericContainerHandle);
-#else
-                genContainer = method->genericContainer;
-#endif
-            }
+            genContainer = GetGenericContainer(method);
             genCount = genContainer->type_argc;
         }
 
