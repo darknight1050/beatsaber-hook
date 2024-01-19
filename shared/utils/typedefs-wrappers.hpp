@@ -572,14 +572,17 @@ template <typename T>
     requires(std::is_convertible_v<T*, Il2CppObject*>)
 #endif
 struct UnityW {
-    UnityW() = default;
-    UnityW(T* t) : innerPtr(t) {}
+    constexpr UnityW() noexcept = default;
+    constexpr UnityW(T* t) noexcept : innerPtr(t) {}
 
     template <typename U>
     requires(std::is_convertible_v<U*, T*>)
-    UnityW(UnityW<U> u) : innerPtr(u.innerPtr) {}
-    
-    UnityW(void* p) : innerPtr(reinterpret_cast<T*>(p)) {}
+    constexpr UnityW(UnityW<U> u) : innerPtr(u.innerPtr) {}
+
+    explicit constexpr UnityW(void* p) noexcept : innerPtr(static_cast<T*>(p)) {}
+    constexpr void* convert() const noexcept {
+        return const_cast<void*>(static_cast<void const*>(unsafePtr()));
+    }
 
     constexpr T const* unsafePtr() const noexcept {
         return innerPtr;
@@ -597,27 +600,21 @@ struct UnityW {
         __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(innerPtr);
     }
 
-    constexpr void* convert() const noexcept {
-        return const_cast<void*>(static_cast<void const*>(unsafePtr()));
-    }
 
     /// @brief Explicitly cast this instance to a T*.
-    /// Note, however, that the lifetime of this returned T* is not longer than the lifetime of this instance.
-    /// Consider passing a SafePtrUnity reference or copy instead.
-    constexpr explicit operator T* const() const {
+    constexpr explicit operator T*() const {
         return const_cast<T*>(ptr());
     }
 
-    constexpr T* const operator->() {
+    constexpr T* operator->() {
         return const_cast<T*>(ptr());
     }
 
-    constexpr T* const operator->() const {
+    constexpr T const* operator->() const {
         return ptr();
     }
 
-    constexpr T& operator*()
-    {
+    constexpr T& operator*() {
         return *ptr();
     }
 
@@ -640,19 +637,22 @@ struct UnityW {
         return isAlive(other) == isAlive() && other == innerPtr;
     }
 
-    [[nodiscard]] inline bool isAlive() const {
+    [[nodiscard]] constexpr inline bool isAlive() const {
         return isAlive(innerPtr);
     }
 
-    [[nodiscard]] static inline bool isAlive(T const* ptr) {
-#ifdef HAS_CODEGEN
-        return ptr && ptr->___m_CachedPtr;
-#else
-        // offset yay
-        // the offset as specified in the codegen header of [m_CachedPtr] is 0x10
-        // which is also the first field of the instance UnityEngine.Object
-        return ptr && *reinterpret_cast<void* const*>(reinterpret_cast<uint8_t const*>(ptr) + sizeof(Il2CppObject*));
-#endif
+    [[nodiscard]] static constexpr inline bool isAlive(T const* ptr) {
+        return ptr && cached_ptr(ptr);
+    }
+
+    [[nodiscard]] static constexpr inline void* cached_ptr(T const* ptr) {
+        #ifdef HAS_CODEGEN
+            return ptr->___m_CachedPtr;
+        #else
+            // the offset as specified in the codegen header of [m_CachedPtr] is 0x10
+            // which is also the first field of the instance UnityEngine.Object
+            return *static_cast<void* const*>(static_cast<void const*>((static_cast<uint8_t const*>(static_cast<void const*>(ptr)) + 0x10)));
+        #endif
     }
 
    private:
@@ -662,6 +662,7 @@ struct UnityW {
 MARK_GEN_REF_T(UnityW);
 
 static_assert(il2cpp_utils::has_il2cpp_conversion<UnityW<Il2CppObject>>);
+
 template <class T>
 struct BS_HOOKS_HIDDEN ::il2cpp_utils::il2cpp_type_check::need_box<UnityW<T>> {
     constexpr static bool value = false;
