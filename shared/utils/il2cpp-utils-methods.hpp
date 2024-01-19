@@ -69,14 +69,14 @@ namespace il2cpp_utils {
     struct FindMethodInfo {
         Il2CppClass* klass = nullptr;
         ::std::string_view const name;
-        ::std::span<const Il2CppClass*> const genTypes;
-        ::std::span<const Il2CppType*> const argTypes;
+        ::std::span<const Il2CppClass* const> const genTypes;
+        ::std::span<const Il2CppType* const> const argTypes;
 
         constexpr FindMethodInfo() = delete;
         constexpr FindMethodInfo(FindMethodInfo&&) = default;
         constexpr FindMethodInfo(FindMethodInfo const&) = default;
-        constexpr FindMethodInfo(Il2CppClass* klass, ::std::string_view const name, ::std::span<const Il2CppClass*> const genTypes,
-                                 ::std::span<const Il2CppType*> argTypes)
+        constexpr FindMethodInfo(Il2CppClass* klass, ::std::string_view const name, ::std::span<const Il2CppClass* const> const genTypes,
+                                 ::std::span<const Il2CppType* const> argTypes)
             : klass(klass),
               name(name),
               genTypes(genTypes),
@@ -230,8 +230,8 @@ namespace il2cpp_utils {
     // )
     inline const MethodInfo* FindMethod(T&& instance, ::std::string_view const name, GT&& genTypes, AT&& argTypes) {
         auto klass = ExtractClass(std::forward<T>(instance));
-        auto genTypesSpan = std::span<const Il2CppClass*>(std::forward<GT>(genTypes));
-        auto argTypesSpan = std::span<const Il2CppType*>(std::forward<AT>(argTypes));
+        auto genTypesSpan = std::span<const Il2CppClass* const>(std::forward<GT>(genTypes));
+        auto argTypesSpan = std::span<const Il2CppType* const>(std::forward<AT>(argTypes));
         auto info = FindMethodInfo(klass, name, genTypesSpan, argTypesSpan);
         return FindMethod(info);
     }
@@ -239,20 +239,20 @@ namespace il2cpp_utils {
     /// no gen args
     template <typename T, typename AT>
     inline const MethodInfo* FindMethod(T&& instance, ::std::string_view methodName, AT&& argTypes) {
-        return FindMethod<T>(instance, methodName, std::span<const Il2CppClass*>(), std::forward<AT>(argTypes));
+        return FindMethod<T>(std::forward<T>(instance), methodName, std::span<const Il2CppClass* const>(), std::forward<AT>(argTypes));
     }
 
     /// no args
     template <typename T>
     inline const MethodInfo* FindMethod(T&& instance, ::std::string_view methodName) {
-        return FindMethod<T>(std::forward<T>(instance), methodName, std::span<const Il2CppType*>());
+        return FindMethod<T>(std::forward<T>(instance), methodName, std::span<const Il2CppType* const>());
     }
 
     bool IsConvertibleFrom(const Il2CppType* to, const Il2CppType* from, bool asArgs = true);
 
     // Returns if a given MethodInfo's parameters match the Il2CppType vector
     template<size_t genSz, size_t argSz>
-    bool ParameterMatch(const MethodInfo* method, std::span<const Il2CppClass*, genSz> const genTypes, std::span<const Il2CppType*, argSz> const argTypes) {
+    bool ParameterMatch(const MethodInfo* method, std::span<const Il2CppClass* const, genSz> const genTypes, std::span<const Il2CppType* const, argSz> const argTypes) {
         static auto logger = getLogger().WithContext("ParameterMatch");
         il2cpp_functions::Init();
         if (method->parameters_count != argTypes.size()) {
@@ -319,7 +319,7 @@ namespace il2cpp_utils {
     }
 
     template <size_t argSz>
-    bool ParameterMatch(const MethodInfo* method, ::std::span<const Il2CppType*, argSz> const argTypes) {
+    bool ParameterMatch(const MethodInfo* method, ::std::span<const Il2CppType* const, argSz> const argTypes) {
         std::array<const Il2CppClass*, 0> gens;
         return ParameterMatch<0, argSz>(method, std::span(gens), argTypes);
     }
@@ -654,7 +654,7 @@ namespace il2cpp_utils {
     ::std::optional<TOut> RunMethod(T&& classOrInstance, ::std::string_view methodName, TArgs&&... params) {
         static auto& logger = getLogger();
         if constexpr (checkTypes) {
-            std::array<const Il2CppType*, sizeof...(TArgs)> types{::il2cpp_utils::ExtractType(params)...};
+            std::array<const Il2CppType*, sizeof...(TArgs)> const types{::il2cpp_utils::ExtractType(params)...};
             auto* method = RET_NULLOPT_UNLESS(logger, FindMethod(classOrInstance, methodName, types));
             return RunMethod<TOut, true>(classOrInstance, method, params...);
         }

@@ -28,7 +28,8 @@ namespace std {
             return hash_seq(seq);
         }
     };
-    template<class T> struct hash<std::span<T>> {
+    template <class T>
+    struct hash<std::span<T>> {
         std::size_t operator()(std::span<T> const& seq) const noexcept {
             return hash_seq(seq);
         }
@@ -39,8 +40,8 @@ namespace std {
         std::size_t operator()(il2cpp_utils::FindMethodInfo const& info) const noexcept {
             auto hashPtr = std::hash<void*>{};
 
-            auto hashSeqClass = std::hash<span<const Il2CppClass*>>{};
-            auto hashSeqType = std::hash<span<const Il2CppType*>>{};
+            auto hashSeqClass = std::hash<span<const Il2CppClass* const>>{};
+            auto hashSeqType = std::hash<span<const Il2CppType* const>>{};
 
             auto hashStr = std::hash<std::string_view>{};
 
