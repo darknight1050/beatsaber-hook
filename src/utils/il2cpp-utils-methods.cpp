@@ -3,6 +3,7 @@
 #include "../../shared/utils/hashing.hpp"
 #include "utils/il2cpp-functions.hpp"
 #include "utils/il2cpp-utils-classes.hpp"
+#include "utils/il2cpp-utils-methods.hpp"
 #include <sstream>
 
 namespace std {
@@ -27,81 +28,36 @@ namespace std {
             return hash_seq(seq);
         }
     };
+    // Specializes std::hash for std::vector
+    template <>
+    struct hash<il2cpp_utils::FindMethodInfo> {
+        std::size_t operator()(il2cpp_utils::FindMethodInfo const& info) const noexcept {
+            auto hashPtr = std::hash<void*>{};
+
+            auto hashSeqClass = std::hash<vector<const Il2CppClass*>>{};
+            auto hashSeqType = std::hash<vector<const Il2CppType*>>{};
+
+            auto hashStr = std::hash<std::string_view>{};
+
+            return hashPtr(info.klass) ^ hashPtr(info.returnType) ^ hashStr(info.name) ^ hashSeqType(info.argTypes) ^ hashSeqClass(info.genTypes);
+        }
+    };
 }
 
+
 namespace il2cpp_utils {
-    static std::unordered_map<std::pair<const Il2CppClass*, std::pair<std::string, decltype(MethodInfo::parameters_count)>>, const MethodInfo*, hash_pair_3> classesNamesToMethodsCache;
     typedef std::pair<std::string, std::vector<const Il2CppType*>> classesNamesTypesInnerPairType;
-    static std::unordered_map<std::pair<const Il2CppClass*, classesNamesTypesInnerPairType>, const MethodInfo*, hash_pair_3> classesNamesTypesToMethodsCache;
+    static std::unordered_map<std::pair<const Il2CppClass*, std::pair<std::string, decltype(MethodInfo::parameters_count)>>, const MethodInfo*, hash_pair_3> classesNamesToMethodsCache;
+    static std::unordered_map<FindMethodInfo, const MethodInfo*> classesNamesTypesToMethodsCache;
     std::mutex classNamesMethodsLock;
     std::mutex classTypesMethodsLock;
 
-    bool ParameterMatch(const MethodInfo* method, std::vector<Il2CppClass*> genTypes, std::vector<const Il2CppType*> argTypes) {
-        static auto logger = getLogger().WithContext("ParameterMatch");
-        il2cpp_functions::Init();
-        if (method->parameters_count != argTypes.size()) {
-            logger.warning("Potential method match had wrong number of parameters %i (expected %lu)", method->parameters_count, argTypes.size());
-            return false;
-        }
 
-        const Il2CppGenericContainer* genContainer;
-
-        int32_t genCount = 0;
-        if (method->is_generic) {
-            if (method->is_inflated) {
-                auto genMethodInfo = method->genericMethod;
-                genContainer = reinterpret_cast<const Il2CppGenericContainer*>(genMethodInfo->methodDefinition->genericContainerHandle);
-            } else {
-                genContainer = reinterpret_cast<const Il2CppGenericContainer*>(method->genericContainerHandle);
-            }
-            genCount = genContainer->type_argc;
-        }
-
-        if ((size_t)genCount != genTypes.size()) {
-            logger.warning("Potential method match had wrong number of generics %i (expected %lu)", genCount, genTypes.size());
-            logger.warning("is generic %i is inflated %i", method->is_generic, method->is_inflated);
-            return false;
-        }
-        // TODO: supply boolStrictMatch and use type_equals instead of IsConvertibleFrom if supplied?
-        for (decltype(method->parameters_count) i = 0; i < method->parameters_count; i++) {
-            auto* paramType = method->parameters[i];
-            if (paramType->type == IL2CPP_TYPE_MVAR) {
-                if (genCount == 0) {
-                    logger.warning("No generic args to extract paramIdx %i", i);
-                    continue;
-                }
-                auto genIdx = il2cpp_functions::MetadataCache_GetGenericParameterIndexFromParameter(paramType->data.genericParameterHandle) - genContainer->genericParameterStart;
-                if (genIdx < 0) {
-                    logger.warning("Extracted invalid genIdx %i from parameter %i", genIdx, i);
-                    continue;
-                }
-                if (genIdx >= genCount) {
-                    logger.warning(
-                        "ParameterMatch was not supplied enough genTypes to determine type of parameter %i "
-                        "(had %i, needed %i)!",
-                        i, genCount, genIdx);
-                    continue;
-                }
-                
-                auto* klass = genTypes.at(genIdx);
-                paramType = (paramType->byref) ? &klass->this_arg : &klass->byval_arg;
-            }
-            // TODO: just because two parameter lists match doesn't necessarily mean this is the best match...
-            if (!IsConvertibleFrom(paramType, argTypes.at(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    bool ParameterMatch(const MethodInfo* method, std::vector<const Il2CppType*> argTypes) {
-        return ParameterMatch(method, {}, argTypes);
-    }
 
 #if __has_feature(cxx_exceptions)
-    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::vector<Il2CppClass*> types)
+    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::span<Il2CppClass*> const types)
     #else
-    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::vector<Il2CppClass*> types) noexcept
+    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::span<Il2CppClass*> const types) noexcept
     #endif
     {
         static auto logger = getLogger().WithContext("MakeGenericMethod");
@@ -294,10 +250,8 @@ namespace il2cpp_utils {
 
         // TODO: make cache work for generics (stratify by generics count?) and differing return types?
         // Check Cache
-        auto innerPair = classesNamesTypesInnerPairType(info.name, info.argTypes);
-        auto key = std::pair<Il2CppClass*, classesNamesTypesInnerPairType>(klass, innerPair);
         classTypesMethodsLock.lock();
-        auto itr = classesNamesTypesToMethodsCache.find(key);
+        auto itr = classesNamesTypesToMethodsCache.find(info);
         if (itr != classesNamesTypesToMethodsCache.end()) {
             classTypesMethodsLock.unlock();
             return itr->second;
@@ -317,7 +271,7 @@ namespace il2cpp_utils {
                 logger.debug("Method name does not match for method %s", current->name);
                 continue;
             }
-            if (!ParameterMatch(current, info.genTypes, info.argTypes)) {
+            if (!ParameterMatch(current, std::span(info.genTypes), std::span(info.argTypes))) {
                 logger.debug("Parameters do not match for method %s", current->name);
                 continue;
             }
@@ -395,7 +349,7 @@ namespace il2cpp_utils {
         }
         // cache only if basic match
         classTypesMethodsLock.lock();
-        classesNamesTypesToMethodsCache.emplace(key, methodInfo);
+        classesNamesTypesToMethodsCache.emplace(info, methodInfo);
         classTypesMethodsLock.unlock();
         return methodInfo;
     }
