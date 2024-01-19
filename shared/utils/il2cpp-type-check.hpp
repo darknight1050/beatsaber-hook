@@ -96,7 +96,7 @@ namespace il2cpp_utils {
 
     // Function made by zoller27osu, modified by Sc2ad
     // PLEASE don't use, there are easier ways to get generics (see CreateParam, CreateFieldValue)
-    Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::span<const Il2CppClass*> args);
+    Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::span<const Il2CppClass* const> args);
     Il2CppClass* MakeGeneric(const Il2CppClass* klass, const Il2CppType** types, uint32_t numTypes);
 
     // Framework provided by DaNike
@@ -370,7 +370,8 @@ namespace il2cpp_utils {
                 if (gen_klass) return gen_klass;
 
                 auto* klass = il2cpp_gen_struct_no_arg_class<S>::get();
-                gen_klass = il2cpp_utils::MakeGeneric(klass, { il2cpp_no_arg_class<TArgs>::get()... });
+                std::array<const Il2CppClass*, sizeof...(TArgs)> const types{ il2cpp_no_arg_class<TArgs>::get()... };
+                gen_klass = il2cpp_utils::MakeGeneric(klass, types);
 
                 return gen_klass;
             }

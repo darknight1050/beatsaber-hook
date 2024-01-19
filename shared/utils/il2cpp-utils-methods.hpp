@@ -3,7 +3,6 @@
 
 #include <initializer_list>
 #include <type_traits>
-#include "utils/il2cpp-utils-classes.hpp"
 #pragma pack(push)
 
 #include "il2cpp-functions.hpp"
