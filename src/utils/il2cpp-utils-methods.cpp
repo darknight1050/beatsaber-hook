@@ -320,6 +320,7 @@ namespace il2cpp_utils {
         std::vector<const MethodInfo*> matches;
         matches.reserve(1);
 
+        const MethodInfo* target = nullptr;
 
         // Does NOT automatically recurse through klass's parents
         for (std::size_t i = 0; i < info.klass->method_count; i++) {
@@ -333,11 +334,20 @@ namespace il2cpp_utils {
                 logger.debug("Parameters do not match for method %s", current->name);
                 continue;
             }
+
+            // strict equal
+            // if true, perfect match
+            if (ParameterMatch<true>(current, std::span(info.genTypes), std::span(info.argTypes))) {
+                target = current;
+                break;
+            }
+
+            auto methodParams = std::span(current->parameters, current->parameters_count);
+
             matches.push_back(current);
         }
-        const MethodInfo* target = nullptr;
         // Only one method found, use it
-        if (matches.size() == 1) {
+        if (!target && matches.size() == 1) {
             target = matches.front();
         }
 

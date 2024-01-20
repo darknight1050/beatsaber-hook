@@ -271,7 +271,7 @@ namespace il2cpp_utils {
     }
     
     // Returns if a given MethodInfo's parameters match the Il2CppType vector
-    template<size_t genSz, size_t argSz>
+    template<bool strictEqual = false, size_t genSz, size_t argSz>
     bool ParameterMatch(const MethodInfo* method, std::span<const Il2CppClass* const, genSz> const genTypes, std::span<const Il2CppType* const, argSz> const argTypes) {
         static auto logger = getLogger().WithContext("ParameterMatch");
         il2cpp_functions::Init();
@@ -317,6 +317,10 @@ namespace il2cpp_utils {
                 auto* klass = genTypes[genIdx];
                 paramType = (paramType->byref) ? &klass->this_arg : &klass->byval_arg;
             }
+            if constexpr (strictEqual) {
+                // type is not identical, return!
+                if (paramType != argTypes[i]) return false;
+            }
             // TODO: just because two parameter lists match doesn't necessarily mean this is the best match...
             if (!IsConvertibleFrom(paramType, argTypes[i])) {
                 return false;
@@ -325,21 +329,19 @@ namespace il2cpp_utils {
         return true;
     }
 
-    template <size_t argSz>
-    bool ParameterMatch(const MethodInfo* method, ::std::span<const Il2CppType* const, argSz> const argTypes) {
-        std::array<const Il2CppClass*, 0> gens;
-        return ParameterMatch<0, argSz>(method, std::span(gens), argTypes);
+    template <bool strictEqual = false, size_t argSz>
+    auto ParameterMatch(const MethodInfo* method, ::std::span<const Il2CppType* const, argSz> const argTypes) {
+        return ParameterMatch<strictEqual, 0, argSz>(method, std::span<const Il2CppClass* const, 0>(), argTypes);
     }
 
-    template <size_t genSz, size_t argSz>
+    template <bool strictEqual = false, size_t genSz, size_t argSz>
     bool ParameterMatch(const MethodInfo* method, std::array<const Il2CppClass*, genSz> const& genTypes, std::array<const Il2CppType*, argSz> const& argTypes) {
-        return ParameterMatch<genSz, argSz>(method, genTypes, argTypes);
+        return ParameterMatch<strictEqual, genSz, argSz>(method, genTypes, argTypes);
     }
 
-    template <size_t sz>
+    template <bool strictEqual = false, size_t sz>
     bool ParameterMatch(const MethodInfo* method, std::array<const Il2CppType*, sz> const& argTypes) {
-        std::array<const Il2CppClass*, 0> gens;
-        return ParameterMatch<0, sz>(method, gens, argTypes);
+        return ParameterMatch<strictEqual, 0, sz>(method, std::span<const Il2CppClass* const, 0>(), argTypes);
     }
 
     /// @brief Calls the methodPointer on the provided const MethodInfo*, but throws a RunMethodException on failure.
