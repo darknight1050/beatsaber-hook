@@ -245,10 +245,9 @@ namespace il2cpp_utils {
     /// no args
     template <typename T>
     inline const MethodInfo* FindMethod(T&& instanceOrKlass, ::std::string_view methodName) {
-        return ::il2cpp_utils::FindMethod(std::forward<T>(instanceOrKlass), methodName, std::span<const Il2CppType* const>());
+        return ::il2cpp_utils::FindMethod(std::forward<T>(instanceOrKlass), methodName, std::span<const Il2CppClass* const>(), std::span<const Il2CppType* const>());
     }
-    #pragma endregion
-
+#pragma endregion
 
 #pragma region FindMethod string overloads
     // gen and array args
@@ -262,13 +261,13 @@ namespace il2cpp_utils {
     template <typename AT>
     inline const MethodInfo* FindMethod(std::string_view namespaze, std::string_view klassName, ::std::string_view methodName, AT&& argTypes) {
         auto klass = ::il2cpp_utils::GetClassFromName(namespaze, klassName);
-        return ::il2cpp_utils::FindMethod(klass, methodName, std::forward<AT>(argTypes));
+        return ::il2cpp_utils::FindMethod(klass, methodName, std::span<const Il2CppClass* const>(), std::forward<AT>(argTypes));
     }
 
     /// no args
     inline const MethodInfo* FindMethod(std::string_view namespaze, std::string_view klassName, ::std::string_view methodName) {
         auto klass = ::il2cpp_utils::GetClassFromName(namespaze, klassName);
-        return ::il2cpp_utils::FindMethod(klass, methodName);
+        return ::il2cpp_utils::FindMethod(klass, methodName, std::span<const Il2CppClass* const>(), std::span<const Il2CppType* const>());
     }
 #pragma endregion
 
