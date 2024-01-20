@@ -219,6 +219,10 @@ namespace il2cpp_utils {
     /// @param methodName The il2cpp name of the method to find
     /// @param argsCount The number of arguments to match (or -1 to not match at all)
     const MethodInfo* FindMethodUnsafe(::std::string_view nameSpace, ::std::string_view className, ::std::string_view methodName, int argsCount);
+
+    /// Attempts to look for a method that best matches given the FindMethodInfo data
+    /// if no method is found, returns null
+    /// Look at il2cpp-utils-methods.cpp for more details on how this resolution takes place
     const MethodInfo* FindMethod(FindMethodInfo& info);
 
 #pragma region FindMethod class

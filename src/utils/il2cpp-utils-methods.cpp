@@ -317,6 +317,21 @@ namespace il2cpp_utils {
         }
         classTypesMethodsLock.unlock();
 
+        // Ok we look through all the methods that have the following:
+        // - matches name
+        // - parameters match as defined in ::il2cpp_utils::ParametersMatch
+        // 
+        // The resolution order goes as follows:
+        // if a method parameter matches perfectly, as in the parameter types are identical, then we use that.
+        // If only a single method is found, we use that.
+        //
+        // If multiple methods are found, the following occurs:
+        // We attempt to weigh the parameters based on what we expect.
+        // Then we find the lowest weighted method and use that
+        // if no methods are found, we look at our parents' methods and check if those match recursively
+
+        // Finally we add to cache and finish
+
         std::vector<const MethodInfo*> matches;
         matches.reserve(1);
 
@@ -348,9 +363,67 @@ namespace il2cpp_utils {
 
             matches.push_back(current);
         }
-        // Only one method found, use it
-        if (!target && matches.size() == 1) {
-            target = matches.front();
+
+        // Look for method in matches
+        if (!matches.empty()) {
+            // Only one method found, use it
+            if (!target && matches.size() == 1) {
+                target = matches.front();
+            }
+
+            // multiple methods
+            // time to method overload resolution
+            if (!target) {
+                std::vector<std::pair<const MethodInfo*, std::size_t>> weightMap;
+                weightMap.reserve(matches.size());
+
+                // iterate methods
+                for (auto const& method : matches) {
+                    // overload resolution
+                    std::size_t weight = 0;
+
+                    // weigh the methods based on their distance to the expected
+                    // parameters
+                    for (std::size_t i = 0; i < info.argTypes.size(); i++) {
+                        auto const& expectedParamType = info.argTypes[i];
+                        auto const& methodParamType = method->parameters[i];
+
+                        auto const methodParamClass = getTypeClass(methodParamType, method);
+                        auto expectedParamClass = getTypeClass(expectedParamType, method);
+
+                        auto distance = 0;
+
+                        if (!methodParamClass || !expectedParamClass) {
+                            distance = 1;
+                        } else {
+                            while (expectedParamClass && expectedParamClass != methodParamClass) {
+                                if (!il2cpp_functions::class_is_assignable_from(methodParamClass, expectedParamClass)) {
+                                    break;
+                                }
+
+                                expectedParamClass = expectedParamClass->parent;
+                                distance++;
+                            }
+                        }
+
+                        weight += distance;
+                    }
+
+                    // found a method that matches perfectly
+                    // return now!
+                    if (weight == 0) {
+                        target = method;
+                        break;
+                    }
+
+                    weightMap.emplace_back(method, weight);
+                }
+
+                // if no perfect match, look for lowest weighted
+                if (!target) {
+                    target = std::min_element(weightMap.begin(), weightMap.end(), [](auto a, auto b) { return a.second < b.second; })->first;
+                }
+            }
         }
 
         // Use parent's methods to look for the appropiate method
@@ -360,61 +433,6 @@ namespace il2cpp_utils {
             info.klass = klass->parent;
             target = FindMethod(info);
             info.klass = klass;
-        }
-
-
-
-        // time to method overload resolution
-        if (!target) {
-            std::vector<std::pair<const MethodInfo*, std::size_t>> weightMap;
-            weightMap.reserve(matches.size());
-
-            // iterate methods
-            for (auto const& method : matches) {
-                // overload resolution
-                std::size_t weight = 0;
-
-                // weigh the methods based on their distance to the expected
-                // parameters
-                for (std::size_t i = 0; i < info.argTypes.size(); i++) {
-                    auto const& expectedParamType = info.argTypes[i];
-                    auto const& methodParamType = method->parameters[i];
-
-                    auto const methodParamClass = getTypeClass(methodParamType, method);
-                    auto expectedParamClass = getTypeClass(expectedParamType, method);
-
-                    auto distance = 0;
-
-                    if (!methodParamClass || !expectedParamClass) {
-                        distance = 1;
-                    } else {
-                        while (expectedParamClass && expectedParamClass != methodParamClass) {
-                            if (!il2cpp_functions::class_is_assignable_from(methodParamClass, expectedParamClass)) {
-                                break;
-                            }
-
-                            expectedParamClass = expectedParamClass->parent;
-                            distance++;
-                        }
-                    }
-
-                    weight += distance;
-                }
-
-                // found a method that matches perfectly
-                // return now!
-                if (weight == 0) {
-                    target = method;
-                    break;
-                }
-
-                weightMap.emplace_back(method, weight);
-            }
-
-            // if no perfect match, look for lowest weighted
-            if (!target) {
-                target = std::min_element(weightMap.begin(), weightMap.end(), [](auto a, auto b) { return a.second < b.second; })->first;
-            }
         }
 
         // look in parent
