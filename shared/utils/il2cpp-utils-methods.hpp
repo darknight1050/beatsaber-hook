@@ -225,6 +225,7 @@ namespace il2cpp_utils {
     /// helper constructor
     template <typename T, typename GT, typename AT>
     requires(
+        !::std::is_convertible_v<T, std::string_view> &&
         std::is_constructible_v<std::span<const Il2CppClass* const>, GT> && 
         std::is_constructible_v<std::span<const Il2CppType* const>, AT>
     )
@@ -238,12 +239,14 @@ namespace il2cpp_utils {
 
     /// no gen args
     template <typename T, typename AT>
+    requires(!::std::is_convertible_v<T, std::string_view>)
     inline const MethodInfo* FindMethod(T&& instanceOrKlass, ::std::string_view methodName, AT&& argTypes) {
         return ::il2cpp_utils::FindMethod(std::forward<T>(instanceOrKlass), methodName, std::span<const Il2CppClass* const>(), std::forward<AT>(argTypes));
     }
 
     /// no args
     template <typename T>
+    requires(!::std::is_convertible_v<T, std::string_view>)
     inline const MethodInfo* FindMethod(T&& instanceOrKlass, ::std::string_view methodName) {
         return ::il2cpp_utils::FindMethod(std::forward<T>(instanceOrKlass), methodName, std::span<const Il2CppClass* const>(), std::span<const Il2CppType* const>());
     }
