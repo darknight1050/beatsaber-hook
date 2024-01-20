@@ -6,6 +6,7 @@
 #include "utils/il2cpp-utils-methods.hpp"
 #include "utils/utils.h"
 #include <algorithm>
+#include <shared_mutex>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
@@ -61,7 +62,7 @@ namespace il2cpp_utils {
     static std::unordered_map<std::pair<const Il2CppClass*, std::pair<std::string, decltype(MethodInfo::parameters_count)>>, const MethodInfo*, hash_pair_3> classesNamesToMethodsCache;
     static std::unordered_map<FindMethodInfo, const MethodInfo*> classesNamesTypesToMethodsCache;
     std::mutex classNamesMethodsLock;
-    std::mutex classTypesMethodsLock;
+    std::shared_mutex classTypesMethodsLock;
 
 
 
@@ -309,13 +310,13 @@ namespace il2cpp_utils {
 
         // TODO: make cache work for generics (stratify by generics count?) and differing return types?
         // Check Cache
-        classTypesMethodsLock.lock();
-        auto itr = classesNamesTypesToMethodsCache.find(info);
-        if (itr != classesNamesTypesToMethodsCache.end()) {
-            classTypesMethodsLock.unlock();
-            return itr->second;
+        {
+            std::shared_lock lock(classTypesMethodsLock);
+            auto itr = classesNamesTypesToMethodsCache.find(info);
+            if (itr != classesNamesTypesToMethodsCache.end()) {
+                return itr->second;
+            }
         }
-        classTypesMethodsLock.unlock();
 
         // Ok we look through all the methods that have the following:
         // - matches name
@@ -435,10 +436,11 @@ namespace il2cpp_utils {
             info.klass = klass;
         }
 
-        // look in parent
-        classTypesMethodsLock.lock();
-        classesNamesTypesToMethodsCache.emplace(info, target);
-        classTypesMethodsLock.unlock();
+        // add to cache
+        {
+            std::unique_lock lock(classTypesMethodsLock);
+            classesNamesTypesToMethodsCache.emplace(info, target);
+        }
 
         if (!target) {
             std::stringstream ss;
