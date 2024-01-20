@@ -269,10 +269,11 @@ namespace il2cpp_utils {
 #endif
         }
     }
-    
-    // Returns if a given MethodInfo's parameters match the Il2CppType vector
-    template<bool strictEqual = false, size_t genSz, size_t argSz>
-    bool ParameterMatch(const MethodInfo* method, std::span<const Il2CppClass* const, genSz> const genTypes, std::span<const Il2CppType* const, argSz> const argTypes) {
+
+    /// Returns if a given MethodInfo's parameters match the Il2CppType vector
+    /// \param isIdenticalOut is true if every parameter type matches identically. Can be null
+    template<size_t genSz, size_t argSz>
+    bool ParameterMatch(const MethodInfo* method, std::span<const Il2CppClass* const, genSz> const genTypes, std::span<const Il2CppType* const, argSz> const argTypes, std::optional<bool*> isIdenticalOut) {
         static auto logger = getLogger().WithContext("ParameterMatch");
         il2cpp_functions::Init();
         if (method->parameters_count != argTypes.size()) {
@@ -293,6 +294,8 @@ namespace il2cpp_utils {
             logger.warning("is generic %i is inflated %i", method->is_generic, method->is_inflated);
             return false;
         }
+        bool isIdentical = true;
+        bool matches = true;
         // TODO: supply boolStrictMatch and use type_equals instead of IsConvertibleFrom if supplied?
         for (decltype(method->parameters_count) i = 0; i < method->parameters_count; i++) {
             auto* paramType = method->parameters[i];
@@ -317,31 +320,36 @@ namespace il2cpp_utils {
                 auto* klass = genTypes[genIdx];
                 paramType = (paramType->byref) ? &klass->this_arg : &klass->byval_arg;
             }
-            if constexpr (strictEqual) {
-                // type is not identical, return!
-                if (paramType != argTypes[i]) return false;
-            }
+            // parameters are identical if every param matches exactly!
+            isIdentical &= paramType == argTypes[i];
+
             // TODO: just because two parameter lists match doesn't necessarily mean this is the best match...
             if (!IsConvertibleFrom(paramType, argTypes[i])) {
-                return false;
+                matches = false;
+                break;
             }
         }
-        return true;
+        // write to out
+        if (isIdenticalOut.has_value()) {
+            *isIdenticalOut.value() = isIdentical;
+        }
+
+        return matches;
     }
 
-    template <bool strictEqual = false, size_t argSz>
-    auto ParameterMatch(const MethodInfo* method, ::std::span<const Il2CppType* const, argSz> const argTypes) {
-        return ParameterMatch<strictEqual, 0, argSz>(method, std::span<const Il2CppClass* const, 0>(), argTypes);
+    template <size_t argSz>
+    auto ParameterMatch(const MethodInfo* method, ::std::span<const Il2CppType* const, argSz> const argTypes, std::optional<bool*> isIdenticalOut) {
+        return ParameterMatch<0, argSz>(method, std::span<const Il2CppClass* const, 0>(), argTypes, isIdenticalOut);
     }
 
     template <bool strictEqual = false, size_t genSz, size_t argSz>
-    bool ParameterMatch(const MethodInfo* method, std::array<const Il2CppClass*, genSz> const& genTypes, std::array<const Il2CppType*, argSz> const& argTypes) {
-        return ParameterMatch<strictEqual, genSz, argSz>(method, genTypes, argTypes);
+    bool ParameterMatch(const MethodInfo* method, std::array<const Il2CppClass*, genSz> const& genTypes, std::array<const Il2CppType*, argSz> const& argTypes, std::optional<bool*> isIdenticalOut) {
+        return ParameterMatch<genSz, argSz>(method, genTypes, argTypes, isIdenticalOut);
     }
 
     template <bool strictEqual = false, size_t sz>
-    bool ParameterMatch(const MethodInfo* method, std::array<const Il2CppType*, sz> const& argTypes) {
-        return ParameterMatch<strictEqual, 0, sz>(method, std::span<const Il2CppClass* const, 0>(), argTypes);
+    bool ParameterMatch(const MethodInfo* method, std::array<const Il2CppType*, sz> const& argTypes, std::optional<bool*> isIdenticalOut) {
+        return ParameterMatch<0, sz>(method, std::span<const Il2CppClass* const, 0>(), argTypes, isIdenticalOut);
     }
 
     /// @brief Calls the methodPointer on the provided const MethodInfo*, but throws a RunMethodException on failure.
@@ -368,7 +376,7 @@ namespace il2cpp_utils {
 
         if constexpr (checkTypes && sizeof...(TArgs) > 0) {
             std::array<const Il2CppType*, sizeof...(TArgs)> types{::il2cpp_utils::ExtractType(params)...};
-            if (!ParameterMatch(method, types)) {
+            if (!ParameterMatch(method, types, std::nullopt)) {
                 throw RunMethodException("Parameters do not match!", method);
             }
             auto* outType = ExtractIndependentType<TOut>();
@@ -508,7 +516,7 @@ namespace il2cpp_utils {
             // only check args if TArgs is > 0
             if constexpr (sizeof...(TArgs) > 0) {
                 std::array<const Il2CppType*, sizeof...(TArgs)> types{ ::il2cpp_utils::ExtractType(params)... };
-                if (!ParameterMatch(method, types)) {
+                if (!ParameterMatch(method, types, std::nullopt)) {
                     throw RunMethodException("Parameters do not match!", method);
                 }
             }
@@ -582,10 +590,10 @@ namespace il2cpp_utils {
 
     bool IsConvertibleFrom(const Il2CppType* to, const Il2CppType* from, bool asArgs = true);
     // Returns if a given MethodInfo's parameters match the Il2CppType vector
-    bool ParameterMatch(const MethodInfo* method, ::std::span<const Il2CppType*> argTypes);
+    bool ParameterMatch(const MethodInfo* method, ::std::span<const Il2CppType*> argTypes, std::optional<bool*> perfectMatch);
 
     // Returns if a given MethodInfo's parameters match the Il2CppType vector and generic types vector
-    bool ParameterMatch(const MethodInfo* method, ::std::span<Il2CppClass const*> genTypes, ::std::span<const Il2CppType*> argTypes);
+    bool ParameterMatch(const MethodInfo* method, ::std::span<Il2CppClass const*> genTypes, ::std::span<const Il2CppType*> argTypes, std::optional<bool*> perfectMatch);
     #endif
 
     // Function made by zoller27osu, modified by Sc2ad
@@ -605,7 +613,7 @@ namespace il2cpp_utils {
 
         if constexpr (checkTypes && sizeof...(TArgs) > 0) {
             std::array<const Il2CppType*, sizeof...(TArgs)> types{::il2cpp_utils::ExtractType(params)...};
-            RET_NULLOPT_UNLESS(logger, ParameterMatch(method, types));
+            RET_NULLOPT_UNLESS(logger, ParameterMatch(method, types, std::nullopt));
         }
 
         void* inst = ::il2cpp_utils::ExtractValue(instance);  // null is allowed (for T = Il2CppType* or Il2CppClass*)

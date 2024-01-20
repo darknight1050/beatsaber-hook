@@ -330,14 +330,16 @@ namespace il2cpp_utils {
                 logger.debug("Method name does not match for method %s", current->name);
                 continue;
             }
-            if (!ParameterMatch(current, std::span(info.genTypes), std::span(info.argTypes))) {
+
+            // strict equal
+            bool isPerfect;
+            if (!ParameterMatch(current, std::span(info.genTypes), std::span(info.argTypes), &isPerfect)) {
                 logger.debug("Parameters do not match for method %s", current->name);
                 continue;
             }
 
-            // strict equal
             // if true, perfect match
-            if (ParameterMatch<true>(current, std::span(info.genTypes), std::span(info.argTypes))) {
+            if (isPerfect) {
                 target = current;
                 break;
             }
