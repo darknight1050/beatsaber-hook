@@ -574,6 +574,20 @@ namespace il2cpp_utils {
         }
 
         if constexpr (!std::is_same_v<void, TOut>) {
+            if constexpr (checkTypes) {
+                if (ret) {
+                    // By using this instead of ExtractType, we avoid unboxing because the ultimate type in that case would depend on the
+                    // method in the first place
+                    auto* outType = ExtractIndependentType<TOut>();
+                    if (outType) {
+                        auto* retType = ExtractType(ret);
+                        if (!IsConvertibleFrom(outType, retType, false)) {
+                            logger.warning("User requested TOut %s does not match the method's return object of type %s!", TypeGetSimpleName(outType), TypeGetSimpleName(retType));
+                        }
+                    }
+                }
+            }
+
             // return type is not void, we should return something!
             // type check boxing
             // TODO: Type check boxing is needed?
