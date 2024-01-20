@@ -409,11 +409,9 @@ namespace il2cpp_utils {
                 weightMap.emplace_back(method, weight);
             }
 
-            // if no perfect match, sort by weight and look for lowest weighted
+            // if no perfect match, look for lowest weighted
             if (!target) {
-                std::stable_sort(weightMap.begin(), weightMap.end(), [](auto a, auto b) { return a.second < b.second; });
-
-                target = weightMap.front().first;
+                target = std::min_element(weightMap.begin(), weightMap.end(), [](auto a, auto b) { return a.second < b.second; })->first;
             }
         }
 
