@@ -813,6 +813,8 @@ namespace il2cpp_utils {
         auto result = ::il2cpp_utils::RunMethod<TOut, checkTypes>(std::forward<TArgs>(params)...);
 
         if (auto exception = std::get_if<::il2cpp_utils::RunMethodException>(&result)) {
+            static auto& logger = getLogger();
+            logger.error("%s: Failed with exception: %s", il2cpp_functions::method_get_name(exception->info), il2cpp_utils::ExceptionToString(exception->ex).c_str());
             return std::nullopt;
         }
 
