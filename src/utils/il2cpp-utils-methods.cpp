@@ -67,9 +67,9 @@ namespace il2cpp_utils {
 
 
 #if __has_feature(cxx_exceptions)
-    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::span<Il2CppClass*> const types)
+    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::span<const Il2CppClass* const> const types)
     #else
-    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::span<Il2CppClass*> const types) noexcept
+    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::span<const Il2CppClass* const> const types) noexcept
     #endif
     {
         static auto logger = getLogger().WithContext("MakeGenericMethod");
