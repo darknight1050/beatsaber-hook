@@ -16,6 +16,7 @@
 #include "il2cpp-utils-boxing.hpp"
 #include "il2cpp-utils-classes.hpp"
 #include "il2cpp-utils-exceptions.hpp"
+#include "result.hpp"
 #include "logging.hpp"
 #include "utils.h"
 
@@ -51,10 +52,6 @@ enum struct CreationType {
     /// @brief Created object is manual, it must be freed explicitly (via delete).
     Manual
 };
-
-/// Converts void to std::monostate for variant
-template <typename T>
-using TypeOrMonostate = std::conditional_t<std::is_same_v<T, void>, std::monostate, T>;
 
 /// @brief Manually creates an instance of the provided Il2CppClass*.
 /// The created instance's type initializer will NOT execute on another thread! Be warned!
@@ -560,7 +557,7 @@ void LogMethod(LoggerContextObject& logger, const MethodInfo* method);
 void LogMethods(LoggerContextObject& logger, Il2CppClass* klass, bool logParents = false);
 
 template <typename TOut>
-using MethodResult = ::std::variant<TypeOrMonostate<TOut>, RunMethodException>;
+using MethodResult = ::il2cpp_utils::Result<TOut, RunMethodException>;
 
 #pragma region Invokers
 // Experiment
@@ -822,11 +819,12 @@ template <class TOut = void, bool checkTypes = true, class... TArgs>
 inline TOut RunMethodRethrow(TArgs&&... params) {
     auto result = ::il2cpp_utils::RunMethod<TOut, checkTypes>(std::forward<TArgs>(params)...);
 
-    if (auto exception = std::get_if<::il2cpp_utils::RunMethodException>(&result)) {
-        throw exception;
+    // TODO: Move here?
+    if (auto exceptionOpt = result.as_optional_exception()) {
+        throw exceptionOpt.value();
     }
     if constexpr (!std::is_same_v<TOut, void>) {
-        return std::get<TOut>(std::move(result));
+        return result.move_result();
     }
 }
 
@@ -844,13 +842,13 @@ template <class TOut = void, bool checkTypes = true, class... TArgs>
 inline std::optional<TypeOrMonostate<TOut>> RunMethodOpt(TArgs&&... params) noexcept {
     auto result = ::il2cpp_utils::RunMethod<TOut, checkTypes>(std::forward<TArgs>(params)...);
 
-    if (auto exception = std::get_if<::il2cpp_utils::RunMethodException>(&result)) {
+    if (auto const exception = result.as_optional_exception()) {
         static auto& logger = getLogger();
-        logger.error("%s: Failed with exception: %s", il2cpp_functions::method_get_name(exception->info), il2cpp_utils::ExceptionToString(exception->ex).c_str());
+        logger.error("%s: Failed with exception: %s", il2cpp_functions::method_get_name(exception.value()->info), il2cpp_utils::ExceptionToString(exception.value()->ex).c_str());
         return std::nullopt;
     }
 
-    return std::get<TypeOrMonostate<TOut>>(std::move(result));
+    return result.move_result();
 }
 
 
