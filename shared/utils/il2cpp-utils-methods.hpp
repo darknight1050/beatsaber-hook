@@ -690,7 +690,10 @@ template <class TOut = Il2CppObject*, bool checkTypes = true, class T, class... 
 // Assumes a static method if instance == nullptr. May fail due to exception or wrong name, hence the ::std::optional.
 MethodResult<TOut> RunMethod(T&& wrappedInstance, const MethodInfo* method, TArgs&&... params) noexcept {
     static auto& logger = getLogger();
-    RET_NULLOPT_UNLESS(logger, method);
+
+    if (!method) {
+        return RunMethodException("MethodInfo cannot be null!", nullptr);
+    }
 
     if constexpr (checkTypes) {
         // only check args if TArgs is > 0
