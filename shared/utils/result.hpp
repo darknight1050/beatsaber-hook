@@ -33,9 +33,7 @@ struct Result {
     Result(Result&&) noexcept = default;
     Result(Result const&) noexcept = default;
 
-    Result(SuccessValue&& result) noexcept
-
-        : success(true), result(std::forward<SuccessValue>(result)) {}
+    Result(SuccessValue&& result) noexcept : success(true), result(std::forward<SuccessValue>(result)) {}
 
     Result(SuccessValue const& result) noexcept : success(true), result(std::forward<SuccessValue>(result)) {}
 
@@ -98,8 +96,7 @@ struct Result {
 
     /// Moves this result into a variant
     /// if T is void, returns std::monostate
-    [[nodiscard]] constexpr std::variant<SuccessValue, ExceptionValue> into_variant()
-    {
+    [[nodiscard]] constexpr std::variant<SuccessValue, ExceptionValue> into_variant() {
         if (success) {
             return this->move_result();
         }
@@ -110,8 +107,7 @@ struct Result {
 #pragma region Optional Result
     /// Moves this result into an optional
     /// if T is void, returns std::monostate
-    [[nodiscard]] constexpr std::optional<SuccessValue> into_optional_result()
-    {
+    [[nodiscard]] constexpr std::optional<SuccessValue> into_optional_result() {
         if (success) {
             return this->move_result();
         }
@@ -121,8 +117,7 @@ struct Result {
 
     /// Moves this result into an optional
     /// if T is void, returns std::monostate
-    [[nodiscard]] constexpr std::optional<SuccessValue*> as_optional_result()
-    {
+    [[nodiscard]] constexpr std::optional<SuccessValue*> as_optional_result() {
         if (success) {
             return &this->get_result();
         }
@@ -131,8 +126,7 @@ struct Result {
     }
     /// Moves this result into an optional
     /// if T is void, returns std::monostate
-    [[nodiscard]] constexpr std::optional<SuccessValue const*> as_optional_result() const
-    {
+    [[nodiscard]] constexpr std::optional<SuccessValue const*> as_optional_result() const {
         if (success) {
             return &this->get_result();
         }

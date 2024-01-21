@@ -4,7 +4,6 @@
 #include <initializer_list>
 #include <type_traits>
 #include <variant>
-#include "utils/il2cpp-utils-exceptions.hpp"
 #pragma pack(push)
 
 #include <array>
