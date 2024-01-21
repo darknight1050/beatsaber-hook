@@ -5,6 +5,7 @@
 #include "../../shared/utils/typedefs-string.hpp"
 #include "../../shared/utils/typedefs-wrappers.hpp"
 #include "../../shared/utils/typedefs.h"
+#include "utils/il2cpp-utils-methods.hpp"
 #include "utils/typedefs-string.hpp"
 
 std::unordered_map<void*, size_t> Counter::addrRefCount;
@@ -64,7 +65,7 @@ Il2CppString* alloc_str(std::u16string_view str) {
 Il2CppString* CreateString(int length) {
     static MethodInfo const* methodInfo = il2cpp_utils::FindMethod(classof(Il2CppString*), "CreateString",
                                                                    std::array<Il2CppType const*, 2>{ il2cpp_utils::ExtractIndependentType<Il2CppChar>(), il2cpp_utils::ExtractIndependentType<int>() });
-    return CRASH_UNLESS(il2cpp_utils::RunStaticMethodUnsafe<Il2CppString*>(methodInfo, Il2CppChar('\0'), length));
+    return CRASH_UNLESS(il2cpp_utils::RunMethodOpt<Il2CppString*, false>(nullptr, methodInfo, Il2CppChar('\0'), length));
 }
 
 Il2CppString* strappend(Il2CppString const* lhs, Il2CppString const* rhs) noexcept {

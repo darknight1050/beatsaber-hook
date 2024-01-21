@@ -5,6 +5,7 @@
 #include "../../shared/utils/il2cpp-utils.hpp"
 #include "../../shared/utils/utils.h"
 #include "../../shared/utils/il2cpp-functions.hpp"
+#include "utils/il2cpp-utils-methods.hpp"
 #include <algorithm>
 #include <map>
 #include <unordered_map>
@@ -198,7 +199,7 @@ namespace il2cpp_utils {
         if (klass->has_cctor && !klass->cctor_finished_or_no_cctor && !klass->cctor_started) {
             obj->klass->cctor_started = true;
             auto* m = RET_0_UNLESS(logger, FindMethodUnsafe(klass, ".cctor", 0));
-            RET_0_UNLESS(logger, il2cpp_utils::RunStaticMethodUnsafe(m));
+            RET_0_UNLESS(logger, il2cpp_utils::RunMethodOpt(nullptr, m));
             obj->klass->cctor_finished_or_no_cctor = true;
         }
         return obj;
@@ -220,7 +221,7 @@ namespace il2cpp_utils {
             if (!m) {
                 throw exceptions::StackTraceException("Failed to find .cctor method!");
             }
-            if (!il2cpp_utils::RunStaticMethodUnsafe(m)) {
+            if (!il2cpp_utils::RunMethodOpt(nullptr, m)) {
                 throw exceptions::StackTraceException("Failed to run .cctor method!");
             }
             obj->klass->cctor_finished_or_no_cctor = true;

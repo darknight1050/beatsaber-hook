@@ -102,7 +102,7 @@ namespace il2cpp_utils {
         }
         // Call instance function on infoObj to MakeGeneric
         // Does not need to perform type checking, since if this does not match, it will fail more miserably.
-        auto res = il2cpp_utils::RunMethod<Il2CppReflectionMethod*, false>(infoObj, "MakeGenericMethod", arr);
+        auto res = il2cpp_utils::RunMethodOpt<Il2CppReflectionMethod*, false>(infoObj, "MakeGenericMethod", arr);
         const auto* returnedInfoObj = RET_0_UNLESS(logger, res);
         if (!returnedInfoObj) {
             logger.error("Failed to get Il2CppReflectionMethod from MakeGenericMethod!");

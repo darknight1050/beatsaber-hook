@@ -33,7 +33,7 @@ namespace il2cpp_utils {
         };
     }
     // Returns a legible string from an Il2CppException*
-    ::std::string ExceptionToString(Il2CppException* exp) noexcept;
+    ::std::string ExceptionToString(const Il2CppException* exp) noexcept;
 
     #if defined(UNITY_2019) || defined(UNITY_2021)
     /// @brief Raises the provided Il2CppException to be used within il2cpp.

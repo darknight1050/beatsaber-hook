@@ -8,7 +8,7 @@ namespace il2cpp_utils {
     #define EXCEPTION_MESSAGE_SIZE 4096
     #endif
     // Returns a legible string from an Il2CppException*
-    std::string ExceptionToString(Il2CppException* exp) noexcept {
+    std::string ExceptionToString(const Il2CppException* exp) noexcept {
         il2cpp_functions::Init();
 
         char msg[EXCEPTION_MESSAGE_SIZE];
