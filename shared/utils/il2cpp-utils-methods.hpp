@@ -3,6 +3,7 @@
 
 #include <initializer_list>
 #include <type_traits>
+#include <variant>
 #pragma pack(push)
 
 #include "il2cpp-functions.hpp"
@@ -396,7 +397,7 @@ namespace il2cpp_utils {
     /// @param mPtr The method pointer to invoke specifically.
     /// @param params The arguments to pass into the function.
     template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
-    TOut RunMethodThrow(T* instance, const MethodInfo* method, Il2CppMethodPointer mPtr, TArgs&&... params) {
+    TOut RunMethodFnPtr(T* instance, const MethodInfo* method, Il2CppMethodPointer mPtr, TArgs&&... params) {
         static auto& logger = getLogger();
         if (!method) {
             throw RunMethodException("Method cannot be null!", nullptr);
@@ -440,31 +441,32 @@ namespace il2cpp_utils {
                 }
                 if ((method->flags & METHOD_ATTRIBUTE_STATIC) > 0) {
                     // Static method
-                    reinterpret_cast<void (*)(std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(params..., method);
-                } else {
-                    if (il2cpp_functions::class_is_valuetype(method->klass)) {
-                        // Value type instance method. Instance parameter is always boxed in some way.
-                        auto boxedRepr = instance;
-                        if constexpr (sizeof(Il2CppCodeGenModule) <= 104) {
-                            // Boxing is only required if we invoke to adjustor thunks instead of actual impls
-                            // Note that for whatever reason, we have exposed methods that are compiled that use literals, yet we still need to passed boxed reprs.
-                            if constexpr (il2cpp_type_check::need_box<T>::value) {
-                                // TODO: Eventually remove this dependence on il2cpp_functions::Init
-                                il2cpp_functions::Init();
-                                // Yeah, we cast literally all over the place.
-                                boxedRepr = reinterpret_cast<T*>(il2cpp_functions::value_box(classof(T), boxedRepr));
-                            } else {
-                                boxedRepr = reinterpret_cast<T*>(reinterpret_cast<void**>(boxedRepr) - 2);
-                            }
-                        }
-                        reinterpret_cast<void (*)(T*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(boxedRepr, params..., method);
-                        if constexpr (sizeof(Il2CppCodeGenModule) <= 104) {
-                            *instance = *reinterpret_cast<T*>(il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(boxedRepr)));
-                        }
-                    } else {
-                        reinterpret_cast<void (*)(T*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(instance, params..., method);
-                    }
+                    return reinterpret_cast<void (*)(std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(params..., method);
                 }
+                if (il2cpp_functions::class_is_valuetype(method->klass)) {
+                    // Value type instance method. Instance parameter is always boxed in some way.
+                    auto boxedRepr = instance;
+                    if constexpr (sizeof(Il2CppCodeGenModule) <= 104) {
+                        // Boxing is only required if we invoke to adjustor thunks instead of actual impls
+                        // Note that for whatever reason, we have exposed methods that are compiled that use literals, yet we still need to passed boxed reprs.
+                        if constexpr (il2cpp_type_check::need_box<T>::value) {
+                            // TODO: Eventually remove this dependence on il2cpp_functions::Init
+                            il2cpp_functions::Init();
+                            // Yeah, we cast literally all over the place.
+                            boxedRepr = reinterpret_cast<T*>(il2cpp_functions::value_box(classof(T), boxedRepr));
+                        } else {
+                            boxedRepr = reinterpret_cast<T*>(reinterpret_cast<void**>(boxedRepr) - 2);
+                        }
+                    }
+                    reinterpret_cast<void (*)(T*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(boxedRepr, params..., method);
+                    if constexpr (sizeof(Il2CppCodeGenModule) <= 104) {
+                        *instance = *reinterpret_cast<T*>(il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(boxedRepr)));
+                    }
+                    return;
+                } else {
+                    return reinterpret_cast<void (*)(T*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(instance, params..., method);
+                }
+
             } else {
                 // Method has non-void return
                 // if (il2cpp_functions::class_from_type(method->return_type)->instance_size != sizeof(TOut)) {
@@ -501,9 +503,10 @@ namespace il2cpp_utils {
                             *instance = *reinterpret_cast<T*>(il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(boxedRepr)));
                         }
                         return res;
-                    } else {
-                        return reinterpret_cast<TOut (*)(T*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(instance, params..., method);
                     }
+
+                    // ref type
+                    return reinterpret_cast<TOut (*)(T*, std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(instance, params..., method);
                 }
             }
         } catch (Il2CppExceptionWrapper& wrapper) {
@@ -523,32 +526,184 @@ namespace il2cpp_utils {
     /// @param instance The instance or Il2CppClass*/Il2CppType* to invoke with.
     /// @param method The MethodInfo* to invoke.
     /// @param params The arguments to pass into the function.
-    template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
-    TOut RunMethodThrow(T* instance, const MethodInfo* method, TArgs&& ...params) {
-        return RunMethodThrow<TOut, checkTypes>(instance, method, method->methodPointer, params...);
+    template <class TOut = void, bool checkTypes = true, class T, class... TArgs>
+    TOut RunMethodFnPtr(T* instance, const MethodInfo* method, TArgs&&... params) {
+        return RunMethodFnPtr<TOut, checkTypes>(instance, method, method->methodPointer, params...);
     }
 
-    /// @brief Runs the provided method and rethrows any exception that occurs. Will throw a RunMethodException.
-    /// If checkTypes is false, does not perform type checking and instead is an unsafe wrapper around runtime_invoke.
-    /// @tparam TOut The output to return. Defaults to void.
-    /// @tparam checkTypes Whether to check types or not. Defaults to true.
-    /// @tparam T The instance type (an actual instance or nullptr Il2CppClass*, etc.)
-    /// @tparam TArgs The argument types.
-    /// @param instance The instance or nullptr Il2CppClass* to invoke with.
-    /// @param method The MethodInfo* to invoke.
-    /// @param params The arguments to pass into the function.
-    /// @return The result from the function, or will throw.
-    template<class TOut = void, bool checkTypes = true, class T, class... TArgs>
-    TOut RunMethodRethrow(T&& instance, const MethodInfo* method, TArgs&& ...params) {
+
+    #else
+    /// @brief Instantiates a generic MethodInfo* from the provided Il2CppClasses.
+    /// @return MethodInfo* for RunMethod calls, will be nullptr on failure
+    const MethodInfo* MakeGenericMethod(const MethodInfo* info, ::std::span<Il2CppClass*> types) noexcept;
+    const MethodInfo* FindMethodUnsafe(const Il2CppClass* klass, ::std::string_view methodName, int argsCount) noexcept;
+    const MethodInfo* FindMethodUnsafe(Il2CppObject* instance, ::std::string_view methodName, int argsCount) noexcept;
+    const MethodInfo* FindMethodUnsafe(::std::string_view nameSpace, ::std::string_view className, ::std::string_view methodName, int argsCount) noexcept;
+    const MethodInfo* FindMethod(FindMethodInfo& info) noexcept;
+    #ifndef BS_HOOK_USE_CONCEPTS
+    template <typename... TArgs, ::std::enable_if_t<(... && !::std::is_convertible_v<TArgs, FindMethodInfo>), int> = 0>
+    #else
+    template<typename... TArgs>
+    requires (... && !::std::is_convertible_v<TArgs, FindMethodInfo>)
+    #endif
+    const MethodInfo* FindMethod(TArgs&&... args) noexcept {
+        auto info = FindMethodInfo(args...);
+        return FindMethod(info);
+    }
+
+    bool IsConvertibleFrom(const Il2CppType* to, const Il2CppType* from, bool asArgs = true);
+    // Returns if a given MethodInfo's parameters match the Il2CppType vector
+    bool ParameterMatch(const MethodInfo* method, ::std::span<const Il2CppType*> argTypes, std::optional<bool*> perfectMatch);
+
+    // Returns if a given MethodInfo's parameters match the Il2CppType vector and generic types vector
+    bool ParameterMatch(const MethodInfo* method, ::std::span<Il2CppClass const*> genTypes, ::std::span<const Il2CppType*> argTypes, std::optional<bool*> perfectMatch);
+    #endif
+
+    // Function made by zoller27osu, modified by Sc2ad
+    // Logs information about the given MethodInfo* as log(DEBUG)
+    void LogMethod(LoggerContextObject& logger, const MethodInfo* method);
+
+    // Created by zoller27osu
+    // Calls LogMethod on all methods in the given class
+    void LogMethods(LoggerContextObject& logger, Il2CppClass* klass, bool logParents = false);
+
+    namespace invokers {
+    // TODO: invoker concept
+
+    template <typename TOut, typename T, typename... TArgs>
+    ::std::variant<TOut, RunMethodException> FnPtrInvoker(T* instance, const MethodInfo* method, TArgs&&... params) noexcept {
+        bool isStatic = method->flags & METHOD_ATTRIBUTE_STATIC;
+        if (isStatic && method->klass && !method->klass->cctor_finished_or_no_cctor) {
+            il2cpp_functions::Class_Init(method->klass);
+        }
+
+        if (!method) {
+            return RunMethodException("Method cannot be null!", nullptr);
+        }
+
+        auto mPtr = method->methodPointer;
+
+        if (!mPtr) {
+            return RunMethodException("Method pointer cannot be null (don't call an abstract method directly!)", method);
+        }
+
+        if constexpr (std::is_same_v<TOut, void>) {
+            // Method has void return
+            if (!il2cpp_functions::type_equals(method->return_type, &il2cpp_functions::defaults->void_class->byval_arg)) {
+                // If the method does NOT have a void return, yet we asked for one, this fails.
+                // This should ALWAYS fail because it's very wrong, regardless of checkTypes.
+                return RunMethodException("Return type of method is not void, yet was requested as void!", method);
+            }
+        } else {
+            // Method does not void return
+            if (il2cpp_functions::type_equals(method->return_type, &il2cpp_functions::defaults->void_class->byval_arg)) {
+                return RunMethodException("Return type of method is void, yet was requested as non-void!", method);
+            }
+        }
+
+        try {
+            if ((method->flags & METHOD_ATTRIBUTE_STATIC) > 0) {
+                // Static method
+                return reinterpret_cast<TOut (*)(std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr)(params..., method);
+            }
+
+            auto castedMPtr = reinterpret_cast<TOut (*)(std::remove_reference_t<TArgs>..., const MethodInfo*)>(mPtr);
+
+            auto boxedRepr = instance;
+            if (il2cpp_functions::class_is_valuetype(method->klass)) {
+                if constexpr (sizeof(Il2CppCodeGenModule) <= 104) {
+                    // Boxing is only required if we invoke to adjustor thunks instead of actual impls
+                    // Note that for whatever reason, we have exposed methods that are compiled that use literals, yet we still need to passed boxed reprs.
+                    if constexpr (il2cpp_type_check::need_box<T>::value) {
+                        // TODO: Eventually remove this dependence on il2cpp_functions::Init
+                        il2cpp_functions::Init();
+                        // Yeah, we cast literally all over the place.
+                        boxedRepr = reinterpret_cast<T*>(il2cpp_functions::value_box(classof(T), boxedRepr));
+                    } else {
+                        boxedRepr = reinterpret_cast<T*>(reinterpret_cast<void**>(boxedRepr) - 2);
+                    }
+                }
+            }
+
+            // update value type
+            auto unbox_value_type = [&]() {
+                if constexpr (il2cpp_type_check::need_box<T>::value && sizeof(Il2CppCodeGenModule) <= 104) {
+                    *instance = *reinterpret_cast<T*>(il2cpp_functions::object_unbox(reinterpret_cast<Il2CppObject*>(boxedRepr)));
+                }
+            };
+
+            if constexpr (std::is_same_v<TOut, void>) {
+                castedMPtr(boxedRepr, params..., method);
+                unbox_value_type();
+            } else {
+                TOut res = castedMPtr(boxedRepr, params..., method);
+                unbox_value_type();
+                return res;
+            }
+
+        } catch (Il2CppExceptionWrapper& wrapper) {
+            return RunMethodException(wrapper.ex, method);
+        }
+    }
+
+    template <typename TOut, typename T, typename... TArgs>
+    ::std::variant<TOut, RunMethodException> Il2CppInvoker(T* obj, const MethodInfo* method, TArgs&&... params) noexcept {
+        il2cpp_functions::Init();
+        Il2CppException* exp = nullptr;
+        std::array<void*, sizeof...(params)> invokeParams{ ::il2cpp_utils::ExtractTypeValue(params)... };
+        auto* ret = il2cpp_functions::runtime_invoke(method, obj, invokeParams.data(), &exp);
+
+        if (exp) {
+            return RunMethodException(exp, method);
+        }
+
+        if constexpr (!std::is_same_v<void, TOut>) {
+            // return type is not void, we should return something!
+            // type check boxing
+            // TODO: Type check boxing is needed?
+            // if constexpr (checkTypes && ret != nullptr) {
+            //     auto constexpr must_box = ::il2cpp_utils::il2cpp_type_check::need_box<TOut>::value;
+            //     auto is_boxed = il2cpp_functions::class_is_valuetype(ret->klass);
+            //     if (is_boxed != must_box) {
+            //         throw RunMethodException(string_format("Klass %s requires boxing: %i Klass %s is boxed %i",
+            //                                                ::il2cpp_utils::ClassStandardName(classof(TOut)), must_box,
+            //                                                ::il2cpp_utils::ClassStandardName(ret->klass), is_boxed));
+            //     }
+            // }
+
+            // FIXME: what if the return type is a ByRef<T> ?
+            if constexpr (::il2cpp_utils::il2cpp_type_check::need_box<TOut>::value) {  // value type returns from runtime invoke are boxed
+                // FIXME: somehow allow the gc free as an out of scope instead of having to temporarily save the retval?
+                auto retval = ::il2cpp_utils::Unbox<TOut>(ret);
+                il2cpp_functions::il2cpp_GC_free(ret);
+                return retval;
+            } else if constexpr (::il2cpp_utils::il2cpp_reference_type_wrapper<TOut>) {  // ref type returns are just that, ref type returns
+                return TOut(ret);
+            } else {
+                // probably ref type pointer
+                return static_cast<TOut>(static_cast<void*>(ret));
+            }
+        }
+    }
+    }  // namespace invokers
+
+    template <class TOut = Il2CppObject*, bool checkTypes = true, class T, class... TArgs>
+    // Runs a MethodInfo with the specified parameters and instance, with return type TOut.
+    // Assumes a static method if instance == nullptr. May fail due to exception or wrong name, hence the ::std::optional.
+    ::std::variant<TOut, RunMethodException> RunMethod(T&& wrappedInstance, const MethodInfo* method, TArgs&&... params) noexcept {
         static auto& logger = getLogger();
-        CRASH_UNLESS(method);
+        RET_NULLOPT_UNLESS(logger, method);
 
         if constexpr (checkTypes) {
             // only check args if TArgs is > 0
+            if (method->parameters_count != sizeof...(TArgs)) {
+                logger.warning("MethodInfo parameter count %i does not match actual parameter count %i", method->parameters_count, sizeof...(TArgs));
+            }
+            
             if constexpr (sizeof...(TArgs) > 0) {
                 std::array<const Il2CppType*, sizeof...(TArgs)> types{ ::il2cpp_utils::ExtractType(params)... };
                 if (!ParameterMatch(method, types, std::nullopt)) {
-                    throw RunMethodException("Parameters do not match!", method);
+                    return RunMethodException("Parameters do not match!", method);
                 }
             }
 
@@ -557,20 +712,26 @@ namespace il2cpp_utils {
                 if (outType) {
                     if (!IsConvertibleFrom(outType, method->return_type, false)) {
                         logger.warning("User requested TOut %s does not match the method's return object of type %s!", TypeGetSimpleName(outType), TypeGetSimpleName(method->return_type));
-                        throw RunMethodException(string_format("Return type of method is not convertible to: %s!", TypeGetSimpleName(outType)), method);
+                        return RunMethodException(string_format("Return type of method is not convertible to: %s!", TypeGetSimpleName(outType)), method);
                     }
                 }
             }
         }
 
-        void* inst = ::il2cpp_utils::ExtractValue(instance);  // null is allowed (for T = Il2CppType* or Il2CppClass*)
+        void* inst = ::il2cpp_utils::ExtractValue(wrappedInstance);  // null is allowed (for T = Il2CppType* or Il2CppClass*)
+
+        auto isStatic = method->flags & METHOD_ATTRIBUTE_STATIC;
+        if (!isStatic && !inst) {
+            return RunMethodException("Method is static but instance is null!", method);
+        }
+
         Il2CppException* exp = nullptr;
-        std::array<void*, sizeof...(params)> invokeParams{::il2cpp_utils::ExtractTypeValue(params)...};
+        std::array<void*, sizeof...(params)> invokeParams{ ::il2cpp_utils::ExtractTypeValue(params)... };
         il2cpp_functions::Init();
         auto* ret = il2cpp_functions::runtime_invoke(method, inst, invokeParams.data(), &exp);
 
         if (exp) {
-            throw RunMethodException(exp, method);
+            return RunMethodException(exp, method);
         }
 
         if constexpr (!std::is_same_v<void, TOut>) {
@@ -609,139 +770,53 @@ namespace il2cpp_utils {
                 return retval;
             } else if constexpr (::il2cpp_utils::il2cpp_reference_type_wrapper<TOut>) {  // ref type returns are just that, ref type returns
                 return TOut(ret);
-            } else {  // probably ref type pointer
+            } else {
+                // probably ref type pointer
                 return static_cast<TOut>(static_cast<void*>(ret));
             }
         }
     }
-    #else
-    /// @brief Instantiates a generic MethodInfo* from the provided Il2CppClasses.
-    /// @return MethodInfo* for RunMethod calls, will be nullptr on failure
-    const MethodInfo* MakeGenericMethod(const MethodInfo* info, ::std::span<Il2CppClass*> types) noexcept;
-    const MethodInfo* FindMethodUnsafe(const Il2CppClass* klass, ::std::string_view methodName, int argsCount) noexcept;
-    const MethodInfo* FindMethodUnsafe(Il2CppObject* instance, ::std::string_view methodName, int argsCount) noexcept;
-    const MethodInfo* FindMethodUnsafe(::std::string_view nameSpace, ::std::string_view className, ::std::string_view methodName, int argsCount) noexcept;
-    const MethodInfo* FindMethod(FindMethodInfo& info) noexcept;
-    #ifndef BS_HOOK_USE_CONCEPTS
-    template <typename... TArgs, ::std::enable_if_t<(... && !::std::is_convertible_v<TArgs, FindMethodInfo>), int> = 0>
-    #else
-    template<typename... TArgs>
-    requires (... && !::std::is_convertible_v<TArgs, FindMethodInfo>)
-    #endif
-    const MethodInfo* FindMethod(TArgs&&... args) noexcept {
-        auto info = FindMethodInfo(args...);
-        return FindMethod(info);
-    }
 
-    bool IsConvertibleFrom(const Il2CppType* to, const Il2CppType* from, bool asArgs = true);
-    // Returns if a given MethodInfo's parameters match the Il2CppType vector
-    bool ParameterMatch(const MethodInfo* method, ::std::span<const Il2CppType*> argTypes, std::optional<bool*> perfectMatch);
+    /// @brief Runs the provided method and rethrows any exception that occurs. Will throw a RunMethodException.
+    /// If checkTypes is false, does not perform type checking and instead is an unsafe wrapper around runtime_invoke.
+    /// @tparam TOut The output to return. Defaults to void.
+    /// @tparam checkTypes Whether to check types or not. Defaults to true.
+    /// @tparam T The instance type (an actual instance or nullptr Il2CppClass*, etc.)
+    /// @tparam TArgs The argument types.
+    /// @param instance The instance or nullptr Il2CppClass* to invoke with.
+    /// @param method The MethodInfo* to invoke.
+    /// @param params The arguments to pass into the function.
+    /// @return The result from the function, or will throw.
+    template <class TOut = void, bool checkTypes = true, class... TArgs>
+    inline TOut RunMethodRethrow(TArgs&&... params) {
+        auto result = ::il2cpp_utils::RunMethod<TOut, checkTypes>(std::forward<TArgs>(params)...);
 
-    // Returns if a given MethodInfo's parameters match the Il2CppType vector and generic types vector
-    bool ParameterMatch(const MethodInfo* method, ::std::span<Il2CppClass const*> genTypes, ::std::span<const Il2CppType*> argTypes, std::optional<bool*> perfectMatch);
-    #endif
-
-    // Function made by zoller27osu, modified by Sc2ad
-    // Logs information about the given MethodInfo* as log(DEBUG)
-    void LogMethod(LoggerContextObject& logger, const MethodInfo* method);
-
-    // Created by zoller27osu
-    // Calls LogMethod on all methods in the given class
-    void LogMethods(LoggerContextObject& logger, Il2CppClass* klass, bool logParents = false);
-
-    template<class TOut = Il2CppObject*, bool checkTypes = true, class T, class... TArgs>
-    // Runs a MethodInfo with the specified parameters and instance, with return type TOut.
-    // Assumes a static method if instance == nullptr. May fail due to exception or wrong name, hence the ::std::optional.
-    ::std::optional<TOut> RunMethod(T&& instance, const MethodInfo* method, TArgs&& ...params) {
-        static auto& logger = getLogger();
-        RET_NULLOPT_UNLESS(logger, method);
-
-        if constexpr (checkTypes && sizeof...(TArgs) > 0) {
-            std::array<const Il2CppType*, sizeof...(TArgs)> types{::il2cpp_utils::ExtractType(params)...};
-            RET_NULLOPT_UNLESS(logger, ParameterMatch(method, types, std::nullopt));
+        if (auto exception = std::get_if<::il2cpp_utils::RunMethodException>(&result)) {
+            throw exception;
         }
 
-        void* inst = ::il2cpp_utils::ExtractValue(instance);  // null is allowed (for T = Il2CppType* or Il2CppClass*)
-        Il2CppException* exp = nullptr;
-        std::array<void*, sizeof...(params)> invokeParams{::il2cpp_utils::ExtractValue(params)...};
-        il2cpp_functions::Init();
-        auto* ret = il2cpp_functions::runtime_invoke(method, inst, invokeParams.data(), &exp);
+        return std::get<TOut>(std::move(result));
+    }
 
-        // Check if the TOut that the user requested makes sense given the Il2CppObject* we actually got
-        if constexpr (checkTypes) {
-            if (ret) {
-                // By using this instead of ExtractType, we avoid unboxing because the ultimate type in that case would depend on the
-                // method in the first place
-                auto* outType = ExtractIndependentType<TOut>();
-                if (outType) {
-                    auto* retType = ExtractType(ret);
-                    if (!IsConvertibleFrom(outType, retType, false)) {
-                        logger.warning("User requested TOut %s does not match the method's return object of type %s!",
-                            TypeGetSimpleName(outType), TypeGetSimpleName(retType));
-                    }
-                }
-            }
+    /// @brief Runs the provided method and rethrows any exception that occurs. Will throw a RunMethodException.
+    /// If checkTypes is false, does not perform type checking and instead is an unsafe wrapper around runtime_invoke.
+    /// @tparam TOut The output to return. Defaults to void.
+    /// @tparam checkTypes Whether to check types or not. Defaults to true.
+    /// @tparam T The instance type (an actual instance or nullptr Il2CppClass*, etc.)
+    /// @tparam TArgs The argument types.
+    /// @param instance The instance or nullptr Il2CppClass* to invoke with.
+    /// @param method The MethodInfo* to invoke.
+    /// @param params The arguments to pass into the function.
+    /// @return The result from the function, or will throw.
+    template <class TOut = void, bool checkTypes = true, class... TArgs>
+    inline std::optional<TOut> RunMethodOpt(TArgs&&... params) noexcept {
+        auto result = ::il2cpp_utils::RunMethod<TOut, checkTypes>(std::forward<TArgs>(params)...);
+
+        if (auto exception = std::get_if<::il2cpp_utils::RunMethodException>(&result)) {
+            return std::nullopt;
         }
 
-        if (exp) {
-            logger.error("%s: Failed with exception: %s", il2cpp_functions::method_get_name(method),
-                il2cpp_utils::ExceptionToString(exp).c_str());
-            return ::std::nullopt;
-        }
-
-        return FromIl2CppObject<TOut>(ret);
-    }
-
-    template<class TOut = Il2CppObject*, bool checkTypes = true, class... TArgs>
-    // Simply forwards arguments to RunMethod<TOut, checkTypes>(static_cast<Il2CppClass*>(nullptr), ...)
-    ::std::optional<TOut> RunStaticMethod(const MethodInfo* method, TArgs&& ...params) {
-        return RunMethod<TOut, checkTypes>(static_cast<Il2CppClass*>(nullptr), method, params...);
-    }
-
-    template<class TOut = Il2CppObject*, class T, class... TArgs>
-    // Simply forwards arguments to RunMethod<TOut, false>
-    ::std::optional<TOut> RunMethodUnsafe(T&& instance, const MethodInfo* method, TArgs&& ...params) {
-        return RunMethod<TOut, false>(instance, method, params...);
-    }
-
-    template<class TOut = Il2CppObject*, class... TArgs>
-    // Simply forwards arguments to RunMethod<TOut, false>(static_cast<Il2CppClass*>(nullptr), ...)
-    ::std::optional<TOut> RunStaticMethodUnsafe(const MethodInfo* method, TArgs&& ...params) {
-        return RunMethod<TOut, false>(static_cast<Il2CppClass*>(nullptr), method, params...);
-    }
-
-    template <class TOut = Il2CppObject*, bool checkTypes = true, class T, class... TArgs>
-    // Runs a (static) method with the specified method name, with return type TOut.
-    // Checks the types of the parameters against the candidate methods.
-    ::std::optional<TOut> RunMethod(T&& classOrInstance, ::std::string_view methodName, TArgs&&... params) {
-        static auto& logger = getLogger();
-        if constexpr (checkTypes) {
-            std::array<const Il2CppType*, sizeof...(TArgs)> const types{::il2cpp_utils::ExtractType(params)...};
-            auto* method = RET_NULLOPT_UNLESS(logger, FindMethod(classOrInstance, methodName, types));
-            return RunMethod<TOut, true>(classOrInstance, method, params...);
-        }
-        // TODO: We should probably change how FindMethod is called/isn't called
-        // At the moment, however, if you call RunMethod with checkTypes = false, it will perform an FindMethodUnsafe instead
-        // But it will return nullptr if there are multiple matches
-        else {
-            if constexpr (std::is_same_v<T, Il2CppClass*>) {
-                auto* method = RET_NULLOPT_UNLESS(logger, FindMethodUnsafe(classOrInstance, methodName, sizeof...(TArgs)));
-                return RunMethod<TOut, false>(classOrInstance, method, params...);
-            } else {
-                auto* klass = RET_NULLOPT_UNLESS(logger, ExtractClass(classOrInstance));
-                auto* method = RET_NULLOPT_UNLESS(logger, FindMethodUnsafe(klass, methodName, sizeof...(TArgs)));
-                return RunMethod<TOut, false>(classOrInstance, method, params...);
-            }
-        }
-    }
-
-    template<class TOut = Il2CppObject*, bool checkTypes = true, class... TArgs>
-    // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
-    // The method also has return type TOut.
-    ::std::optional<TOut> RunMethod(::std::string_view nameSpace, ::std::string_view klassName, ::std::string_view methodName, TArgs&& ...params) {
-        static auto& logger = getLogger();
-        auto* klass = RET_NULLOPT_UNLESS(logger, GetClassFromName(nameSpace, klassName));
-        return RunMethod<TOut, checkTypes>(klass, methodName, params...);
+        return std::get<TOut>(std::move(result));
     }
 
     /// @brief Instantiates a generic MethodInfo* from the provided Il2CppClasses and invokes it.
@@ -777,30 +852,6 @@ namespace il2cpp_utils {
         return RunGenericMethod<TOut>(klass, methodName, genTypes, params...);
     }
 
-    template<class TOut = Il2CppObject*, class T, class... TArgs>
-    // Runs a (static) method with the specified method name and number of arguments, with return type TOut.
-    // DOES NOT PERFORM TYPE CHECKING.
-    #ifndef BS_HOOK_USE_CONCEPTS
-    ::std::enable_if_t<::std::is_base_of_v<Il2CppClass, T> || ::std::is_base_of_v<Il2CppObject, T>, ::std::optional<TOut>>
-    #else
-    requires (::std::is_base_of_v<Il2CppClass, T> || ::std::is_base_of_v<Il2CppObject, T>) ::std::optional<TOut>
-    #endif
-    RunMethodUnsafe(T* classOrInstance, ::std::string_view methodName, TArgs&& ...params) {
-        static auto& logger = getLogger();
-        RET_NULLOPT_UNLESS(logger, classOrInstance);
-        auto* method = RET_NULLOPT_UNLESS(logger, FindMethodUnsafe(classOrInstance, methodName, sizeof...(TArgs)));
-        return RunMethod<TOut, false>(classOrInstance, method, params...);
-    }
-
-    template<class TOut = Il2CppObject*, class... TArgs>
-    // Runs a static method with the specified method name and arguments, on the class with the specified namespace and class name.
-    // The method also has return type TOut.
-    // DOES NOT PERFORM TYPE CHECKING.
-    ::std::optional<TOut> RunMethodUnsafe(::std::string_view nameSpace, ::std::string_view klassName, ::std::string_view methodName, TArgs&& ...params) {
-        static auto& logger = getLogger();
-        auto* klass = RET_NULLOPT_UNLESS(logger, GetClassFromName(nameSpace, klassName));
-        return RunMethodUnsafe<TOut>(klass, methodName, params...);
-    }
 
     template<typename TOut = Il2CppObject*, CreationType creationType = CreationType::Temporary, typename... TArgs>
     // Creates a new object of the given class using the given constructor parameters
