@@ -567,9 +567,13 @@ namespace il2cpp_utils {
     // Calls LogMethod on all methods in the given class
     void LogMethods(LoggerContextObject& logger, Il2CppClass* klass, bool logParents = false);
 
+#pragma region Invokers
+    // Experiment
     namespace invokers {
     // TODO: invoker concept
 
+
+    // TODO: Fix
     template <typename TOut, typename T, typename... TArgs>
     ::std::variant<TOut, RunMethodException> FnPtrInvoker(T* instance, const MethodInfo* method, TArgs&&... params) noexcept {
         bool isStatic = method->flags & METHOD_ATTRIBUTE_STATIC;
@@ -646,8 +650,8 @@ namespace il2cpp_utils {
         }
     }
 
-    template <typename TOut, typename T, typename... TArgs>
-    ::std::variant<TOut, RunMethodException> Il2CppInvoker(T* obj, const MethodInfo* method, TArgs&&... params) noexcept {
+    template <typename TOut, typename... TArgs>
+    ::std::variant<TOut, RunMethodException> Il2CppInvoker(Il2CppObject* obj, const MethodInfo* method, TArgs&&... params) noexcept {
         il2cpp_functions::Init();
         Il2CppException* exp = nullptr;
         std::array<void*, sizeof...(params)> invokeParams{ ::il2cpp_utils::ExtractTypeValue(params)... };
@@ -686,7 +690,8 @@ namespace il2cpp_utils {
         }
     }
     }  // namespace invokers
-
+#pragma endregion
+    
     template <class TOut = Il2CppObject*, bool checkTypes = true, class T, class... TArgs>
     // Runs a MethodInfo with the specified parameters and instance, with return type TOut.
     // Assumes a static method if instance == nullptr. May fail due to exception or wrong name, hence the ::std::optional.
@@ -724,6 +729,9 @@ namespace il2cpp_utils {
         if (!isStatic && !inst) {
             return RunMethodException("Method is static but instance is null!", method);
         }
+
+        // Experiment
+        // return Invoker<TOut>(inst, method, std::forward<TArgs>(params)...);
 
         Il2CppException* exp = nullptr;
         std::array<void*, sizeof...(params)> invokeParams{ ::il2cpp_utils::ExtractTypeValue(params)... };
@@ -830,30 +838,30 @@ namespace il2cpp_utils {
     /// @param info Generic MethodInfo* to invoke
     /// @param genTypes Types to instantiate the generic MethodInfo* with
     /// @param params Parameters to RunMethod
-    template<class TOut = Il2CppObject*, class T, class... TArgs>
-    ::std::optional<TOut> RunGenericMethod(T&& instance, const MethodInfo* info, ::std::span<const Il2CppClass* const> genTypes, TArgs&& ...params) noexcept {
+    template <class TOut = Il2CppObject*, class T, class... TArgs>
+    ::std::variant<TOut, RunMethodException> RunGenericMethod(T&& instance, const MethodInfo* info, ::std::span<const Il2CppClass* const> genTypes, TArgs&&... params) noexcept {
         static auto& logger = getLogger();
         auto* createdMethod = RET_NULLOPT_UNLESS(logger, MakeGenericMethod(info, genTypes));
         return RunMethod<TOut, false>(instance, createdMethod, params...);
     }
 
-    template<class TOut = Il2CppObject*, class T, class... TArgs>
-    ::std::optional<TOut> RunGenericMethod(T&& classOrInstance, ::std::string_view methodName, ::std::span<const Il2CppClass* const> genTypes, TArgs&& ...params) noexcept {
+    template <class TOut = Il2CppObject*, class T, class... TArgs>
+    ::std::variant<TOut, RunMethodException> RunGenericMethod(T&& classOrInstance, ::std::string_view methodName, ::std::span<const Il2CppClass* const> genTypes, TArgs&&... params) noexcept {
         static auto& logger = getLogger();
         std::array<const Il2CppType*, sizeof...(TArgs)> types{::il2cpp_utils::ExtractType(params)...};
 
         auto* info = RET_NULLOPT_UNLESS(logger, FindMethod(classOrInstance, NoArgClass<TOut>(), methodName, genTypes, types));
         return RunGenericMethod<TOut>(classOrInstance, info, genTypes, params...);
     }
-    template<class TOut = Il2CppObject*, class... TArgs>
+    template <class TOut = Il2CppObject*, class... TArgs>
     // Runs a static generic method with the specified method name and arguments, on the class with the specified namespace and class name.
     // The method also has return type TOut.
-    ::std::optional<TOut> RunGenericMethod(::std::string_view nameSpace, ::std::string_view klassName, ::std::string_view methodName, ::std::span<const Il2CppClass* const> genTypes, TArgs&& ...params) noexcept {
+    ::std::variant<TOut, RunMethodException> RunGenericMethod(::std::string_view nameSpace, ::std::string_view klassName, ::std::string_view methodName, ::std::span<const Il2CppClass* const> genTypes,
+                                                              TArgs&&... params) noexcept {
         static auto& logger = getLogger();
         auto* klass = RET_NULLOPT_UNLESS(logger, GetClassFromName(nameSpace, klassName));
         return RunGenericMethod<TOut>(klass, methodName, genTypes, params...);
     }
-
 
     template<typename TOut = Il2CppObject*, CreationType creationType = CreationType::Temporary, typename... TArgs>
     // Creates a new object of the given class using the given constructor parameters
@@ -872,7 +880,7 @@ namespace il2cpp_utils {
         // runtime_invoke constructor with right type(s) of arguments, return null if constructor errors
         std::array<const Il2CppType*, sizeof...(TArgs)> types{::il2cpp_utils::ExtractType(args)...};
         auto* method = RET_NULLOPT_UNLESS(logger, FindMethod(klass, ".ctor", types));
-        RET_NULLOPT_UNLESS(logger, RunMethod(obj, method, args...));
+        RET_NULLOPT_UNLESS(logger, RunMethodOpt(obj, method, args...));
         return FromIl2CppObject<TOut>(obj);
     }
 
