@@ -821,12 +821,11 @@ template <class TOut = void, bool checkTypes = true, class... TArgs>
 inline TOut RunMethodRethrow(TArgs&&... params) {
     auto result = ::il2cpp_utils::RunMethod<TOut, checkTypes>(std::forward<TArgs>(params)...);
 
-    // TODO: Move here?
     if (auto exceptionOpt = result.as_optional_exception()) {
         throw exceptionOpt.value();
     }
     if constexpr (!std::is_same_v<TOut, void>) {
-        return result.move_result();
+        return result.get_result();
     }
 }
 
@@ -850,7 +849,7 @@ inline std::optional<TypeOrMonostate<TOut>> RunMethodOpt(TArgs&&... params) noex
         return std::nullopt;
     }
 
-    return result.move_result();
+    return result.get_result();
 }
 
 
