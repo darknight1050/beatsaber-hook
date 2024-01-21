@@ -422,7 +422,16 @@ namespace il2cpp_utils {
 
                 // if no perfect match, look for lowest weighted
                 if (!target) {
+                    logger.warning("Found multiple methods that match for %s.%s", ClassStandardName(klass).c_str(), info.name.data());
+                    for (auto const& [method, weight] : weightMap) {
+                        logger.warning("Weight %lu Method %s", weight, method->name);
+                        LogMethod(logger, method);
+                    }
+
                     target = std::min_element(weightMap.begin(), weightMap.end(), [](auto a, auto b) { return a.second < b.second; })->first;
+                    logger.warning("Using the following:");
+                    CRASH_UNLESS(target);
+                    LogMethod(logger, target);
                 }
             }
         }
