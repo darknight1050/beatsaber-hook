@@ -559,6 +559,9 @@ void LogMethod(LoggerContextObject& logger, const MethodInfo* method);
 // Calls LogMethod on all methods in the given class
 void LogMethods(LoggerContextObject& logger, Il2CppClass* klass, bool logParents = false);
 
+template <typename TOut>
+using MethodResult = ::std::variant<TypeOrMonostate<TOut>, RunMethodException>;
+
 #pragma region Invokers
 // Experiment
 namespace invokers {
@@ -566,7 +569,7 @@ namespace invokers {
 
 // TODO: Fix
 template <typename TOut, typename T, typename... TArgs>
-::std::variant<TypeOrMonostate<TOut>, RunMethodException> FnPtrInvoker(T* instance, const MethodInfo* method, TArgs&&... params) noexcept {
+MethodResult<TOut> FnPtrInvoker(T* instance, const MethodInfo* method, TArgs&&... params) noexcept {
     bool isStatic = method->flags & METHOD_ATTRIBUTE_STATIC;
     if (isStatic && method->klass && !method->klass->cctor_finished_or_no_cctor) {
         il2cpp_functions::Class_Init(method->klass);
@@ -642,7 +645,7 @@ template <typename TOut, typename T, typename... TArgs>
 }
 
 template <typename TOut, typename... TArgs>
-::std::variant<TypeOrMonostate<TOut>, RunMethodException> Il2CppInvoker(Il2CppObject* obj, const MethodInfo* method, TArgs&&... params) noexcept {
+MethodResult<TOut> Il2CppInvoker(Il2CppObject* obj, const MethodInfo* method, TArgs&&... params) noexcept {
     il2cpp_functions::Init();
     Il2CppException* exp = nullptr;
     std::array<void*, sizeof...(params)> invokeParams{ ::il2cpp_utils::ExtractTypeValue(params)... };
@@ -683,8 +686,7 @@ template <typename TOut, typename... TArgs>
 }  // namespace invokers
 #pragma endregion
 
-template <typename TOut>
-using MethodResult = ::std::variant<TypeOrMonostate<TOut>, RunMethodException>;
+
 
 template <class TOut = Il2CppObject*, bool checkTypes = true, class T, class... TArgs>
     requires(!::std::is_convertible_v<T, std::string_view> || std::is_same_v<T, nullptr_t>)
