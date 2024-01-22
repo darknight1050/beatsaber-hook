@@ -322,6 +322,11 @@ namespace il2cpp_utils {
             }
         }
 
+        // initialize klass if needed
+        if (!klass->initialized_and_no_error) {
+            il2cpp_functions::Class_Init(klass);
+        }
+
         // Ok we look through all the methods that have the following:
         // - matches name
         // - parameters match as defined in ::il2cpp_utils::ParametersMatch
