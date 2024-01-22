@@ -723,7 +723,7 @@ MethodResult<TOut> RunMethod(T&& wrappedInstance, const MethodInfo* method, TArg
 
     auto isStatic = method->flags & METHOD_ATTRIBUTE_STATIC;
     if (!isStatic && !inst) {
-        return RunMethodException("Method is static but instance is null!", method);
+        return RunMethodException("Method is instance but instance is null!", method);
     }
 
     // Experiment
