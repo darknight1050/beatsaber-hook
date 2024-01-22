@@ -405,6 +405,12 @@ namespace il2cpp_utils {
 
                         auto distance = 0;
 
+                        if (methodParamClass->flags & TYPE_ATTRIBUTE_INTERFACE) {
+                            // if interface, just add lots of weight
+                            // so we choose a concrete type instead
+                            distance += 100;
+                        }
+
                         if (!methodParamClass || !expectedParamClass) {
                             distance = 1;
                         } else {
