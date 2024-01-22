@@ -94,9 +94,33 @@ struct Result {
         return std::move(exception);
     }
 
+    /// Gets the current success result or rethrows if an exception
+    [[nodiscard]] constexpr SuccessValue const& get_or_rethrow() const {
+        if (!success) {
+            throw this->get_exception();
+        }
+
+        return this->get_result();
+    }
+    /// Gets the current success result or rethrows if an exception
+    [[nodiscard]] constexpr SuccessValue& get_or_rethrow() {
+        if (!success) {
+            throw this->get_exception();
+        }
+
+        return this->get_result();
+    }
+    /// Gets the current success result or rethrows if an exception
+    constexpr void rethrow() const {
+        if (success) {
+            return;
+        }
+        throw this->get_exception();
+    }
+
     /// Moves this result into a variant
     /// if T is void, returns std::monostate
-    [[nodiscard]] constexpr std::variant<SuccessValue, ExceptionValue> into_variant() {
+    [[nodiscard]] constexpr std::variant<SuccessValue, ExceptionValue> into_variant() noexcept {
         if (success) {
             return this->move_result();
         }
@@ -107,7 +131,7 @@ struct Result {
 #pragma region Optional Result
     /// Moves this result into an optional
     /// if T is void, returns std::monostate
-    [[nodiscard]] constexpr std::optional<SuccessValue> into_optional_result() {
+    [[nodiscard]] constexpr std::optional<SuccessValue> into_optional_result() noexcept {
         if (success) {
             return this->move_result();
         }
@@ -117,7 +141,7 @@ struct Result {
 
     /// Moves this result into an optional
     /// if T is void, returns std::monostate
-    [[nodiscard]] constexpr std::optional<SuccessValue*> as_optional_result() {
+    [[nodiscard]] constexpr std::optional<SuccessValue*> as_optional_result() noexcept {
         if (success) {
             return &this->get_result();
         }
@@ -126,7 +150,7 @@ struct Result {
     }
     /// Moves this result into an optional
     /// if T is void, returns std::monostate
-    [[nodiscard]] constexpr std::optional<SuccessValue const*> as_optional_result() const {
+    [[nodiscard]] constexpr std::optional<SuccessValue const*> as_optional_result() const noexcept {
         if (success) {
             return &this->get_result();
         }
@@ -138,7 +162,7 @@ struct Result {
 #pragma region Optional Exception
     /// Moves this result into an optional
     /// if T is void, returns std::monostate
-    [[nodiscard]] constexpr std::optional<E> into_optional_exception() {
+    [[nodiscard]] constexpr std::optional<E> into_optional_exception() noexcept {
         if (!success) {
             return this->move_exception();
         }
@@ -147,7 +171,7 @@ struct Result {
     }
 
     /// Wraps this exception into an optional
-    [[nodiscard]] constexpr std::optional<E*> as_optional_exception() {
+    [[nodiscard]] constexpr std::optional<E*> as_optional_exception() noexcept {
         if (!success) {
             return &this->get_exception();
         }
@@ -155,7 +179,7 @@ struct Result {
         return std::nullopt;
     }
     /// Wraps this exception into an optional
-    [[nodiscard]] constexpr std::optional<E const*> as_optional_exception() const {
+    [[nodiscard]] constexpr std::optional<E const*> as_optional_exception() const noexcept {
         if (!success) {
             return &this->get_exception();
         }
