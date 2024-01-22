@@ -218,7 +218,7 @@ const MethodInfo* FindMethodUnsafe(::std::string_view nameSpace, ::std::string_v
 /// Attempts to look for a method that best matches given the FindMethodInfo data
 /// if no method is found, returns null
 /// Look at il2cpp-utils-methods.cpp for more details on how this resolution takes place
-const MethodInfo* FindMethod(FindMethodInfo& info);
+const MethodInfo* FindMethod(FindMethodInfo const& info);
 
 #pragma region FindMethod class
 /// helper constructor

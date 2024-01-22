@@ -358,9 +358,9 @@ namespace il2cpp_utils {
     }
 
 #if __has_feature(cxx_exceptions)
-    const MethodInfo* FindMethod(FindMethodInfo& info)
+    const MethodInfo* FindMethod(FindMethodInfo const& info)
 #else
-    const MethodInfo* FindMethod(FindMethodInfo& info) noexcept
+    const MethodInfo* FindMethod(FindMethodInfo const& info) noexcept
 #endif
     {
         static auto logger = getLogger().WithContext("FindMethod");
@@ -403,37 +403,46 @@ namespace il2cpp_utils {
 
         const MethodInfo* target = nullptr;
 
-        // Does NOT automatically recurse through klass's parents
-        for (std::size_t i = 0; i < info.klass->method_count; i++) {
-            auto current = info.klass->methods[i];
+        auto addMethodsToMatches = [&](Il2CppClass const* targetKlass) {
+            // Does NOT automatically recurse through klass's parents
+            auto const methodsSpan = std::span(targetKlass->methods, targetKlass->method_count);
+            for (auto const& current : methodsSpan) {
+                if (info.name != current->name) {
+                    logger.debug("Method name does not match for method %s", current->name);
+                    continue;
+                }
 
-            if (info.name != current->name) {
-                logger.debug("Method name does not match for method %s", current->name);
-                continue;
+                // strict equal
+                bool isPerfect;
+                if (!ParameterMatch(current, std::span(info.genTypes), std::span(info.argTypes), &isPerfect)) {
+                    logger.debug("Parameters do not match for method %s", current->name);
+                    continue;
+                }
+
+                // if true, perfect match
+                if (isPerfect) {
+                    target = current;
+                    break;
+                }
+
+                auto methodParams = std::span(current->parameters, current->parameters_count);
+
+                matches.push_back(current);
             }
+        };
 
-            // strict equal
-            bool isPerfect;
-            if (!ParameterMatch(current, std::span(info.genTypes), std::span(info.argTypes), &isPerfect)) {
-                logger.debug("Parameters do not match for method %s", current->name);
-                continue;
-            }
-
-            // if true, perfect match
-            if (isPerfect) {
-                target = current;
-                break;
-            }
-
-            auto methodParams = std::span(current->parameters, current->parameters_count);
-
-            matches.push_back(current);
+        // now look for matches recursively
+        auto targetKlass = info.klass;
+        // if we reached no parent or perfect target is found, we're done
+        while (targetKlass != nullptr && target == nullptr) {
+            addMethodsToMatches(targetKlass);
+            targetKlass = targetKlass->parent;
         }
 
-        // Look for method in matches
-        if (!matches.empty()) {
+        // Method overload resolution
+        if (!target && !matches.empty()) {
             // Only one method found, use it
-            if (!target && matches.size() == 1) {
+            if (matches.size() == 1) {
                 target = matches.front();
             }
 
@@ -477,15 +486,6 @@ namespace il2cpp_utils {
                     LogMethod(logger, target);
                 }
             }
-        }
-
-        // Use parent's methods to look for the appropiate method
-        if (!target && klass->parent && klass->parent != klass) {
-            logger.debug("Method does not exist in %s, looking at parent %s", ClassStandardName(klass).c_str(), ClassStandardName(klass->parent).c_str());
-
-            info.klass = klass->parent;
-            target = FindMethod(info);
-            info.klass = klass;
         }
 
         // add to cache
