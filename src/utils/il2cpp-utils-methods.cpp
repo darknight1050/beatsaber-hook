@@ -280,7 +280,9 @@ namespace il2cpp_utils {
             //     return getTypeClass(genType, genClass, methodInfo);
             // }
             if (t->type == IL2CPP_TYPE_VAR) {
-                genContainer = reinterpret_cast<const Il2CppGenericContainer*>(methodInfo);
+                // idk which is more correct, yolo
+                // genContainer = reinterpret_cast<const Il2CppGenericContainer*>(methodInfo->klass->genericContainerHandle);
+                genContainer = il2cpp_utils::GetGenericContainer(methodInfo);
                 genericInst = methodInfo->genericMethod->context.method_inst;
             }
             if (t->type == IL2CPP_TYPE_MVAR) {
