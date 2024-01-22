@@ -6,6 +6,7 @@
 #include "utils/il2cpp-utils-methods.hpp"
 #include "utils/utils.h"
 #include <algorithm>
+#include <cstdint>
 #include <shared_mutex>
 #include <sstream>
 #include <unordered_map>
@@ -303,6 +304,59 @@ namespace il2cpp_utils {
         return nullptr;
     }
 
+    std::int64_t calculateWeightOfParam(Il2CppClass* methodParamClass, Il2CppClass* expectedParamClass) {
+        if (!methodParamClass || !expectedParamClass) {
+            return 1;
+        }
+
+        std::span<Il2CppClass const* const> methodInterfaces = { methodParamClass->implementedInterfaces, methodParamClass->interfaces_count };
+
+        std::int64_t distance = 0;
+
+        if (methodParamClass == expectedParamClass) {
+            return distance;
+        }
+
+        bool isMethodInterface = methodParamClass->flags & TYPE_ATTRIBUTE_INTERFACE;
+        bool isExpectedInterface = expectedParamClass->flags & TYPE_ATTRIBUTE_INTERFACE;
+
+        // method is an interface, we expect a concrete type
+        // avoid
+        if (isExpectedInterface && !isMethodInterface) {
+            return 1000;
+        }
+
+        if (isMethodInterface) {
+            // if interface, just add lots of weight
+            // so we choose a concrete type instead
+            distance += 100;
+        }
+
+        std::span<Il2CppClass const* const> expectedInterfaces = { expectedParamClass->implementedInterfaces, expectedParamClass->interfaces_count };
+
+        // find all interfaces which intersect with our expected type
+        std::vector<Il2CppClass const*> interfaceIntersections;
+        interfaceIntersections.reserve(expectedInterfaces.size());
+        std::set_intersection(expectedInterfaces.begin(), expectedInterfaces.end(), methodInterfaces.begin(), methodInterfaces.end(), std::back_inserter(interfaceIntersections));
+        std::size_t interfaceSharing = interfaceIntersections.size();
+
+        while (expectedParamClass && expectedParamClass != methodParamClass) {
+            if (!il2cpp_functions::class_is_assignable_from(methodParamClass, expectedParamClass)) {
+                break;
+            }
+
+            expectedParamClass = expectedParamClass->parent;
+            distance++;
+        }
+
+        // subtract distance by specifity of interface
+        // since it allows specifity
+        distance -= interfaceSharing;
+
+
+        return distance;
+    }
+
 #if __has_feature(cxx_exceptions)
     const MethodInfo* FindMethod(FindMethodInfo& info)
 #else
@@ -386,13 +440,13 @@ namespace il2cpp_utils {
             // multiple methods
             // time to method overload resolution
             if (!target) {
-                std::vector<std::pair<const MethodInfo*, std::size_t>> weightMap;
+                std::vector<std::pair<const MethodInfo*, std::int64_t>> weightMap;
                 weightMap.reserve(matches.size());
 
                 // iterate methods
                 for (auto const& method : matches) {
                     // overload resolution
-                    std::size_t weight = 0;
+                    std::int64_t weight = 0;
 
                     // weigh the methods based on their distance to the expected
                     // parameters
@@ -401,37 +455,9 @@ namespace il2cpp_utils {
                         auto const& methodParamType = method->parameters[i];
 
                         auto const methodParamClass = getTypeClass(methodParamType, method);
-                        auto expectedParamClass = getTypeClass(expectedParamType, method);
+                        auto const expectedParamClass = getTypeClass(expectedParamType, method);
 
-                        auto distance = 0;
-
-                        if (methodParamClass->flags & TYPE_ATTRIBUTE_INTERFACE) {
-                            // if interface, just add lots of weight
-                            // so we choose a concrete type instead
-                            distance += 100;
-                        }
-
-                        if (!methodParamClass || !expectedParamClass) {
-                            distance = 1;
-                        } else {
-                            while (expectedParamClass && expectedParamClass != methodParamClass) {
-                                if (!il2cpp_functions::class_is_assignable_from(methodParamClass, expectedParamClass)) {
-                                    break;
-                                }
-
-                                expectedParamClass = expectedParamClass->parent;
-                                distance++;
-                            }
-                        }
-
-                        weight += distance;
-                    }
-
-                    // found a method that matches perfectly
-                    // return now!
-                    if (weight == 0) {
-                        target = method;
-                        break;
+                        weight += calculateWeightOfParam(methodParamClass, expectedParamClass);
                     }
 
                     weightMap.emplace_back(method, weight);
