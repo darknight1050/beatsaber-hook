@@ -329,7 +329,7 @@ namespace il2cpp_utils {
         if (isMethodInterface) {
             // if interface, just add lots of weight
             // so we choose a concrete type instead
-            distance += 100;
+            distance += 5;
         }
 
         std::span<Il2CppClass const* const> expectedInterfaces = { expectedParamClass->implementedInterfaces, expectedParamClass->interfaces_count };
