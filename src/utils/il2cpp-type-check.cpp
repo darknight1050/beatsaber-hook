@@ -9,6 +9,29 @@ namespace il2cpp_utils {
         return logger;
     }
 
+    std::vector<Il2CppClass*> ClassesFrom(std::span<std::string_view> const strings) {
+        std::vector<Il2CppClass*> classes;
+        classes.reserve((strings.size() - 1) / 2);
+        for (size_t i = 0; i < strings.size() - 1; i += 2) {
+            classes.push_back(GetClassFromName(strings[i].data(), strings[i + 1].data()));
+        }
+        return classes;
+    }
+
+    std::vector<const Il2CppType*> TypesFrom(std::span<const Il2CppClass*> classes) {
+        return ClassVecToTypes(classes);
+    }
+    std::vector<const Il2CppType*> TypesFrom(std::span<std::string_view> strings) {
+        std::vector<const Il2CppType*> types;
+        types.reserve((strings.size() - 1) / 2);
+        il2cpp_functions::Init();
+        for (size_t i = 0; i < strings.size() - 1; i += 2) {
+            auto clazz = GetClassFromName(strings[i].data(), strings[i + 1].data());
+            types.push_back(il2cpp_functions::class_get_type(clazz));
+        }
+        return types;
+    }
+
     // It doesn't matter what types these are, they just need to be used correctly within the methods
     static std::unordered_map<std::pair<std::string, std::string>, Il2CppClass*, hash_pair> namesToClassesCache;
     static std::mutex nameHashLock;
@@ -97,7 +120,7 @@ namespace il2cpp_utils {
         return nullptr;
     }
 
-    Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::span<const Il2CppClass*> const args) {
+    Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::span<const Il2CppClass* const> const args) {
         il2cpp_functions::Init();
         static auto logger = getLogger().WithContext("MakeGeneric");
 

@@ -5,6 +5,7 @@
 #include "../../shared/utils/il2cpp-utils.hpp"
 #include "../../shared/utils/utils.h"
 #include "../../shared/utils/il2cpp-functions.hpp"
+#include "utils/il2cpp-utils-methods.hpp"
 #include <algorithm>
 #include <map>
 #include <unordered_map>
@@ -80,26 +81,6 @@ namespace il2cpp_utils {
     }
 
 
-    std::vector<Il2CppClass*> ClassesFrom(std::span<std::string_view> const strings) {
-        std::vector<Il2CppClass*> classes;
-        classes.reserve((strings.size() - 1) / 2);
-        for (size_t i = 0; i < strings.size() - 1; i += 2) {
-            classes.push_back(GetClassFromName(strings[i].data(), strings[i+1].data()));
-        }
-        return classes;
-    }
-
-    std::vector<const Il2CppType*> TypesFrom(std::span<const Il2CppClass*> classes) { return ClassVecToTypes(classes); }
-    std::vector<const Il2CppType*> TypesFrom(std::span<std::string_view> strings) {
-        std::vector<const Il2CppType*> types;
-        types.reserve((strings.size() - 1) / 2);
-        il2cpp_functions::Init();
-        for (size_t i = 0; i < strings.size() - 1; i += 2) {
-            auto clazz = GetClassFromName(strings[i].data(), strings[i+1].data());
-            types.push_back(il2cpp_functions::class_get_type(clazz));
-        }
-        return types;
-    }
 
     Il2CppClass* GetParamClass(const MethodInfo* method, int paramIdx) {
         static auto logger = getLogger().WithContext("GetParamClass");
@@ -218,7 +199,7 @@ namespace il2cpp_utils {
         if (klass->has_cctor && !klass->cctor_finished_or_no_cctor && !klass->cctor_started) {
             obj->klass->cctor_started = true;
             auto* m = RET_0_UNLESS(logger, FindMethodUnsafe(klass, ".cctor", 0));
-            RET_0_UNLESS(logger, il2cpp_utils::RunStaticMethodUnsafe(m));
+            RET_0_UNLESS(logger, il2cpp_utils::RunMethodOpt(nullptr, m));
             obj->klass->cctor_finished_or_no_cctor = true;
         }
         return obj;
@@ -240,7 +221,7 @@ namespace il2cpp_utils {
             if (!m) {
                 throw exceptions::StackTraceException("Failed to find .cctor method!");
             }
-            if (!il2cpp_utils::RunStaticMethodUnsafe(m)) {
+            if (!il2cpp_utils::RunMethodOpt(nullptr, m)) {
                 throw exceptions::StackTraceException("Failed to run .cctor method!");
             }
             obj->klass->cctor_finished_or_no_cctor = true;

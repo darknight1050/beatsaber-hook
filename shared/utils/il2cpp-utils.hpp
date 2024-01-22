@@ -49,26 +49,6 @@ namespace il2cpp_utils {
 
     bool IsInterface(const Il2CppClass* klass);
 
-    // instant return
-    inline ::std::vector<Il2CppClass*>& ClassesFrom(::std::vector<Il2CppClass*>& classes) {
-        return classes;
-    }
-    inline ::std::vector<Il2CppClass*> const& ClassesFrom(::std::vector<Il2CppClass*> const& classes) {
-        return classes;
-    }
-    ::std::vector<Il2CppClass*> ClassesFrom(::std::span<::std::string_view> strings);
-
-
-    ::std::vector<const Il2CppType*> TypesFrom(::std::span<const Il2CppClass*> classes);
-    ::std::vector<const Il2CppType*> TypesFrom(::std::span<::std::string_view> strings);
-
-    // instant return
-    inline std::vector<const Il2CppType*>& TypesFrom(std::vector<const Il2CppType*>& types) {
-        return types;
-    }
-    inline std::vector<const Il2CppType*> const& TypesFrom(std::vector<const Il2CppType*> const& types) {
-        return types;
-    }
 
     Il2CppClass* GetParamClass(const MethodInfo* method, int paramIdx);
 

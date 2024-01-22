@@ -17,7 +17,7 @@ static void constDoThing(const ListW<int>& wrap) {
 
 static void doThing() {
     ListW<int> arr(*il2cpp_utils::New<List<int>*>(classof(List<int>*)));
-    il2cpp_utils::RunMethodThrow(*reinterpret_cast<List<int>**>(&arr), il2cpp_utils::FindMethod(arr, "Add"), 2);
+    il2cpp_utils::RunMethodRethrow(*reinterpret_cast<List<int>**>(&arr), il2cpp_utils::FindMethod(arr, "Add"), 2);
     auto i = arr[0];
     assert(arr.size() == 1);
     for (auto itr : arr) {
@@ -50,8 +50,8 @@ static void doThing() {
 static void doThing2() {
     ListW<int> arr(nullptr);
     MethodInfo info;
-    il2cpp_utils::RunMethodThrow(classof(Il2CppObject*), &info, arr);
-    il2cpp_utils::RunMethodThrow<ListW<Il2CppObject*>>(classof(Il2CppObject*), &info);
+    il2cpp_utils::RunMethodRethrow(classof(Il2CppObject*), &info, arr);
+    il2cpp_utils::RunMethodRethrow<ListW<Il2CppObject*>>(classof(Il2CppObject*), &info);
 }
 
 #endif

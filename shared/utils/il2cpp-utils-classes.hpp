@@ -87,6 +87,9 @@ namespace il2cpp_utils {
     template<class T>
     [[deprecated]]void a_lack_of_no_arg_class_for([[maybe_unused]]::std::string_view s) {};
 
+    ///
+    /// \return The Il2CppClass* for arg. If arg is Il2CppClass*, returns itself
+    ///
     template<typename T>
     Il2CppClass* ExtractClass(T&& arg) {
         using Dt = ::std::decay_t<T>;
