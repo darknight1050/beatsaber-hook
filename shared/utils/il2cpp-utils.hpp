@@ -209,7 +209,7 @@ namespace il2cpp_utils {
         }
         // In the event that a function is static, this will behave as normal
         // Yes, we mutate the held one as well. This is okay because we will ALWAYS mutate it.
-        auto* delegate = RET_DEFAULT_UNLESS(logger, il2cpp_utils::NewUnsafe<T>(delegateClass, obj, &method));
+        auto* delegate = RET_DEFAULT_UNLESS(logger, il2cpp_utils::New<T>(delegateClass, obj, &method));
         auto* asDelegate = reinterpret_cast<Il2CppDelegate*>(delegate);
         if ((void*)asDelegate->method_ptr != (void*)callback) {
             logger.error("Created Delegate's method_ptr (%p) is incorrect (should be %p)!", (void*)asDelegate->method_ptr, callback);
@@ -460,13 +460,6 @@ namespace il2cpp_utils {
         static auto& logger = getLogger();
         auto* klass = RET_0_UNLESS(logger, GetParamClass(method, paramIdx));
         return il2cpp_utils::New(klass, args...);
-    }
-
-    template<typename... TArgs>
-    Il2CppObject* CreateParamUnsafe(const MethodInfo* method, int paramIdx, TArgs&& ...args) {
-        static auto& logger = getLogger();
-        auto* klass = RET_0_UNLESS(logger, GetParamClass(method, paramIdx));
-        return il2cpp_utils::NewUnsafe(klass, args...);
     }
 
     /// @brief Converts a vector to an Array*

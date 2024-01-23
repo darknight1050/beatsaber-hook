@@ -947,25 +947,6 @@ TOut NewSpecific(TArgs&&... args) {
 }
 
 template <typename TOut = Il2CppObject*, CreationType creationType = CreationType::Temporary, typename... TArgs>
-// Creates a new object of the given class using the given constructor parameters
-// DOES NOT PERFORM ARGUMENT TYPE CHECKING! Uses the first .ctor with the right number of parameters it sees.
-::std::optional<TOut> NewUnsafe(const Il2CppClass* klass, TArgs&&... args) {
-    static auto& logger = getLogger();
-    il2cpp_functions::Init();
-
-    Il2CppObject* obj;
-    if constexpr (creationType == CreationType::Temporary) {
-        // object_new call
-        obj = RET_NULLOPT_UNLESS(logger, il2cpp_functions::object_new(klass));
-    } else {
-        obj = RET_NULLOPT_UNLESS(logger, createManual(klass));
-    }
-    // runtime_invoke constructor with right number of args, return null if constructor errors
-    RET_NULLOPT_UNLESS(logger, RunMethodUnsafe(obj, ".ctor", args...));
-    return FromIl2CppObject<TOut>(obj);
-}
-
-template <typename TOut = Il2CppObject*, CreationType creationType = CreationType::Temporary, typename... TArgs>
 // Creates a new object of the returned type using the given constructor parameters
 // Will only run a .ctor whose parameter types match the given arguments.
 #ifndef BS_HOOK_USE_CONCEPTS
@@ -988,14 +969,6 @@ template <typename TOut = Il2CppObject*, CreationType creationType = CreationTyp
     return New<TOut, creationType>(klass, args...);
 }
 
-template <typename TOut = Il2CppObject*, CreationType creationType = CreationType::Temporary, typename... TArgs>
-// Creates a new object of the class with the given nameSpace and className using the given constructor parameters.
-// DOES NOT PERFORM ARGUMENT TYPE CHECKING! Uses the first .ctor with the right number of parameters it sees.
-::std::optional<TOut> NewUnsafe(::std::string_view nameSpace, ::std::string_view className, TArgs*... args) {
-    static auto& logger = getLogger();
-    auto* klass = RET_0_UNLESS(logger, GetClassFromName(nameSpace, className));
-    return NewUnsafe<TOut, creationType>(klass, args...);
-}
 }  // namespace il2cpp_utils
 
 #pragma pack(pop)

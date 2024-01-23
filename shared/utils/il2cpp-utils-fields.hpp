@@ -141,13 +141,6 @@ namespace il2cpp_utils {
         auto* klass = RET_0_UNLESS(logger, GetFieldClass(field));
         return il2cpp_utils::New(klass, args...);
     }
-
-    template<typename... TArgs>
-    Il2CppObject* CreateFieldValueUnsafe(FieldInfo* field, TArgs&& ...args) {
-        static auto& logger = getLogger();
-        auto* klass = RET_0_UNLESS(logger, GetFieldClass(field));
-        return il2cpp_utils::NewUnsafe(klass, args...);
-    }
 }
 
 #pragma pack(pop)
