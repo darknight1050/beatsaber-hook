@@ -9,9 +9,58 @@ namespace il2cpp_utils {
         return logger;
     }
 
+    std::vector<Il2CppClass*> ClassesFrom(std::span<std::string_view> const strings) {
+        std::vector<Il2CppClass*> classes;
+        classes.reserve((strings.size() - 1) / 2);
+        for (size_t i = 0; i < strings.size() - 1; i += 2) {
+            classes.push_back(GetClassFromName(strings[i].data(), strings[i + 1].data()));
+        }
+        return classes;
+    }
+
+    std::vector<const Il2CppType*> TypesFrom(std::span<const Il2CppClass*> classes) {
+        return ClassVecToTypes(classes);
+    }
+    std::vector<const Il2CppType*> TypesFrom(std::span<std::string_view> strings) {
+        std::vector<const Il2CppType*> types;
+        types.reserve((strings.size() - 1) / 2);
+        il2cpp_functions::Init();
+        for (size_t i = 0; i < strings.size() - 1; i += 2) {
+            auto clazz = GetClassFromName(strings[i].data(), strings[i + 1].data());
+            types.push_back(il2cpp_functions::class_get_type(clazz));
+        }
+        return types;
+    }
+
     // It doesn't matter what types these are, they just need to be used correctly within the methods
     static std::unordered_map<std::pair<std::string, std::string>, Il2CppClass*, hash_pair> namesToClassesCache;
     static std::mutex nameHashLock;
+
+    Il2CppClass* FindNested(Il2CppClass* declaring, std::string_view typeName) {
+        static auto logger = getLogger().WithContext("FindNested");
+        // logger.info("trying to find: %s ", typeName.data());
+
+        if (!declaring) return nullptr;
+        auto token = typeName.find("/");
+        bool deeperNested = token != std::string::npos;
+
+        auto subTypeName = deeperNested ? typeName : typeName.substr(0, token);
+
+        void* myIter = nullptr;
+        Il2CppClass* found = nullptr;
+        while (Il2CppClass* nested = il2cpp_functions::class_get_nested_types(declaring, &myIter)) {
+            if (subTypeName == nested->name) {
+                found = nested;
+                break;
+            }
+        }
+
+        if (deeperNested) {
+            return FindNested(found, typeName.substr(token + 1));
+        } else {
+            return found;
+        }
+    }
 
     Il2CppClass* GetClassFromName(std::string_view name_space, std::string_view type_name) {
         il2cpp_functions::Init();
@@ -46,12 +95,32 @@ namespace il2cpp_utils {
                 return klass;
             }
         }
+
+        // we failed to find the class directly, time to check if it is a nested class, and if so look for it
+        auto token = type_name.find("/");
+        bool nested = token != std::string::npos;
+        if (nested) { // this is a nested name
+            // get the first part of the nested type_name
+            auto declaringTypeName = std::string(type_name.substr(0, token));
+            // get the first class, which is the declaring class
+            auto declaring = GetClassFromName(name_space, declaringTypeName);
+            // recursively look through the nested classes of the declaring class until we run out of tokens ('/') or we run into a problem where we don't find a class
+            auto klass = FindNested(declaring, type_name.substr(token + 1));
+
+            if (klass) {
+                nameHashLock.lock();
+                namesToClassesCache.emplace(key, klass);
+                nameHashLock.unlock();
+                return klass;
+            }
+        }
+
         logger.error("Could not find class with namepace: %s and name: %s",
             name_space.data(), type_name.data());
         return nullptr;
     }
 
-    Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::vector<const Il2CppClass*> args) {
+    Il2CppClass* MakeGeneric(const Il2CppClass* klass, std::span<const Il2CppClass* const> const args) {
         il2cpp_functions::Init();
         static auto logger = getLogger().WithContext("MakeGeneric");
 

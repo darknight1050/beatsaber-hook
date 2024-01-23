@@ -1,7 +1,16 @@
 #include "../../shared/utils/typedefs.h"
 #include "../../shared/utils/il2cpp-utils-methods.hpp"
 #include "../../shared/utils/hashing.hpp"
+#include "utils/il2cpp-functions.hpp"
+#include "utils/il2cpp-utils-classes.hpp"
+#include "utils/il2cpp-utils-methods.hpp"
+#include "utils/utils.h"
+#include <algorithm>
+#include <cstdint>
+#include <shared_mutex>
 #include <sstream>
+#include <unordered_map>
+#include <utility>
 
 namespace std {
     // From https://www.boost.org/doc/libs/1_55_0/doc/html/hash/reference.html#boost.hash_combine
@@ -25,19 +34,43 @@ namespace std {
             return hash_seq(seq);
         }
     };
+    template <class T>
+    struct hash<std::span<T>> {
+        std::size_t operator()(std::span<T> const& seq) const noexcept {
+            return hash_seq(seq);
+        }
+    };
+    // Specializes std::hash for std::vector
+    template <>
+    struct hash<il2cpp_utils::FindMethodInfo> {
+        std::size_t operator()(il2cpp_utils::FindMethodInfo const& info) const noexcept {
+            auto hashPtr = std::hash<void*>{};
+
+            auto hashSeqClass = std::hash<span<const Il2CppClass* const>>{};
+            auto hashSeqType = std::hash<span<const Il2CppType* const>>{};
+
+            auto hashStr = std::hash<std::string_view>{};
+
+            return hashPtr(info.klass) ^ //hashPtr(info.returnType) ^
+                   hashStr(info.name) ^ hashSeqType(info.argTypes) ^ hashSeqClass(info.genTypes);
+        }
+    };
 }
 
-namespace il2cpp_utils {
-    static std::unordered_map<std::pair<const Il2CppClass*, std::pair<std::string, decltype(MethodInfo::parameters_count)>>, const MethodInfo*, hash_pair_3> classesNamesToMethodsCache;
-    typedef std::pair<std::string, std::vector<const Il2CppType*>> classesNamesTypesInnerPairType;
-    static std::unordered_map<std::pair<const Il2CppClass*, classesNamesTypesInnerPairType>, const MethodInfo*, hash_pair_3> classesNamesTypesToMethodsCache;
-    std::mutex classNamesMethodsLock;
-    std::mutex classTypesMethodsLock;
 
-    #if __has_feature(cxx_exceptions)
-    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::vector<Il2CppClass*> types)
+namespace il2cpp_utils {
+    typedef std::pair<std::string, std::vector<const Il2CppType*>> classesNamesTypesInnerPairType;
+    static std::unordered_map<std::pair<const Il2CppClass*, std::pair<std::string, decltype(MethodInfo::parameters_count)>>, const MethodInfo*, hash_pair_3> classesNamesToMethodsCache;
+    static std::unordered_map<FindMethodInfo, const MethodInfo*> classesNamesTypesToMethodsCache;
+    std::mutex classNamesMethodsLock;
+    std::shared_mutex classTypesMethodsLock;
+
+
+
+#if __has_feature(cxx_exceptions)
+    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::span<const Il2CppClass* const> const types)
     #else
-    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::vector<Il2CppClass*> types) noexcept
+    const MethodInfo* MakeGenericMethod(const MethodInfo* info, std::span<const Il2CppClass* const> const types) noexcept
     #endif
     {
         static auto logger = getLogger().WithContext("MakeGenericMethod");
@@ -70,7 +103,11 @@ namespace il2cpp_utils {
         }
         // Call instance function on infoObj to MakeGeneric
         // Does not need to perform type checking, since if this does not match, it will fail more miserably.
-        auto res = il2cpp_utils::RunMethod<Il2CppReflectionMethod*, false>(infoObj, "MakeGenericMethod", arr);
+        static auto const* MakeGenericMethodInfo = ::il2cpp_utils::FindMethod(infoObj,
+                                                                              "MakeGenericMethod",
+                                                                              std::array<const Il2CppType*, 1>{ il2cpp_utils::ExtractType(arr) }
+                                                                              );
+        auto res = il2cpp_utils::RunMethodOpt<Il2CppReflectionMethod*, false>(infoObj, MakeGenericMethodInfo, arr);
         const auto* returnedInfoObj = RET_0_UNLESS(logger, res);
         if (!returnedInfoObj) {
             logger.error("Failed to get Il2CppReflectionMethod from MakeGenericMethod!");
@@ -86,11 +123,43 @@ namespace il2cpp_utils {
         return inflatedInfo;
     }
 
+    const MethodInfo* ResolveMethodWithSlot(Il2CppClass* klass, uint16_t slot) noexcept {
+        il2cpp_functions::Init();
+        if (!klass->initialized_and_no_error) il2cpp_functions::Class_Init(klass);
+
+        static auto logger = getLogger().WithContext("ResolveMethodWithSlot");
+
+        auto mend = klass->methods + klass->method_count;
+        for (auto itr = klass->methods; itr != mend; itr++) {
+            if ((*itr)->slot == slot) {
+                return *itr;
+            }
+        }
+
+        return nullptr;
+    }
+
     const MethodInfo* ResolveVtableSlot(Il2CppClass* klass, Il2CppClass* declaringClass, uint16_t slot) noexcept {
         il2cpp_functions::Init();
+        if (!klass->initialized_and_no_error) il2cpp_functions::Class_Init(klass);
+        if (!declaringClass->initialized_and_no_error) il2cpp_functions::Class_Init(declaringClass);
+
         static auto logger = getLogger().WithContext("ResolveVtableSlot");
         if(il2cpp_functions::class_is_interface(declaringClass)) {
-            RET_DEFAULT_UNLESS(logger, slot < declaringClass->vtable_count);
+            // if the declaring class is an interface,
+            // vtable_count means nothing and instead method_count should be used
+            // their vtables are just as valid though!
+            if (slot >= declaringClass->method_count) { // we tried looking for a slot that is outside the bounds of the interface vtable
+                // dump some info so the user can know which method was attempted to be resolved
+                logger.error("Declaring class has a vtable that's too small, dumping resolve info:");
+                logger.error("Instance class:                   %s::%s", klass->namespaze, klass->name);
+                logger.error("Instance class vtable slots:      %u", klass->vtable_count);
+                logger.error("Declaring class:                  %s::%s", declaringClass->namespaze, declaringClass->name);
+                logger.error("Declaring class vtable slots:     %u", declaringClass->vtable_count);
+                logger.error("Attempted slot:                   %u", slot);
+                return {};
+            }
+
             for (uint16_t i = 0; i < klass->interface_offsets_count; i++) {
                 if(klass->interfaceOffsets[i].interfaceType == declaringClass) {
                     int32_t offset = klass->interfaceOffsets[i].offset;
@@ -98,15 +167,35 @@ namespace il2cpp_utils {
                     return klass->vtable[offset + slot].method;
                 }
             }
+
+            // if klass is an interface itself, and we haven't found the method yet, we should look in klass->methods anyway
+            if (il2cpp_functions::class_is_interface(klass)) {
+                RET_DEFAULT_UNLESS(logger, slot < klass->method_count);
+                return klass->methods[slot];
+            }
+
             logger.error("could not find method in slot %i of interface '%s' in class '%s'!", slot, ClassStandardName(declaringClass).c_str(), ClassStandardName(klass).c_str());
-        }
-        else {
+        } else {
             RET_DEFAULT_UNLESS(logger, slot < klass->vtable_count);
-            return klass->vtable[slot].method;
+            auto method = klass->vtable[slot].method;
+
+            if (method->slot != slot) {
+                logger.warning("Resolving vtable slot led to a method info with a different slot! is this method abstract?");
+                logger.warning("Looking for: %d, resolved to: %d", slot, method->slot);
+
+                method = ResolveMethodWithSlot(klass, slot);
+                logger.info("After resolving method with slot: found method %p", method);
+
+            }
+
+            // resolved method slot should be the slot we asked for if it came from a non-interface
+            RET_DEFAULT_UNLESS(logger, method && slot == method->slot);
+
+            return method;
         }
         return nullptr;
     }
-    
+
     const MethodInfo* ResolveVtableSlot(Il2CppClass* klass, std::string_view declaringNamespace, std::string_view declaringClassName, uint16_t slot) noexcept {
         return ResolveVtableSlot(klass, GetClassFromName(declaringNamespace, declaringClassName), slot);
     }
@@ -165,11 +254,114 @@ namespace il2cpp_utils {
         return FindMethodUnsafe(klass, methodName, argsCount);
     }
 
-    #if __has_feature(cxx_exceptions)
-    const MethodInfo* FindMethod(FindMethodInfo& info)
-    #else
-    const MethodInfo* FindMethod(FindMethodInfo& info) noexcept
-    #endif
+    // get class from type and match Var/MVar
+    // Il2CppClass* getTypeClass(const Il2CppType* t, Il2CppGenericClass* genClass, MethodInfo const* methodInfo) {
+    Il2CppClass* getTypeClass(const Il2CppType* t, MethodInfo const* methodInfo) {
+        if (t->type == IL2CPP_TYPE_CLASS || t->type == IL2CPP_TYPE_VALUETYPE) {
+            return il2cpp_functions::MetadataCache_GetTypeInfoFromHandle(t->data.typeHandle);
+        }
+        if (t->type == IL2CPP_TYPE_VAR || t->type == IL2CPP_TYPE_MVAR) {
+            auto genParam = il2cpp_functions::MetadataCache_GetGenericParameterIndexFromParameter(t->data.genericParameterHandle);
+            const Il2CppGenericContainer* genContainer;
+            const Il2CppGenericInst* genericInst;
+
+            // if (t->type == IL2CPP_TYPE_VAR) {
+            //     auto genContainer = reinterpret_cast<const Il2CppGenericContainer*>(genClass->cached_class->genericContainerHandle);
+            //     auto genParamIndex = genParam - genContainer->genericParameterStart;
+            //     auto genType = genClass->context.class_inst->type_argv[genParamIndex];
+
+            //     return getTypeClass(genType, genClass, methodInfo);
+            // }
+            // if (t->type == IL2CPP_TYPE_MVAR) {
+            //     auto methodGenContainer = il2cpp_utils::GetGenericContainer(methodInfo);
+            //     auto genParamIndex = genParam - methodGenContainer->genericParameterStart;
+            //     methodInfo->genericMethod->context
+            //     auto genType = methodGenContainer.->context.class_inst->type_argv[genParamIndex];
+
+            //     return getTypeClass(genType, genClass, methodInfo);
+            // }
+            if (t->type == IL2CPP_TYPE_VAR) {
+                // idk which is more correct, yolo
+                // genContainer = reinterpret_cast<const Il2CppGenericContainer*>(methodInfo->klass->genericContainerHandle);
+                genContainer = il2cpp_utils::GetGenericContainer(methodInfo);
+                genericInst = methodInfo->genericMethod->context.method_inst;
+            }
+            if (t->type == IL2CPP_TYPE_MVAR) {
+                genContainer = il2cpp_utils::GetGenericContainer(methodInfo);
+                genericInst = methodInfo->genericMethod->context.method_inst;
+            }
+
+            auto genParamIndex = genParam - genContainer->genericParameterStart;
+            auto genType = genericInst->type_argv[genParamIndex];
+
+            return getTypeClass(genType, methodInfo);
+        }
+        if (t->type == IL2CPP_TYPE_GENERICINST) {
+            auto genData = t->data.generic_class;
+            return getTypeClass(genData->type, methodInfo);
+        }
+
+        return nullptr;
+    }
+
+    std::int64_t calculateWeightOfParam(Il2CppClass* methodParamClass, Il2CppClass* expectedParamClass) {
+        if (!methodParamClass || !expectedParamClass) {
+            return 1;
+        }
+
+        std::span<Il2CppClass const* const> methodInterfaces = { methodParamClass->implementedInterfaces, methodParamClass->interfaces_count };
+
+        std::int64_t distance = 0;
+
+        if (methodParamClass == expectedParamClass) {
+            return distance;
+        }
+
+        bool isMethodInterface = methodParamClass->flags & TYPE_ATTRIBUTE_INTERFACE;
+        bool isExpectedInterface = expectedParamClass->flags & TYPE_ATTRIBUTE_INTERFACE;
+
+        // method is an interface, we expect a concrete type
+        // avoid
+        if (isExpectedInterface && !isMethodInterface) {
+            return 1000;
+        }
+
+        if (isMethodInterface) {
+            // if interface, just add lots of weight
+            // so we choose a concrete type instead
+            distance += 5;
+        }
+
+        std::span<Il2CppClass const* const> expectedInterfaces = { expectedParamClass->implementedInterfaces, expectedParamClass->interfaces_count };
+
+        // find all interfaces which intersect with our expected type
+        std::vector<Il2CppClass const*> interfaceIntersections;
+        interfaceIntersections.reserve(expectedInterfaces.size());
+        std::set_intersection(expectedInterfaces.begin(), expectedInterfaces.end(), methodInterfaces.begin(), methodInterfaces.end(), std::back_inserter(interfaceIntersections));
+        std::size_t interfaceSharing = interfaceIntersections.size();
+
+        while (expectedParamClass && expectedParamClass != methodParamClass) {
+            if (!il2cpp_functions::class_is_assignable_from(methodParamClass, expectedParamClass)) {
+                break;
+            }
+
+            expectedParamClass = expectedParamClass->parent;
+            distance++;
+        }
+
+        // subtract distance by specifity of interface
+        // since it allows specifity
+        distance -= interfaceSharing;
+
+
+        return distance;
+    }
+
+#if __has_feature(cxx_exceptions)
+    const MethodInfo* FindMethod(FindMethodInfo const& info)
+#else
+    const MethodInfo* FindMethod(FindMethodInfo const& info) noexcept
+#endif
     {
         static auto logger = getLogger().WithContext("FindMethod");
         il2cpp_functions::Init();
@@ -178,65 +370,149 @@ namespace il2cpp_utils {
 
         // TODO: make cache work for generics (stratify by generics count?) and differing return types?
         // Check Cache
-        auto innerPair = classesNamesTypesInnerPairType(info.name, info.argTypes);
-        auto key = std::pair<Il2CppClass*, classesNamesTypesInnerPairType>(klass, innerPair);
-        classTypesMethodsLock.lock();
-        auto itr = classesNamesTypesToMethodsCache.find(key);
-        if (itr != classesNamesTypesToMethodsCache.end()) {
-            classTypesMethodsLock.unlock();
-            return itr->second;
-        }
-        classTypesMethodsLock.unlock();
-
-        void* myIter = nullptr;
-        const MethodInfo* methodInfo = nullptr;  // basic match
-        bool multipleBasicMatches = false;
-        const MethodInfo* returnMatch = nullptr;
-        bool multipleReturnMatches = false;
-        const MethodInfo* perfectMatch = nullptr;
-        bool multiplePerfectMatches = false;
-        // Does NOT automatically recurse through klass's parents
-        while (const MethodInfo* current = il2cpp_functions::class_get_methods(info.klass, &myIter)) {
-            if ((info.name == current->name) && ParameterMatch(current, info.genTypes, info.argTypes)) {
-                if (info.returnType) {
-                    auto* returnClass = il2cpp_functions::class_from_il2cpp_type(current->return_type);
-                    if (info.returnType == returnClass) {
-                        if (perfectMatch) {
-                            multiplePerfectMatches = true;
-                            logger.error("Multiple perfect matches???");
-                        }
-                        else perfectMatch = current;
-                    }
-                    if (il2cpp_functions::class_is_assignable_from(info.returnType, returnClass)) {
-                        if (returnMatch) {
-                            logger.debug("Multiple return type matches.");
-                            multipleReturnMatches = true;
-                        }
-                        else returnMatch = current;
-                    }
-                }
-                if (methodInfo)
-                    multipleBasicMatches = true;
-                else
-                    methodInfo = current;
+        {
+            std::shared_lock lock(classTypesMethodsLock);
+            auto itr = classesNamesTypesToMethodsCache.find(info);
+            if (itr != classesNamesTypesToMethodsCache.end()) {
+                return itr->second;
             }
         }
-        if (!methodInfo && klass->parent && klass->parent != klass) {
-            info.klass = klass->parent;
-            methodInfo = FindMethod(info);
-            info.klass = klass;
+
+        // initialize klass if needed
+        if (!klass->initialized_and_no_error) {
+            il2cpp_functions::Class_Init(klass);
         }
 
-        if (!multiplePerfectMatches && perfectMatch) {
-            // It's important that these kinds of matches aren't added to the general cache
-            return perfectMatch;
-        } else if (!multipleReturnMatches && returnMatch) {
-            return returnMatch;
-        } else if (!methodInfo || multipleBasicMatches) {
+        // Ok we look through all the methods that have the following:
+        // - matches name
+        // - parameters match as defined in ::il2cpp_utils::ParametersMatch
+        // 
+        // The resolution order goes as follows:
+        // if a method parameter matches perfectly, as in the parameter types are identical, then we use that.
+        // If only a single method is found, we use that.
+        //
+        // If multiple methods are found, the following occurs:
+        // We attempt to weigh the parameters based on what we expect.
+        // Then we find the lowest weighted method and use that
+        // if no methods are found, we look at our parents' methods and check if those match recursively
+
+        // Finally we add to cache and finish
+
+        std::vector<const MethodInfo*> matches;
+        matches.reserve(1);
+
+        const MethodInfo* target = nullptr;
+
+        auto addMethodsToMatches = [&](Il2CppClass const* targetKlass) {
+            // Does NOT automatically recurse through klass's parents
+            auto const methodsSpan = std::span(targetKlass->methods, targetKlass->method_count);
+            for (auto const& current : methodsSpan) {
+                if (info.name != current->name) {
+                    logger.debug("Method name does not match for method %s", current->name);
+                    continue;
+                }
+
+                // strict equal
+                bool isPerfect;
+                if (!ParameterMatch(current, std::span(info.genTypes), std::span(info.argTypes), &isPerfect)) {
+                    logger.debug("Parameters do not match for method %s", current->name);
+                    continue;
+                }
+
+                // if true, perfect match
+                if (isPerfect) {
+                    target = current;
+                    break;
+                }
+
+                auto methodParams = std::span(current->parameters, current->parameters_count);
+
+                matches.push_back(current);
+            }
+        };
+
+        // now look for matches recursively
+        auto targetKlass = info.klass;
+        // if we reached no parent or perfect target is found, we're done
+        while (targetKlass != nullptr && target == nullptr) {
+            addMethodsToMatches(targetKlass);
+            targetKlass = targetKlass->parent;
+        }
+
+        // Method overload resolution
+        if (!target && !matches.empty()) {
+            // Only one method found, use it
+            if (matches.size() == 1) {
+                target = matches.front();
+            }
+
+            // multiple methods
+            // time to method overload resolution
+            if (!target) {
+                std::vector<std::pair<const MethodInfo*, std::int64_t>> weightMap;
+                weightMap.reserve(matches.size());
+
+                // iterate methods
+                for (auto const& method : matches) {
+                    // overload resolution
+                    std::int64_t weight = 0;
+
+                    // weigh the methods based on their distance to the expected
+                    // parameters
+                    for (std::size_t i = 0; i < info.argTypes.size(); i++) {
+                        auto const& expectedParamType = info.argTypes[i];
+                        auto const& methodParamType = method->parameters[i];
+
+                        auto const methodParamClass = getTypeClass(methodParamType, method);
+                        auto const expectedParamClass = getTypeClass(expectedParamType, method);
+
+                        weight += calculateWeightOfParam(methodParamClass, expectedParamClass);
+                    }
+
+                    weightMap.emplace_back(method, weight);
+                }
+
+                // if no perfect match, look for lowest weighted
+                if (!target) {
+                    logger.warning("Found multiple methods that match for %s.%s", ClassStandardName(klass).c_str(), info.name.data());
+                    for (auto const& [method, weight] : weightMap) {
+                        logger.warning("Weight %lu Method %s", weight, method->name);
+                        LogMethod(logger, method);
+                    }
+
+                    target = std::min_element(weightMap.begin(), weightMap.end(), [](auto a, auto b) { return a.second < b.second; })->first;
+                    logger.warning("Using the following:");
+                    CRASH_UNLESS(target);
+                    LogMethod(logger, target);
+                }
+            }
+        }
+
+        // add to cache
+        {
+            std::unique_lock lock(classTypesMethodsLock);
+            classesNamesTypesToMethodsCache.emplace(info, target);
+        }
+
+        if (!target) {
             std::stringstream ss;
-            ss << ((multipleBasicMatches) ? "found multiple matches for" : "could not find");
-            ss << " method " << info.name << "(";
+            ss << ((matches.size() > 1) ? "found multiple matches for" : "could not find");
+            ss << " method " << info.name;
             bool first = true;
+            // start listing generic types
+            if (!info.genTypes.empty()) {
+                ss << "<";
+                for (auto t : info.genTypes) {
+                    if (!first) ss << ", ";
+                    first = false;
+                    ss << ClassStandardName(t);
+                }
+                ss << ">";
+            }
+
+            // start listing params
+            first = true;
+            ss << "(";
             for (auto t : info.argTypes) {
                 if (!first) ss << ", ";
                 first = false;
@@ -245,12 +521,9 @@ namespace il2cpp_utils {
             ss << ") in class '" << ClassStandardName(klass) << "'!";
             logger.error("%s", ss.str().c_str());
             LogMethods(logger, klass);
-            RET_DEFAULT_UNLESS(logger, !methodInfo || multipleBasicMatches);
         }
-        classTypesMethodsLock.lock();
-        classesNamesTypesToMethodsCache.emplace(key, methodInfo);
-        classTypesMethodsLock.unlock();
-        return methodInfo;
+
+        return target;
     }
 
     void LogMethods(LoggerContextObject& logger, Il2CppClass* klass, bool logParents) {

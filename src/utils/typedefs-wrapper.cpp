@@ -5,6 +5,8 @@
 #include "../../shared/utils/typedefs-string.hpp"
 #include "../../shared/utils/typedefs-wrappers.hpp"
 #include "../../shared/utils/typedefs.h"
+#include "utils/il2cpp-utils-methods.hpp"
+#include "utils/typedefs-string.hpp"
 
 std::unordered_map<void*, size_t> Counter::addrRefCount;
 std::shared_mutex Counter::mutex;
@@ -63,7 +65,7 @@ Il2CppString* alloc_str(std::u16string_view str) {
 Il2CppString* CreateString(int length) {
     static MethodInfo const* methodInfo = il2cpp_utils::FindMethod(classof(Il2CppString*), "CreateString",
                                                                    std::array<Il2CppType const*, 2>{ il2cpp_utils::ExtractIndependentType<Il2CppChar>(), il2cpp_utils::ExtractIndependentType<int>() });
-    return CRASH_UNLESS(il2cpp_utils::RunStaticMethodUnsafe<Il2CppString*>(methodInfo, Il2CppChar('\0'), length));
+    return CRASH_UNLESS(il2cpp_utils::RunMethodOpt<Il2CppString*, false>(nullptr, methodInfo, Il2CppChar('\0'), length));
 }
 
 Il2CppString* strappend(Il2CppString const* lhs, Il2CppString const* rhs) noexcept {
@@ -340,51 +342,3 @@ bool strend(Il2CppString const* lhs, Il2CppString const* rhs) noexcept {
 
 }  // namespace detail
 }  // namespace il2cpp_utils
-
-StringW::operator std::string() const {
-    std::string val(inst->length * sizeof(wchar_t) + 1, '\0');
-    auto resSize = il2cpp_utils::detail::convstr(inst->chars, val.data(), inst->length, val.size());
-    val.resize(resSize);
-    return val;
-}
-
-StringW::operator std::u16string() const {
-    return { inst->chars, inst->chars + inst->length };
-}
-
-StringW::operator std::wstring() const {
-    return { inst->chars, inst->chars + inst->length };
-}
-
-StringW::operator std::u16string_view const() const {
-    return { inst->chars, static_cast<std::size_t>(inst->length) };
-}
-
-StringW::operator std::u16string_view() {
-    return { inst->chars, static_cast<std::size_t>(inst->length) };
-}
-
-StringW::iterator StringW::begin() {
-    return inst->chars;
-}
-StringW::const_iterator StringW::begin() const {
-    return inst->chars;
-}
-StringW::iterator StringW::end() {
-    return inst->chars + inst->length;
-}
-StringW::const_iterator StringW::end() const {
-    return inst->chars + inst->length;
-}
-StringW::operator std::span<Il2CppChar>() {
-    return { begin(), end() };
-}
-StringW::operator std::span<Il2CppChar const> const() const {
-    return { begin(), end() };
-}
-Il2CppChar const& StringW::operator[](size_t const& idx) const {
-    return inst->chars[idx];
-}
-Il2CppChar& StringW::operator[](size_t const& idx) {
-    return inst->chars[idx];
-}

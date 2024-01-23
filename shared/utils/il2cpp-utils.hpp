@@ -8,6 +8,8 @@
 #include <dlfcn.h>
 #include <optional>
 #include <vector>
+#include <unordered_map>
+#include <jni.h>
 
 #include "gc-alloc.hpp"
 
@@ -22,13 +24,15 @@
 #include "il2cpp-utils-properties.hpp"
 #include "il2cpp-utils-fields.hpp"
 #include <string>
+#include <thread>
 #include <string_view>
+#include <sstream>
 #include <optional>
 #include <functional>
 #include <type_traits>
 
-template<>
-struct std::hash<std::pair<Il2CppMethodPointer, bool>> {
+template <>
+struct BS_HOOKS_HIDDEN std::hash<std::pair<Il2CppMethodPointer, bool>> {
     size_t operator()(const std::pair<Il2CppMethodPointer, bool>& p) const {
         return std::hash<Il2CppMethodPointer>{}(p.first) ^ std::hash<bool>{}(p.first);
     }
@@ -41,16 +45,10 @@ namespace il2cpp_utils {
     // Generally, it's better to just use class_from_type!
     const Il2CppType* UnRef(const Il2CppType* type);
 
-    ::std::vector<const Il2CppType*> ClassVecToTypes(::std::vector<const Il2CppClass*> seq);
+    ::std::vector<const Il2CppType*> ClassVecToTypes(::std::span<const Il2CppClass*> seq);
 
     bool IsInterface(const Il2CppClass* klass);
 
-    ::std::vector<Il2CppClass*> ClassesFrom(::std::vector<Il2CppClass*> classes);
-    ::std::vector<Il2CppClass*> ClassesFrom(::std::vector<::std::string_view> strings);
-
-    ::std::vector<const Il2CppType*> TypesFrom(::std::vector<const Il2CppType*> types);
-    ::std::vector<const Il2CppType*> TypesFrom(::std::vector<const Il2CppClass*> classes);
-    ::std::vector<const Il2CppType*> TypesFrom(::std::vector<::std::string_view> strings);
 
     Il2CppClass* GetParamClass(const MethodInfo* method, int paramIdx);
 
@@ -155,22 +153,14 @@ namespace il2cpp_utils {
         // Already cached in defaults, no need to re-cache
         Il2CppException* allocEx = CRASH_UNLESS(New<Il2CppException*>(classof(Il2CppException*)));
         #if __has_feature(cxx_rtti)
-        const char* tName = typeid(T).name();
-        int status;
-        char *demangled_name = abi::__cxa_demangle(tName, NULL, NULL, &status);
-        if (!status) {
-            allocEx->className = newcsstr(demangled_name);
-            std::free(demangled_name);
-        } else {
-            allocEx->className = newcsstr(tName);
-        }
+            allocEx->className = newcsstr(type_name<T>());
         #else
         #warning "Do not raise C++ exceptions without rtti!"
         #endif
         if constexpr (what_able<T>) {
             allocEx->message = newcsstr(arg.what());
         }
-        #ifdef UNITY_2019
+        #if defined(UNITY_2019) || defined(UNITY_2021)
         raise(allocEx);
         #else
         #warning "Raising C++ exceptions without il2cpp_functions::raise is undefined behavior!"
@@ -212,10 +202,11 @@ namespace il2cpp_utils {
             method->return_type = invoke->return_type;
             method->parameters_count = invoke->parameters_count;
             method->slot = kInvalidIl2CppMethodSlot;
-            method->is_marshaled_from_native = true;  // "a fake MethodInfo wrapping a native function pointer"
+            method->has_full_generic_sharing_signature = false;
+            method->indirect_call_via_invokers = true;  // "a fake MethodInfo wrapping a native function pointer"
             if (obj == nullptr) method->flags |= METHOD_ATTRIBUTE_STATIC;
             AddAllocatedDelegate({callbackPtr, obj == nullptr}, method);
-        }        
+        }
         // In the event that a function is static, this will behave as normal
         // Yes, we mutate the held one as well. This is okay because we will ALWAYS mutate it.
         auto* delegate = RET_DEFAULT_UNLESS(logger, il2cpp_utils::NewUnsafe<T>(delegateClass, obj, &method));
@@ -444,7 +435,7 @@ namespace il2cpp_utils {
     /// @param delegateClass The Il2CppClass* of the delegate to create.
     /// @param instance The (move constructible) instance reference to provide to the delegate. This instance is moved and will no longer be valid.
     /// @param memberFunc A pointer to the member function on the provided instance to invoke for this delegate.
-    /// @return The created delegate. 
+    /// @return The created delegate.
     template<typename T = MulticastDelegate*, class I, class R, class... TArgs>
     [[deprecated("DO NOT USE! USE custom_types INSTEAD!")]] inline T MakeDelegate(const Il2CppClass* delegateClass, I& instance, R (I::*memberFunc)(TArgs...)) {
         return MakeDelegate<T>(delegateClass, instance, std::function<R(I*, TArgs...)>(memberFunc));
@@ -457,7 +448,7 @@ namespace il2cpp_utils {
     /// @tparam TArgs The arguments of the delegate.
     /// @param instance The (move constructible) instance reference to provide to the delegate. This instance is moved and will no longer be valid.
     /// @param memberFunc A pointer to the member function on the provided instance to invoke for this delegate.
-    /// @return The created delegate. 
+    /// @return The created delegate.
     template<typename T = MulticastDelegate*, class I, class R, class... TArgs>
     [[deprecated("DO NOT USE! USE custom_types INSTEAD!")]] inline T MakeDelegate(I& instance, R (I::*memberFunc)(TArgs...)) {
         return MakeDelegate<T>(classof(T), instance, std::function<R(I*, TArgs...)>(memberFunc));
@@ -520,9 +511,9 @@ namespace il2cpp_utils {
         return il2cpp_functions::runtime_invoke(method, reference, invokeParams, exc);
     }
 
-    template<typename... TArgs>
-    ::std::vector<const Il2CppClass*> ExtractFromFunctionNoArgs() {
-        return { classof(TArgs)... };
+    template <typename... TArgs>
+    auto ExtractFromFunctionNoArgs() {
+        return std::array<const Il2CppClass*, sizeof...(TArgs)>(classof(TArgs)...);
     }
 
     /// @brief Creates and returns a C# System.Func<TArgs..., Ret> from the provided function_ptr_t.
@@ -610,7 +601,7 @@ namespace il2cpp_utils {
             auto* params = info->parameters;
             // Because we check arguments left to right, we can take advantage of params++ to iterate through the elements.
             // We know they must be valid since we check the parameter count above.
-            if (!(AssignableFrom<TArgs>(il2cpp_functions::class_from_type((params++)->parameter_type)) && ...)) {
+            if (!(AssignableFrom<TArgs>(il2cpp_functions::class_from_type(params++)) && ...)) {
                 return false;
             }
             return true;
@@ -618,12 +609,12 @@ namespace il2cpp_utils {
         /// @brief Finds a MethodInfo* that matches the template types.
         static const MethodInfo* find(::std::string_view nameSpace, ::std::string_view className, ::std::string_view methodName) {
             il2cpp_functions::Init();
-            return ::il2cpp_utils::FindMethod(nameSpace, className, methodName, ::std::vector<Il2CppClass*>{}, ::std::array<const Il2CppType*, sizeof...(TArgs)>{ExtractIndependentType<TArgs>()...});
+            return ::il2cpp_utils::FindMethod(nameSpace, className, methodName, ::std::array<Il2CppClass*, 0>{}, ::std::array<const Il2CppType*, sizeof...(TArgs)>{ExtractIndependentType<TArgs>()...});
         }
         /// @brief Finds a MethodInfo* that matches the template types.
         static const MethodInfo* find(Il2CppClass* klass, ::std::string_view methodName) {
             il2cpp_functions::Init();
-            return ::il2cpp_utils::FindMethod(klass, methodName, ::std::vector<Il2CppClass*>{}, ::std::array<const Il2CppType*, sizeof...(TArgs)>{ExtractIndependentType<TArgs>()...});
+            return ::il2cpp_utils::FindMethod(klass, methodName, ::std::array<Il2CppClass*, 0>{}, ::std::array<const Il2CppType*, sizeof...(TArgs)>{ExtractIndependentType<TArgs>()...});
         }
         /// @brief Finds a MethodInfo* that matches the template types.
         static const MethodInfo* find_unsafe(::std::string_view nameSpace, ::std::string_view className, ::std::string_view methodName, bool instance = false) {
@@ -662,7 +653,7 @@ namespace il2cpp_utils {
             auto* params = info->parameters;
             // Because we check arguments left to right, we can take advantage of params++ to iterate through the elements.
             // We know they must be valid since we check the parameter count above.
-            if (!(AssignableFrom<TArgs>(il2cpp_functions::class_from_type((params++)->parameter_type)) && ...)) {
+            if (!(AssignableFrom<TArgs>(il2cpp_functions::class_from_type(params++)) && ...)) {
                 return false;
             }
             return true;
@@ -670,12 +661,12 @@ namespace il2cpp_utils {
         /// @brief Finds a MethodInfo* that matches the template types.
         static const MethodInfo* find(::std::string_view nameSpace, ::std::string_view className, ::std::string_view methodName) {
             il2cpp_functions::Init();
-            return ::il2cpp_utils::FindMethod(nameSpace, className, methodName, ::std::vector<Il2CppClass*>{}, ::std::array<const Il2CppType*, sizeof...(TArgs)>{ExtractIndependentType<TArgs>()...});
+            return ::il2cpp_utils::FindMethod(nameSpace, className, methodName, ::std::array<Il2CppClass*, 0>{}, ::std::array<const Il2CppType*, sizeof...(TArgs)>{ExtractIndependentType<TArgs>()...});
         }
         /// @brief Finds a MethodInfo* that matches the template types.
         static const MethodInfo* find(Il2CppClass* klass, ::std::string_view methodName) {
             il2cpp_functions::Init();
-            return ::il2cpp_utils::FindMethod(klass, methodName, ::std::vector<Il2CppClass*>{}, ::std::array<const Il2CppType*, sizeof...(TArgs)>{ExtractIndependentType<TArgs>()...});
+            return ::il2cpp_utils::FindMethod(klass, methodName, ::std::array<Il2CppClass*, 0>{}, ::std::array<const Il2CppType*, sizeof...(TArgs)>{ExtractIndependentType<TArgs>()...});
         }
     };
 
@@ -695,6 +686,91 @@ namespace il2cpp_utils {
         }
         return out;
     }
+
+    struct il2cpp_aware_thread : public std::thread {
+        private:
+            static inline thread_local JNIEnv* env;
+        public:
+            static std::string current_thread_id() {
+                std::stringstream id; id << std::this_thread::get_id();
+                return id.str();
+            }
+
+            static inline JNIEnv* get_current_env() noexcept { return env; }
+
+            /// @brief method executed by the thread created in il2cpp_aware_thread
+            /// @param pred the predicate to use in the thread
+            /// @param args the args used
+            template<typename Predicate, typename... TArgs>
+            requires(std::is_invocable_v<Predicate, std::decay_t<TArgs>...>)
+            static void internal_thread(Predicate&& pred, TArgs&&... args) {
+                auto logger = getLogger().WithContext("internal_thread_" + current_thread_id());
+
+                // attach thread to jvm
+                modloader_jvm->AttachCurrentThread(&env, nullptr);
+
+                il2cpp_functions::Init();
+
+                logger.info("Attaching thread");
+                auto domain = il2cpp_functions::domain_get();
+                auto thread = il2cpp_functions::thread_attach(domain);
+
+                logger.info("Invoking predicate");
+                try {
+                    std::invoke(std::forward<Predicate>(pred), std::forward<std::decay_t<TArgs>>(args)...);
+                } catch(RunMethodException const& e) {
+                    logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught RunMethodException! what(): %s", e.what());
+                    e.log_backtrace();
+                    if (e.ex) e.rethrow();
+                    il2cpp_functions::thread_detach(thread);
+                    SAFE_ABORT();
+                } catch(exceptions::StackTraceException const& e) {
+                    logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught StackTraceException! what(): %s", e.what());
+                    e.log_backtrace();
+                    il2cpp_functions::thread_detach(thread);
+                    SAFE_ABORT();
+                } catch(std::exception& e) {
+                    logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught C++ exception! type name: %s, what(): %s", typeid(e).name(), e.what());
+                    il2cpp_functions::thread_detach(thread);
+                    SAFE_ABORT();
+                } catch(...) {
+                    logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught, unknown C++ exception (not std::exception) with no known what() method!");
+                    il2cpp_functions::thread_detach(thread);
+                    SAFE_ABORT();
+                }
+
+                logger.info("Detaching thread");
+
+                // detach il2cpp thread
+                il2cpp_functions::thread_detach(thread);
+
+                // detach thread from jvm
+                modloader_jvm->DetachCurrentThread();
+                env = nullptr;
+            }
+
+            /// @brief creates a thread that automatically will register with il2cpp and deregister once it exits, ensure your args live longer than the thread if they're by reference!
+            /// @param pred the predicate to use for the thread
+            /// @param args the arguments to pass to the thread (& predicate)
+            /// @return created thread, which is the same as you creating a default one
+            template<typename Predicate, typename... TArgs>
+            requires(std::is_invocable_v<Predicate, std::decay_t<TArgs>...>)
+            explicit il2cpp_aware_thread(Predicate&& pred, TArgs&&... args) :
+                std::thread(
+                    &internal_thread<Predicate, std::decay_t<TArgs>...>,
+                    std::forward<Predicate>(pred),
+                    std::forward<TArgs>(args)...
+                )
+            {}
+
+            /// @brief defaulted move ctor
+            il2cpp_aware_thread(il2cpp_aware_thread&&) = default;
+
+            /// @brief if joinable and destructed, join
+            ~il2cpp_aware_thread() {
+                if (joinable()) join();
+            }
+    };
 }
 
 #pragma pack(pop)

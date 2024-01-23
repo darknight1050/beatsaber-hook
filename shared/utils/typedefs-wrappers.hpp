@@ -222,11 +222,13 @@ struct CountPointer {
 // TODO: Make an overall Ptr interface type, virtual destructor and *, -> operators
 // TODO: Remove all conversion operators? (Basically force people to guarantee lifetime of held instance?)
 
+// Fd UnityEngine.Object
 #ifdef HAS_CODEGEN
 namespace UnityEngine {
 class Object;
 }
 #endif
+
 template <typename T>
 struct SafePtrUnity;
 
@@ -273,10 +275,14 @@ struct SafePtr {
         // Otherwise, some other SafePtr is currently holding a reference to this instance, so keep it around.
         if (internalHandle.count() <= 1) {
             il2cpp_functions::Init();
+            #ifdef UNITY_2021
+            il2cpp_functions::gc_free_fixed(internalHandle.__internal_get());
+            #else
             if (!il2cpp_functions::hasGCFuncs) {
                 SAFE_ABORT_MSG("Cannot use SafePtr without GC functions!");
             }
             il2cpp_functions::GC_free(internalHandle.__internal_get());
+            #endif
         }
     }
 
@@ -425,15 +431,24 @@ struct SafePtr {
     struct SafePointerWrapper {
         static SafePointerWrapper* New(T* instance) {
             il2cpp_functions::Init();
+            // It should be safe to assume that gc_alloc_fixed returns a non-null pointer. If it does return null, we have a pretty big issue.
+            static constexpr auto sz = sizeof(SafePointerWrapper);
+
+            #ifdef UNITY_2021
+            auto* wrapper = reinterpret_cast<SafePointerWrapper*>(il2cpp_functions::gc_alloc_fixed(sz));
+
+            #else
+
             if (!il2cpp_functions::hasGCFuncs) {
-#if __has_feature(cxx_exceptions)
+                #if __has_feature(cxx_exceptions)
                 throw CreatedTooEarlyException();
-#else
+                #else
                 SAFE_ABORT_MSG("Cannot use a SafePtr this early/without GC functions!");
-#endif
+                #endif
             }
-            // It should be safe to assume that GC_AllocateFixed returns a non-null pointer. If it does return null, we have a pretty big issue.
-            auto* wrapper = reinterpret_cast<SafePointerWrapper*>(il2cpp_functions::GarbageCollector_AllocateFixed(sizeof(SafePointerWrapper), nullptr));
+            auto* wrapper = reinterpret_cast<SafePointerWrapper*>(il2cpp_functions::GarbageCollector_AllocateFixed(sz, nullptr));
+            #endif
+
             CRASH_UNLESS(wrapper);
             wrapper->instancePointer = instance;
             return wrapper;
@@ -540,7 +555,7 @@ struct SafePtrUnity : public SafePtr<T, true> {
 
     inline bool isAlive() const {
 #ifdef HAS_CODEGEN
-        return static_cast<bool>(Parent::internalHandle) && (Parent::ptr()) && Parent::ptr()->m_CachedPtr.m_value;
+        return static_cast<bool>(Parent::internalHandle) && (Parent::ptr()) && Parent::ptr()->m_CachedPtr;
 #else
         // offset yay
         // the offset as specified in the codegen header of [m_CachedPtr] is 0x10
@@ -727,9 +742,18 @@ class BasicEventCallback {
 
    public:
     void invoke(TArgs... args) const {
+#ifndef NO_EVENT_CALLBACK_INVOKE_SAFETY
+        // copy the callbacks so an unsubscribe during invoke of the container doesn't cause UB
+        auto cbs = callbacks;
+        for (auto& callback : cbs) {
+            callback(args...);
+        }
+#else
+        // no safety requested, just run it from the callbacks as
         for (auto& callback : callbacks) {
             callback(args...);
         }
+#endif
     }
 
     BasicEventCallback& operator+=(ThinVirtualLayer<void(void*, TArgs...)> callback) {

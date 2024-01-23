@@ -1,3 +1,7 @@
+param (
+    [Parameter(Mandatory=$false)]
+    [Switch] $clean
+)
 
 function Clean-Build-Folder {
     if (Test-Path -Path "build")
@@ -9,25 +13,11 @@ function Clean-Build-Folder {
     }
 }
 
-$NDKPath = Get-Content $PSScriptRoot/ndkpath.txt
-
-Clean-Build-Folder
-
-& cmake -G "Ninja" -DCMAKE_BUILD_TYPE="RelWithDebInfo" -DTEST_BUILD=1 . -B build
-& cmake --build ./build
-
-$ExitCode = $LastExitCode
-
-if (-not ($ExitCode -eq 0)) {
-    $msg = "ExitCode: " + $ExitCode
-    Write-Output $msg
-    exit $ExitCode
+if ($clean.IsPresent) {
+    Clean-Build-Folder
 }
 
-# clean folder
-Clean-Build-Folder
 # build mod
-
 & cmake -G "Ninja" -DCMAKE_BUILD_TYPE="RelWithDebInfo" . -B build
 & cmake --build ./build
 

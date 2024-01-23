@@ -1,3 +1,4 @@
+#include "utils/il2cpp-utils-methods.hpp"
 #ifdef TEST_BYREF
 #include "../../shared/utils/byref.hpp"
 #include "../../shared/utils/il2cpp-utils.hpp"
@@ -13,9 +14,9 @@ static void test() {
     MethodInfo inf;
     int x = 3;
     il2cpp_utils::RunMethod((Il2CppClass*)nullptr, &inf, byref(x));
-    il2cpp_utils::RunMethodThrow((Il2CppClass*)nullptr, &inf, byref(x));
-    il2cpp_utils::RunMethodThrow(&x, &inf);
-    il2cpp_utils::RunStaticMethod(&inf, byref(x));
+    il2cpp_utils::RunMethodRethrow((Il2CppClass*)nullptr, &inf, byref(x));
+    il2cpp_utils::RunMethodRethrow(&x, &inf);
+    il2cpp_utils::RunMethod(nullptr, &inf, byref(x));
     il2cpp_utils::ExtractIndependentType<ByRef<int>>();
     il2cpp_utils::ExtractIndependentType<int>();
     const ByRef<int> testit(x);

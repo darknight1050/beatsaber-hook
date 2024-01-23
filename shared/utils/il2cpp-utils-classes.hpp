@@ -5,8 +5,9 @@
 #include "logging.hpp"
 #include "il2cpp-type-check.hpp"
 #include "il2cpp-functions.hpp"
-#include "il2cpp-utils-methods.hpp"
+#include "il2cpp-utils-exceptions.hpp"
 #include "base-wrapper-type.hpp"
+#include "type-concepts.hpp"
 #include <optional>
 #include <vector>
 
@@ -37,7 +38,7 @@ namespace il2cpp_utils {
         }
         if constexpr (::std::is_pointer_v<TOut>) {
             return static_cast<TOut>(val);
-        } else if constexpr (has_il2cpp_conversion<TOut>) {
+        } else if constexpr (il2cpp_reference_type_wrapper<TOut>) {
             return TOut(static_cast<void*>(val));
         }
         else {
@@ -86,6 +87,9 @@ namespace il2cpp_utils {
     template<class T>
     [[deprecated]]void a_lack_of_no_arg_class_for([[maybe_unused]]::std::string_view s) {};
 
+    ///
+    /// \return The Il2CppClass* for arg. If arg is Il2CppClass*, returns itself
+    ///
     template<typename T>
     Il2CppClass* ExtractClass(T&& arg) {
         using Dt = ::std::decay_t<T>;
@@ -138,15 +142,14 @@ namespace il2cpp_utils {
     }
 
     inline auto ExtractTypes() {
-        return ::std::vector<const Il2CppType*>();
+        return ::std::array<const Il2CppType*, 0>();
     }
 
-    template<typename T, typename... TArgs>
-    ::std::vector<const Il2CppType*> ExtractTypes(T&& arg, TArgs&&... args) {
-        auto* tFirst = ExtractType(arg);
-        auto tOthers = ExtractTypes(args...);
-        if (tFirst) tOthers.insert(tOthers.begin(), tFirst);
-        return tOthers;
+    template <typename... TArgs>
+    auto ExtractTypes(TArgs&&... args) {
+        constexpr std::size_t array_count = sizeof...(TArgs);
+
+        return std::array<const Il2CppType*, array_count>(ExtractType(args)...);
     }
 
     // Adds the given TypeDefinitionIndex to the class hash table of a given image
@@ -155,12 +158,12 @@ namespace il2cpp_utils {
 
     // Adds the given nested types of the namespaze, parentName, and klass to the hastable
     // Mainly used in AddTypeToNametoClassHashTable
-    void AddNestedTypesToNametoClassHashTable(Il2CppNameToTypeDefinitionIndexHashTable* hashTable, const char *namespaze, const ::std::string& parentName, Il2CppClass *klass);
+    void AddNestedTypesToNametoClassHashTable(Il2CppNameToTypeHandleHashTable* hashTable, const char *namespaze, const ::std::string& parentName, Il2CppClass *klass);
 
     // Adds the given nested types of typeDefinition to the class hash table of a given image
     // Mainly used in AddTypeToNametoClassHashTable
     void AddNestedTypesToNametoClassHashTable(const Il2CppImage* img, const Il2CppTypeDefinition* typeDefinition);
-    
+
     /// @brief This method allows you to check if the parameter is a child or instance of the parent class. E.g (B extends A)
     /// @tparam ParentT The parent class (left hand assignment)
     /// @param subOrInstanceKlass the instance class (right hand assignment)
@@ -175,7 +178,7 @@ namespace il2cpp_utils {
     bool AssignableFrom(Il2CppClass* subOrInstanceKlass) {
         il2cpp_functions::Init();
         RET_DEFAULT_UNLESS(getLogger(), subOrInstanceKlass);
-        auto* parentK = RET_DEFAULT_UNLESS(getLogger(), classof(ParentT));
+        static auto* parentK = RET_DEFAULT_UNLESS(getLogger(), classof(ParentT));
         return il2cpp_functions::class_is_assignable_from(parentK, subOrInstanceKlass);
     }
 
@@ -189,7 +192,7 @@ namespace il2cpp_utils {
     template<class U, class T>
     [[nodiscard]] U* cast(T* inst) {
         // TODO: Assumes T* is (at least) an Il2CppClass**, this means it assumes klass as first field.
-        auto* k1 = CRASH_UNLESS(classof(U*));
+        static auto* k1 = CRASH_UNLESS(classof(U*));
         auto* k2 = *reinterpret_cast<Il2CppClass**>(CRASH_UNLESS(inst));
         CRASH_UNLESS(k2);
         if (il2cpp_functions::class_is_assignable_from(k1, k2)) {
@@ -214,7 +217,7 @@ namespace il2cpp_utils {
     /// @return A U* of the cast value, if successful.
     template<typename U, typename T>
     [[nodiscard]] std::optional<U*> try_cast(T* inst) {
-        auto* k1 = classof(U*);
+        static auto* k1 = classof(U*);
         if (!k1 || !inst) {
             return std::nullopt;
         }

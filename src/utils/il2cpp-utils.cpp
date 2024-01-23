@@ -5,6 +5,7 @@
 #include "../../shared/utils/il2cpp-utils.hpp"
 #include "../../shared/utils/utils.h"
 #include "../../shared/utils/il2cpp-functions.hpp"
+#include "utils/il2cpp-utils-methods.hpp"
 #include <algorithm>
 #include <map>
 #include <unordered_map>
@@ -15,7 +16,7 @@
 // Please see comments in il2cpp-utils.hpp
 // TODO: Make this into a static class
 namespace il2cpp_utils {
-    std::vector<const Il2CppType*> ClassVecToTypes(std::vector<const Il2CppClass*> seq) {
+    std::vector<const Il2CppType*> ClassVecToTypes(std::span<const Il2CppClass*> const seq) {
         il2cpp_functions::Init();
 
         std::vector<const Il2CppType*> types(seq.size());
@@ -36,44 +37,7 @@ namespace il2cpp_utils {
         return il2cpp_functions::class_get_type(il2cpp_functions::class_from_il2cpp_type(type));
     }
 
-    bool ParameterMatch(const MethodInfo* method, std::vector<Il2CppClass*> genTypes, std::vector<const Il2CppType*> argTypes) {
-        static auto logger = getLogger().WithContext("ParameterMatch");
-        il2cpp_functions::Init();
-        if (method->parameters_count != argTypes.size()) {
-            return false;
-        }
-        auto genCount = (method->is_generic && !method->is_inflated) ? method->genericContainer->type_argc : 0;
-        if ((size_t)genCount != genTypes.size()) {
-            logger.warning("Potential method match had wrong number of generics %i (expected %lu)",
-                genCount, genTypes.size());
-            return false;
-        }
-        // TODO: supply boolStrictMatch and use type_equals instead of IsConvertibleFrom if supplied?
-        for (decltype(method->parameters_count) i = 0; i < method->parameters_count; i++) {
-            auto* paramType = method->parameters[i].parameter_type;
-            if (paramType->type == IL2CPP_TYPE_MVAR) {
-                auto genIdx = paramType->data.genericParameterIndex - method->genericContainer->genericParameterStart;
-                if (genIdx < 0) {
-                    logger.warning("Extracted invalid genIdx %i from parameter %i", genIdx, i);
-                } else if (genIdx >= genCount) {
-                    logger.warning("ParameterMatch was not supplied enough genTypes to determine type of parameter %i "
-                        "(had %i, needed %i)!", i, genCount, genIdx);
-                } else {
-                    auto* klass = genTypes.at(genIdx);
-                    paramType = (paramType->byref) ? &klass->this_arg : &klass->byval_arg;
-                }
-            }
-            // TODO: just because two parameter lists match doesn't necessarily mean this is the best match...
-            if (!IsConvertibleFrom(paramType, argTypes.at(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
 
-    bool ParameterMatch(const MethodInfo* method, std::vector<const Il2CppType*> argTypes) {
-        return ParameterMatch(method, {}, argTypes);
-    }
 
     static std::unordered_map<Il2CppClass*, const char*> typeMap;
     static std::mutex typeLock;
@@ -116,25 +80,7 @@ namespace il2cpp_utils {
             (klass->byval_arg.type == IL2CPP_TYPE_MVAR);
     }
 
-    std::vector<Il2CppClass*> ClassesFrom(std::vector<Il2CppClass*> classes) { return classes; }
-    std::vector<Il2CppClass*> ClassesFrom(std::vector<std::string_view> strings) {
-        std::vector<Il2CppClass*> classes;
-        for (size_t i = 0; i < strings.size() - 1; i += 2) {
-            classes.push_back(GetClassFromName(strings[i].data(), strings[i+1].data()));
-        }
-        return classes;
-    }
-    std::vector<const Il2CppType*> TypesFrom(std::vector<const Il2CppType*> types) { return types; }
-    std::vector<const Il2CppType*> TypesFrom(std::vector<const Il2CppClass*> classes) { return ClassVecToTypes(classes); }
-    std::vector<const Il2CppType*> TypesFrom(std::vector<std::string_view> strings) {
-        std::vector<const Il2CppType*> types;
-        il2cpp_functions::Init();
-        for (size_t i = 0; i < strings.size() - 1; i += 2) {
-            auto clazz = GetClassFromName(strings[i].data(), strings[i+1].data());
-            types.push_back(il2cpp_functions::class_get_type(clazz));
-        }
-        return types;
-    }
+
 
     Il2CppClass* GetParamClass(const MethodInfo* method, int paramIdx) {
         static auto logger = getLogger().WithContext("GetParamClass");
@@ -201,10 +147,10 @@ namespace il2cpp_utils {
 
     void RemoveDelegate(Il2CppDelegate* delegateInstance, Il2CppDelegate* comparePointer) noexcept {
         auto arrPtr = reinterpret_cast<MulticastDelegate*>(delegateInstance)->delegates;
-        std::vector<Il2CppDelegate*> newPtrs(arrPtr->Length());
-        for (il2cpp_array_size_t i = 0; i < arrPtr->Length(); i++) {
-            if (arrPtr->values[i] != comparePointer) {
-                newPtrs.push_back(arrPtr->values[i]);
+        std::vector<Il2CppDelegate*> newPtrs(arrPtr.size());
+        for (auto v : arrPtr) {
+            if (v != comparePointer) {
+                newPtrs.push_back(v);
             }
         }
         reinterpret_cast<MulticastDelegate*>(delegateInstance)->delegates = il2cpp_utils::vectorToArray(newPtrs);
@@ -250,11 +196,11 @@ namespace il2cpp_utils {
         }
         obj->klass = const_cast<Il2CppClass*>(klass);
         // Call cctor, we don't bother making a new thread for the type initializer. BE WARNED!
-        if (klass->has_cctor && !klass->cctor_finished && !klass->cctor_started) {
+        if (klass->has_cctor && !klass->cctor_finished_or_no_cctor && !klass->cctor_started) {
             obj->klass->cctor_started = true;
             auto* m = RET_0_UNLESS(logger, FindMethodUnsafe(klass, ".cctor", 0));
-            RET_0_UNLESS(logger, il2cpp_utils::RunStaticMethodUnsafe(m));
-            obj->klass->cctor_finished = true;
+            RET_0_UNLESS(logger, il2cpp_utils::RunMethodOpt(nullptr, m));
+            obj->klass->cctor_finished_or_no_cctor = true;
         }
         return obj;
     }
@@ -269,16 +215,16 @@ namespace il2cpp_utils {
         }
         obj->klass = const_cast<Il2CppClass*>(klass);
         // Call cctor, we don't bother making a new thread for the type initializer. BE WARNED!
-        if (klass->has_cctor && !klass->cctor_finished && !klass->cctor_started) {
+        if (klass->has_cctor && !klass->cctor_finished_or_no_cctor && !klass->cctor_started) {
             obj->klass->cctor_started = true;
             auto* m = FindMethodUnsafe(klass, ".cctor", 0);
             if (!m) {
                 throw exceptions::StackTraceException("Failed to find .cctor method!");
             }
-            if (!il2cpp_utils::RunStaticMethodUnsafe(m)) {
+            if (!il2cpp_utils::RunMethodOpt(nullptr, m)) {
                 throw exceptions::StackTraceException("Failed to run .cctor method!");
             }
-            obj->klass->cctor_finished = true;
+            obj->klass->cctor_finished_or_no_cctor = true;
         }
         return obj;
     }

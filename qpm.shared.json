@@ -1,16 +1,24 @@
 {
   "config": {
+    "version": "0.1.0",
     "sharedDir": "shared",
     "dependenciesDir": "extern",
     "info": {
       "name": "beatsaber-hook",
       "id": "beatsaber-hook",
-      "version": "1.2.3",
+      "version": "5.0.0",
       "url": "https://github.com/sc2ad/beatsaber-hook",
       "additionalData": {
         "soLink": "https://github.com/sc2ad/beatsaber-hook/releases/download/v0.5.8/libbeatsaber-hook.so",
         "debugSoLink": "https://github.com/sc2ad/beatsaber-hook/releases/download/v0.5.8/debug_libbeatsaber-hook.so",
         "branchName": "master"
+      }
+    },
+    "workspace": {
+      "scripts": {
+        "build": [
+          "pwsh ./build.ps1"
+        ]
       }
     },
     "dependencies": [
@@ -21,7 +29,7 @@
       },
       {
         "id": "libil2cpp",
-        "versionRange": ">=0.1.2, <0.3.0",
+        "versionRange": "^0.3.0",
         "additionalData": {}
       },
       {
@@ -31,25 +39,18 @@
           "private": true
         }
       }
-    ],
-    "workspace": {
-      "scripts": {
-        "build": [
-          "pwsh ./build.ps1"
-        ]
-      }
-    }
+    ]
   },
   "restoredDependencies": [
     {
       "dependency": {
         "id": "libil2cpp",
-        "versionRange": "=0.2.3",
+        "versionRange": "=0.3.1",
         "additionalData": {
           "headersOnly": true
         }
       },
-      "version": "0.2.3"
+      "version": "0.3.1"
     },
     {
       "dependency": {
