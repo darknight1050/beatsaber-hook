@@ -67,15 +67,16 @@ jobs:
           cd ./build/
           pattern="lib${module_id}*.so"
           files=( $pattern )
-          echo ::set-output name=NAME::"${files[0]}"
+          echo "NAME=${files[0]}" >> ${GITHUB_OUTPUT}
 
+      - name: Rename debug lib
+        run: mv ./build/debug/${{ steps.libname.outputs.NAME }} ./build/debug_${{ steps.libname.outputs.NAME }}
       - name: Upload to Release
-        id: upload_file_release
         uses: softprops/action-gh-release@v0.1.15
         with:
           tag_name: ${{ steps.version.outputs.TAG }}
           files: |
             ./build/${{ steps.libname.outputs.NAME }}
-            ./build/debug/${{ steps.libname.outputs.NAME }}
+            ./build/debug_${{ steps.libname.outputs.NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
