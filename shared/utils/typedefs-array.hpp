@@ -302,12 +302,12 @@ struct Array : public Il2CppArray
     }
 
     #ifdef HAS_CODEGEN
-        constexpr operator ::System::Collections::ICollection*() noexcept { return static_cast<::System::Collections::ICollection*>(static_cast<void*>(this)); }
-        constexpr operator ::System::Collections::IEnumerable*() noexcept { return static_cast<::System::Collections::IEnumerable*>(static_cast<void*>(this)); }
-        constexpr operator ::System::Collections::IList*() noexcept { return static_cast<::System::Collections::IList*>(static_cast<void*>(this)); }
-        constexpr operator ::System::Collections::IStructuralComparable*() noexcept { return static_cast<::System::Collections::IStructuralComparable*>(static_cast<void*>(this)); }
-        constexpr operator ::System::Collections::IStructuralEquatable*() noexcept { return static_cast<::System::Collections::IStructuralEquatable*>(static_cast<void*>(this)); }
-        constexpr operator ::System::ICloneable*() noexcept { return static_cast<::System::ICloneable*>(static_cast<void*>(this)); }
+        explicit constexpr operator ::System::Collections::ICollection*() noexcept { return static_cast<::System::Collections::ICollection*>(static_cast<void*>(this)); }
+        explicit constexpr operator ::System::Collections::IEnumerable*() noexcept { return static_cast<::System::Collections::IEnumerable*>(static_cast<void*>(this)); }
+        explicit constexpr operator ::System::Collections::IList*() noexcept { return static_cast<::System::Collections::IList*>(static_cast<void*>(this)); }
+        explicit constexpr operator ::System::Collections::IStructuralComparable*() noexcept { return static_cast<::System::Collections::IStructuralComparable*>(static_cast<void*>(this)); }
+        explicit constexpr operator ::System::Collections::IStructuralEquatable*() noexcept { return static_cast<::System::Collections::IStructuralEquatable*>(static_cast<void*>(this)); }
+        explicit constexpr operator ::System::ICloneable*() noexcept { return static_cast<::System::ICloneable*>(static_cast<void*>(this)); }
     #endif
 };
 MARK_GEN_REF_PTR_T(Array);
@@ -673,12 +673,12 @@ struct ArrayW {
     }
 
     #ifdef HAS_CODEGEN
-        constexpr operator ::System::Collections::ICollection*() noexcept { return static_cast<::System::Collections::ICollection*>(convert()); }
-        constexpr operator ::System::Collections::IEnumerable*() noexcept { return static_cast<::System::Collections::IEnumerable*>(convert()); }
-        constexpr operator ::System::Collections::IList*() noexcept { return static_cast<::System::Collections::IList*>(convert()); }
-        constexpr operator ::System::Collections::IStructuralComparable*() noexcept { return static_cast<::System::Collections::IStructuralComparable*>(convert()); }
-        constexpr operator ::System::Collections::IStructuralEquatable*() noexcept { return static_cast<::System::Collections::IStructuralEquatable*>(convert()); }
-        constexpr operator ::System::ICloneable*() noexcept { return static_cast<::System::ICloneable*>(convert()); }
+        explicit constexpr operator ::System::Collections::ICollection*() noexcept { return static_cast<::System::Collections::ICollection*>(convert()); }
+        explicit constexpr operator ::System::Collections::IEnumerable*() noexcept { return static_cast<::System::Collections::IEnumerable*>(convert()); }
+        explicit constexpr operator ::System::Collections::IList*() noexcept { return static_cast<::System::Collections::IList*>(convert()); }
+        explicit constexpr operator ::System::Collections::IStructuralComparable*() noexcept { return static_cast<::System::Collections::IStructuralComparable*>(convert()); }
+        explicit constexpr operator ::System::Collections::IStructuralEquatable*() noexcept { return static_cast<::System::Collections::IStructuralEquatable*>(convert()); }
+        explicit constexpr operator ::System::ICloneable*() noexcept { return static_cast<::System::ICloneable*>(convert()); }
     #endif
 
     private:
