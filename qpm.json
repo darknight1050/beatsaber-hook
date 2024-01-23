@@ -5,10 +5,10 @@
     "name": "beatsaber-hook",
     "id": "beatsaber-hook",
     "version": "5.0.0",
-    "url": "https://github.com/sc2ad/beatsaber-hook",
+    "url": "https://github.com/QuestPackageManager/beatsaber-hook",
     "additionalData": {
-      "soLink": "https://github.com/sc2ad/beatsaber-hook/releases/download/v0.5.8/libbeatsaber-hook.so",
-      "debugSoLink": "https://github.com/sc2ad/beatsaber-hook/releases/download/v0.5.8/debug_libbeatsaber-hook.so",
+      "soLink": "https://github.com/QuestPackageManager/beatsaber-hook/releases/download/v5.0.0/libbeatsaber-hook.so",
+      "debugSoLink": "https://github.com/QuestPackageManager/beatsaber-hook/releases/download/v5.0.0/debug_libbeatsaber-hook.so",
       "branchName": "master"
     }
   },
