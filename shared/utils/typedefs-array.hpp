@@ -408,7 +408,7 @@ struct ArrayW {
             array->val->values[idx] = static_cast<T>(v);
             // writes on ref types should happen with wbarrier
             if constexpr (il2cpp_utils::il2cpp_reference_type<T>) {
-                il2cpp_functions::GarbageCollector_SetWriteBarrier(array->val->values + idx);
+                il2cpp_functions::GarbageCollector_SetWriteBarrier(reinterpret_cast<void**>(array->val->values + idx));
             }
             return array->val->values[idx];
         }
