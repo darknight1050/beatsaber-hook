@@ -373,7 +373,7 @@ struct ArrayW {
         constexpr ArrayValue(const ArrayValue& other) noexcept { this->array = other.array; this->idx = other.idx; }
         constexpr ArrayValue(ArrayValue&& other) noexcept { this->array = std::move(other.array); this->idx = std::move(other.idx); }
 
-        constexpr ArrayValue& operator=(const ArrayValue& other) noexcept { this->array = other.array; this->idx = other.idx; }
+        constexpr ArrayValue& operator=(const ArrayValue& other) noexcept { this->array = other.array; this->idx = other.idx; return *this; }
         constexpr ArrayValue& operator=(ArrayValue&& other) noexcept { this->array = std::move(other.array); this->idx = std::move(other.idx); return *this; }
 
         constexpr operator reference() const noexcept requires(!const_array) { return array->val->values[idx]; }
