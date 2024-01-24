@@ -16,7 +16,7 @@ struct Il2CppObject;
 
 namespace il2cpp_utils {
     // forward declare
-    std::string ClassStandardName(const Il2CppClass *klass);
+    std::string ClassStandardName(const Il2CppClass* klass, bool generics);
 
     namespace exceptions {
         // TODO: Move all custom exceptions to this namespace?
@@ -50,8 +50,8 @@ namespace il2cpp_utils {
             Il2CppObject* inst;
 
             BadCastException(::Il2CppClass const* klass, ::Il2CppClass const* targetKlass, Il2CppObject* inst)
-                : il2cpp_utils::exceptions::StackTraceException(string_format("Failed to cast %s to %s", ClassStandardName(klass).c_str(),
-                                                                              ClassStandardName(targetKlass).c_str())),
+                : il2cpp_utils::exceptions::StackTraceException(string_format("Failed to cast %s to %s", ClassStandardName(klass, true).c_str(),
+                                                                              ClassStandardName(targetKlass, true).c_str())),
                   klass(klass),
                   targetKlass(targetKlass),
                   inst(inst) {}
