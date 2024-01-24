@@ -216,6 +216,18 @@ struct ListWrapper {
         return lsWrap;
     }
 
+    // method to create a new list easily
+    template <typename U, il2cpp_utils::CreationType creationType = il2cpp_utils::CreationType::Temporary>
+    static ListWrapper<T, Ptr> New(il2cpp_array_size_t size) {
+        il2cpp_functions::Init();
+        auto ls = il2cpp_utils::New<Ptr, creationType>(size);
+        if (!ls) throw ListException(nullptr, "Could not create list!");
+
+        ListWrapper<T, Ptr> lsWrap = { *ls };
+
+        return lsWrap;
+    }
+
     /**
      * @brief System.Collections.Generic::List<T>.IndexOf(T item)
      *
