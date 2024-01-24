@@ -192,14 +192,23 @@ namespace il2cpp_utils {
     template<class U, class T>
     [[nodiscard]] U* cast(T* inst) {
         // TODO: Assumes T* is (at least) an Il2CppClass**, this means it assumes klass as first field.
-        static auto* k1 = CRASH_UNLESS(classof(U*));
-        auto* k2 = *reinterpret_cast<Il2CppClass**>(CRASH_UNLESS(inst));
-        CRASH_UNLESS(k2);
-        if (il2cpp_functions::class_is_assignable_from(k1, k2)) {
-            return reinterpret_cast<U*>(inst);
+        static auto* k1 = classof(U*);
+        if (!k1) {
+            throw il2cpp_utils::exceptions::NullException("cannot cast null target klass!");
         }
-        SAFE_ABORT();
-        return nullptr;
+
+        if (!inst) {
+            throw il2cpp_utils::exceptions::NullException("cannot cast null instance!");
+        }
+        auto* k2 = *reinterpret_cast<Il2CppClass**>(inst);
+        if (!k2) {
+            throw il2cpp_utils::exceptions::NullException("cannot cast null klass!");
+        }
+        if (!il2cpp_functions::class_is_assignable_from(k1, k2)) {
+            throw ::il2cpp_utils::exceptions::BadCastException(k2, k1, inst);
+        }
+
+        return reinterpret_cast<U*>(inst);
     }
     /// @brief Performs an il2cpp type checked cast from T to U, reference version. See `cast` for more documentation.
     /// @tparam T The type to cast from.
@@ -216,7 +225,7 @@ namespace il2cpp_utils {
     /// @tparam U The type to cast to.
     /// @return A U* of the cast value, if successful.
     template<typename U, typename T>
-    [[nodiscard]] std::optional<U*> try_cast(T* inst) {
+    [[nodiscard]] std::optional<U*> try_cast(T* inst) noexcept {
         static auto* k1 = classof(U*);
         if (!k1 || !inst) {
             return std::nullopt;

@@ -51,9 +51,7 @@ namespace bs_hook {
         using StackTraceException::StackTraceException;
     };
 
-    struct NullException : public il2cpp_utils::exceptions::StackTraceException {
-        using StackTraceException::StackTraceException;
-    };
+
 
     struct FieldException : public il2cpp_utils::exceptions::StackTraceException {
         using StackTraceException::StackTraceException;

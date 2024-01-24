@@ -10,8 +10,14 @@
 
 struct Il2CppException;
 struct MethodInfo;
+struct Il2CppClass;
+struct Il2CppObject;
+
 
 namespace il2cpp_utils {
+    // forward declare
+    std::string ClassStandardName(const Il2CppClass *klass);
+
     namespace exceptions {
         // TODO: Move all custom exceptions to this namespace?
         struct StackTraceException : std::runtime_error {
@@ -30,6 +36,25 @@ namespace il2cpp_utils {
                 log_backtrace();
                 return std::runtime_error::what();
             }
+        };
+
+        struct NullException : public il2cpp_utils::exceptions::StackTraceException {
+            using StackTraceException::StackTraceException;
+
+            NullException(std::string_view msg) : il2cpp_utils::exceptions::StackTraceException(msg) {}
+        };
+        struct BadCastException : public il2cpp_utils::exceptions::StackTraceException {
+            using StackTraceException::StackTraceException;
+            ::Il2CppClass const* klass;
+            ::Il2CppClass const* targetKlass;
+            Il2CppObject* inst;
+
+            BadCastException(::Il2CppClass const* klass, ::Il2CppClass const* targetKlass, Il2CppObject* inst)
+                : il2cpp_utils::exceptions::StackTraceException(string_format("Failed to cast %s to %s", ClassStandardName(klass).c_str(),
+                                                                              ClassStandardName(targetKlass).c_str())),
+                  klass(klass),
+                  targetKlass(targetKlass),
+                  inst(inst) {}
         };
     }
     // Returns a legible string from an Il2CppException*
