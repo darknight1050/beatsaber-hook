@@ -98,6 +98,12 @@ struct ListWrapper {
     [[nodiscard]] constexpr il2cpp_array_size_t size() const {
         return this->ptr->_size;
     }
+    [[nodiscard]] constexpr Ptr const getPtr() const {
+        return this->ptr;
+    }
+    [[nodiscard]] constexpr Ptr getPtr() {
+        return this->ptr;
+    }
     T& operator[](size_t i) {
         return get_items()->values[i];
     }
@@ -217,7 +223,7 @@ struct ListWrapper {
     }
 
     // method to create a new list easily
-    template <typename U, il2cpp_utils::CreationType creationType = il2cpp_utils::CreationType::Temporary>
+    template <il2cpp_utils::CreationType creationType = il2cpp_utils::CreationType::Temporary>
     static ListWrapper<T, Ptr> New(il2cpp_array_size_t size) {
         il2cpp_functions::Init();
         auto ls = il2cpp_utils::New<Ptr, creationType>(size);
