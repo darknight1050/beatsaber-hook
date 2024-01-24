@@ -904,7 +904,7 @@ template <typename TOut = Il2CppObject*, CreationType creationType = CreationTyp
     // runtime_invoke constructor with right type(s) of arguments, return null if constructor errors
     std::array<const Il2CppType*, sizeof...(TArgs)> types{ ::il2cpp_utils::ExtractType(args)... };
     auto* method = RET_NULLOPT_UNLESS(logger, FindMethod(klass, ".ctor", types));
-    RET_NULLOPT_UNLESS(logger, RunMethodOpt(obj, method, args...));
+    RET_NULLOPT_UNLESS(logger, RunMethodOpt(obj, method, std::forward<TArgs>(args)...));
     return FromIl2CppObject<TOut>(obj);
 }
 
@@ -931,11 +931,11 @@ TOut NewSpecific(TArgs&&... args) {
         obj = createManualThrow(klass);
     }
     // Only need to extract based off of types, since we are asusming our TOut is classof-able already
-    static auto ctorMethod = FindMethod(klass, ".ctor", std::array<Il2CppType const*, sizeof...(TArgs)>{ ExtractIndependentType<std::remove_reference_t<TArgs>>()... });
+    static auto ctorMethod = FindMethod(klass, ".ctor", std::array<Il2CppType const*, sizeof...(TArgs)>{ ExtractIndependentType<std::decay_t<TArgs>>()... });
     if (!ctorMethod) {
         throw exceptions::StackTraceException(string_format("Failed to find a matching .ctor method during construction of type: %s", ClassStandardName(klass).c_str()));
     }
-    ::il2cpp_utils::RunMethodRethrow<void, false>(obj, ctorMethod, args...);
+    ::il2cpp_utils::RunMethodRethrow<void, false>(obj, ctorMethod, std::forward<TArgs>(args)...);
     if constexpr (std::is_pointer_v<TOut>) {
         return reinterpret_cast<TOut>(obj);
     } else if constexpr (has_il2cpp_conversion<TOut>) {
