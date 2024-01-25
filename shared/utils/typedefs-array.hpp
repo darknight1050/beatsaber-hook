@@ -354,122 +354,15 @@ struct ArrayW {
         return val->get_Length();
     }
 
-    template<bool const_array>
-    struct ArrayValue {
-        using value_type = T;
-        using pointer = T*;
-        using const_pointer = const T*;
-        using reference = T&;
-        using const_reference = T const&;
+    using value = T;
+    using const_value = const T;
+    using pointer = T*;
+    using const_pointer = T const*;
+    using reference = T&;
+    using const_reference = T const&;
 
-        using wrapped_pointer = std::conditional_t<const_array, const_pointer, pointer>;
-
-        wrapped_pointer value;
-
-        constexpr ArrayValue() noexcept : value(nullptr) {}
-        constexpr ArrayValue(wrapped_pointer value) noexcept : value(value) {}
-
-        constexpr ArrayValue(const ArrayValue& other) noexcept { value = other.value; }
-        constexpr ArrayValue(ArrayValue&& other) noexcept { value = std::move(other.value); }
-
-        constexpr ArrayValue& operator=(const ArrayValue& other) noexcept { *value = *other.value; return *this; }
-        constexpr ArrayValue& operator=(ArrayValue&& other) noexcept { *value = std::move(*other.value); return *this; }
-
-        constexpr operator reference() const noexcept requires(!const_array) { return *value; }
-        constexpr reference operator*() const noexcept requires(!const_array) { return *value; }
-
-        constexpr operator const_reference () const noexcept { return *value; }
-        constexpr const_reference operator*() const noexcept { return *value; }
-
-        using arrow_return = std::conditional_t<std::is_pointer_v<T>, value_type, pointer>;
-        constexpr arrow_return operator->() const noexcept {
-            if constexpr(std::is_pointer_v<T>) {
-                return *value;
-            } else {
-                return value;
-            }
-        }
-
-        template<bool other_const>
-        bool operator ==(const ArrayValue<other_const>& other) const noexcept {
-            return value == other.value;
-        }
-
-        template<bool other_const>
-        bool operator <(const ArrayValue<other_const>& other) const noexcept {
-            return value < other.value;
-        }
-
-        /// @brief assignment operator for assigning into an array directly via arr[idx] = value;
-        template<typename U>
-        requires((std::is_convertible_v<U, T> || std::is_same_v<T, std::decay_t<U>>) && !const_array)
-        T& operator=(U&& v) {
-            // if this is already the same type, no need to static_cast
-            if constexpr (std::is_same_v<T, std::decay_t<U>>) {
-                *value = v;
-            } else {
-                *value = static_cast<T>(v);
-            }
-
-// only if wbarrier is available use it for compiling a wbarrier assign. Since unity2021 this seems to not be available in beat saber, excercise caution for other games!
-#ifdef IL2CPP_WBARRIER_AVAILABLE
-            // writes on ref types should happen with wbarrier
-            if constexpr (il2cpp_utils::il2cpp_reference_type<T>) {
-                il2cpp_functions::GarbageCollector_SetWriteBarrier(reinterpret_cast<void**>(value));
-            }
-#endif
-
-            return *value;
-        }
-    };
-
-    using value = ArrayValue<false>;
-    using const_value = ArrayValue<true>;
-
-/// @brief more or less just an extension to ArrayValue to allow iteration
-    template<bool const_array>
-    struct ArrayIterator : public ArrayValue<const_array> {
-        using ArrayValue<const_array>::ArrayValue;
-
-        /// @brief pre decrement (--i)
-        /// @return Self& according to std::bidirectional_iterator
-        constexpr ArrayIterator& operator --() noexcept {
-            this->value--;
-            return *this;
-        }
-
-        /// @brief post decrement (i--)
-        /// @return Self according to std::bidirectional_iterator
-        constexpr ArrayIterator operator --(int) noexcept {
-            auto clone = *this;
-            this->value--;
-            return clone;
-        }
-
-        /// @brief pre increment (++i)
-        /// @return Self& according to std::bidirectional_iterator
-        constexpr ArrayIterator& operator ++() noexcept {
-            this->value++;
-            return *this;
-        }
-
-        /// @brief post increment (i++)
-        /// @return Self according to std::bidirectional_iterator
-        constexpr ArrayIterator operator ++(int) noexcept {
-            auto clone = *this;
-            this->value++;
-            return clone;
-        }
-
-        // mostly here to more easily calculate indexes
-        template<bool other_const>
-        ptrdiff_t operator -(const ArrayIterator<other_const>& other) const noexcept {
-            return this->value - other.value;
-        }
-    };
-
-    using iterator = ArrayIterator<false>;
-    using const_iterator = ArrayIterator<true>;
+    using iterator = pointer;
+    using const_iterator = const_pointer;
 
     static_assert(std::bidirectional_iterator<iterator>);
     static_assert(std::bidirectional_iterator<const_iterator>);
@@ -493,12 +386,12 @@ struct ArrayW {
     auto rend() const { return std::reverse_iterator(const_iterator(val->values + 0)); }
 
     /// @brief index into array
-    value operator[](size_t i) noexcept {
-        return value(val->values + i);
+    reference operator[](size_t i) noexcept {
+        return val->values[i];
     }
     /// @brief const index into array
-    const_value operator[](size_t i) const noexcept {
-        return const_value(val->values + i);
+    const_reference operator[](size_t i) const noexcept {
+        return val->values[i];
     }
 
     /// @brief assert sizes
@@ -511,30 +404,30 @@ struct ArrayW {
     /// @brief Get a given index, performs bound checking and throws std::runtime_error on failure.
     /// @param i The index to get.
     /// @return The reference to the item.
-    value get(size_t i) {
+    reference get(size_t i) {
         assert_bounds(i);
-        return value(val->values + i);
+        return val->values[i];
     }
     /// @brief Get a given index, performs bound checking and throws std::runtime_error on failure.
     /// @param i The index to get.
     /// @return The const reference to the item.
-    const_value get(size_t i) const {
+    const_reference get(size_t i) const {
         assert_bounds(i);
-        return const_value(val->values + i);
+        return val->values[i];
     }
     /// @brief Tries to get a given index, performs bound checking and returns a std::nullopt on failure.
     /// @param i The index to get.
     /// @return The WrapperRef<T> to the item, mostly considered to be a T&.
-    std::optional<value> try_get(size_t i) noexcept {
+    std::optional<WrapperRef<value>> try_get(size_t i) noexcept {
         if (i >= size() || i < 0) {
             return std::nullopt;
         }
-        return value(val->values + i);
+        return WrapperRef<value>(val->values[i]);
     }
     /// @brief Tries to get a given index, performs bound checking and returns a std::nullopt on failure.
     /// @param i The index to get.
     /// @return The WrapperRef<const T> to the item, mostly considered to be a const T&.
-    std::optional<const_value> try_get(size_t i) const noexcept {
+    std::optional<WrapperRef<const_value>> try_get(size_t i) const noexcept {
         if (i >= size() || i < 0) {
             return std::nullopt;
         }
