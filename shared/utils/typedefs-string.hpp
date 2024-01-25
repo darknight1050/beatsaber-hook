@@ -341,9 +341,3 @@ static_assert(il2cpp_utils::has_il2cpp_conversion<StringWrapper<Il2CppString*>>)
 DEFINE_IL2CPP_DEFAULT_TYPE(StringWrapper < Il2CppString*>, string);
 NEED_NO_BOX(StringWrapper<Il2CppString*>);
 MARK_REF_T(StringWrapper<Il2CppString*>);
-
-template <typename Ptr>
-auto format_as(StringWrapper<Ptr> s) {
-    if (!s) return std::string("StringW(null)");
-    return static_cast<std::string>(s);
-}
