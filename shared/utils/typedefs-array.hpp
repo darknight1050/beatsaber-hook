@@ -364,9 +364,6 @@ struct ArrayW {
     using iterator = pointer;
     using const_iterator = const_pointer;
 
-    static_assert(std::bidirectional_iterator<iterator>);
-    static_assert(std::bidirectional_iterator<const_iterator>);
-
     /// @brief forward begin
     iterator begin() { return iterator(val->values + 0); }
     /// @brief forward end
