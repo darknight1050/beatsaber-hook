@@ -258,7 +258,7 @@ struct Array : public Il2CppArray
     template<typename Predicate>
     T Last(Predicate&& pred) {
         auto itr = std::find_if(rbegin(), rend(), pred);
-        if (itr == end()) throw ArrayException(this, "Unable to find Last item with given predicate!");
+        if (itr == rend()) throw ArrayException(this, "Unable to find Last item with given predicate!");
         return *itr;
     }
 
