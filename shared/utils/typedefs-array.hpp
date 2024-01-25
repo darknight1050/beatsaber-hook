@@ -402,7 +402,7 @@ struct ArrayW {
 
         /// @brief assignment operator for assigning into an array directly via arr[idx] = value;
         template<typename U>
-        requires(std::is_convertible_v<U, T> || std::is_same_v<T, std::decay_t<U>> && !const_array)
+        requires((std::is_convertible_v<U, T> || std::is_same_v<T, std::decay_t<U>>) && !const_array)
         T& operator=(U&& v) {
             // if this is already the same type, no need to static_cast
             if constexpr (std::is_same_v<T, std::decay_t<U>>) {
