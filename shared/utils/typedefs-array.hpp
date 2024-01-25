@@ -700,4 +700,10 @@ struct ::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<ArrayW<T, Ptr>> {
     }
 };
 
+template <typename T, typename Ptr>
+auto format_as(ArrayW<T, Ptr> list) {
+    if (!list) return fmt::format("{}(null)", typeid(list).name());
+    return fmt::join(list.begin(), list.end(), ", ");
+}
+
 #pragma pack(pop)
