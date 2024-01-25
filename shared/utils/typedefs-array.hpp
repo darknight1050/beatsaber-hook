@@ -411,10 +411,13 @@ struct ArrayW {
                 *value = static_cast<T>(v);
             }
 
+// only if wbarrier is available use it for compiling a wbarrier assign. Since unity2021 this seems to not be available in beat saber, excercise caution for other games!
+#ifdef IL2CPP_WBARRIER_AVAILABLE
             // writes on ref types should happen with wbarrier
             if constexpr (il2cpp_utils::il2cpp_reference_type<T>) {
                 il2cpp_functions::GarbageCollector_SetWriteBarrier(reinterpret_cast<void**>(value));
             }
+#endif
 
             return *value;
         }
