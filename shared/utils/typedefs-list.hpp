@@ -190,11 +190,29 @@ struct ListWrapper {
         return ptr;
     }
 
+    constexpr ListWrapper& operator=(ListWrapper&&) = default;
+    constexpr ListWrapper& operator=(ListWrapper const&) = default;
+
     constexpr ListWrapper& operator=(Ptr const& ptr) {
         this->ptr = ptr;
+        return *this;
     }
     constexpr ListWrapper& operator=(Ptr&& ptr) {
         this->ptr = ptr;
+        return *this;
+    }
+
+    template <typename U>
+    requires(std::is_convertible_v<U, T>)
+    constexpr ListWrapper& operator=(ListWrapper<U> const& ptr) {
+        this->ptr = ptr.ptr;
+        return *this;
+    }
+    template <typename U>
+    requires(std::is_convertible_v<U, T>)
+    constexpr ListWrapper& operator=(ListWrapper<U>&& ptr) {
+        this->ptr = ptr.ptr;
+        return *this;
     }
 
     // method to create a new list easily
