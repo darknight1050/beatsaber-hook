@@ -98,7 +98,7 @@ namespace il2cpp_utils {
                 logger.error("Failed to get type object from class: %s", il2cpp_functions::class_get_name_const(klass));
                 THROW_OR_RET_NULL(logger, typeObj);
             }
-            arr->values[i] = typeObj;
+            arr->_values[i] = typeObj;
             i++;
         }
         // Call instance function on infoObj to MakeGeneric

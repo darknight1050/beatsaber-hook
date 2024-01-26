@@ -472,7 +472,7 @@ namespace il2cpp_utils {
         static auto& logger = getLogger();
         Array<T>* arr = reinterpret_cast<Array<T>*>(RET_0_UNLESS(logger, il2cpp_functions::array_new(il2cpp_type_check::il2cpp_no_arg_class<T>::get(), vec.size())));
         for (size_t i = 0; i < vec.size(); i++) {
-            arr->values[i] = vec[i];
+            arr->_values[i] = vec[i];
         }
         return arr;
     }

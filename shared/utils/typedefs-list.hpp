@@ -71,9 +71,12 @@ struct ListWrapper {
     static_assert(sizeof(Ptr) == sizeof(void*), "Size of Ptr type must be the same as a void*!");
     using WrappedType = Ptr;
 
+    constexpr ListWrapper(ListWrapper&&) noexcept = default;
+    constexpr ListWrapper(ListWrapper const&) noexcept = default;
+
     constexpr ListWrapper() noexcept : ptr(nullptr) {}
 
-    // TODO: Consider requirementally constexpr-ifying this call
+
     // TODO: Apply these il2cpp conversion changes to ArrayW as well, to permit
     // ArrayW to hold wrapper types and not pure pointers
     constexpr ListWrapper(Ptr const& p) noexcept : ptr(p) {}
@@ -105,10 +108,10 @@ struct ListWrapper {
         return this->ptr;
     }
     T& operator[](size_t i) {
-        return get_items()->values[i];
+        return get_items()->_values[i];
     }
     const T& operator[](size_t i) const {
-        return get_items()->values[i];
+        return get_items()->_values[i];
     }
 
     /// @brief Get a given index, performs bound checking and throws
@@ -117,7 +120,7 @@ struct ListWrapper {
     /// @return The reference to the item.
     T& get(size_t i) {
         THROW_UNLESS(i < size() && i >= 0);
-        return get_items()->values[i];
+        return get_items()->_values[i];
     }
     /// @brief Get a given index, performs bound checking and throws
     /// std::runtime_error on failure.
@@ -125,7 +128,7 @@ struct ListWrapper {
     /// @return The const reference to the item.
     const T& get(size_t i) const {
         THROW_UNLESS(i < size() && i >= 0);
-        return get_items()->values[i];
+        return get_items()->_values[i];
     }
     /// @brief Tries to get a given index, performs bound checking and returns a
     /// std::nullopt on failure.
@@ -135,7 +138,7 @@ struct ListWrapper {
         if (i >= size() || i < 0) {
             return std::nullopt;
         }
-        return WrapperRef(get_items()->values[i]);
+        return WrapperRef(get_items()->_values[i]);
     }
     /// @brief Tries to get a given index, performs bound checking and returns a
     /// std::nullopt on failure.
@@ -146,20 +149,20 @@ struct ListWrapper {
         if (i >= size() || i < 0) {
             return std::nullopt;
         }
-        return WrapperRef(get_items()->values[i]);
+        return WrapperRef(get_items()->_values[i]);
     }
 
     iterator begin() {
-        return get_items()->values;
+        return get_items()->_values;
     }
     iterator end() {
-        return &get_items()->values[size()];
+        return &get_items()->_values[size()];
     }
     const_iterator begin() const {
-        return get_items()->values;
+        return get_items()->_values;
     }
     const_iterator end() const {
-        return &get_items()->values[size()];
+        return &get_items()->_values[size()];
     }
 
     operator std::span<T const> const() const {
