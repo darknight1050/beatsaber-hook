@@ -68,7 +68,7 @@ const void* HookTracker::GetOrigInternal(const void* const location) noexcept {
 }
 
 #ifndef LIBS_FILE_PATH
-#define LIBS_FILE_PATH "/sdcard/Android/data/%s/files/libs"
+#define LIBS_FILE_PATH "/sdcard/ModData/%s/Modloader/libs"
 #endif
 
 #include <dirent.h>
