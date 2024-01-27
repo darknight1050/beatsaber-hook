@@ -229,7 +229,7 @@ struct ListWrapper {
     }
 
     // method to create a new list easily
-    template <typename U, il2cpp_utils::CreationType creationType = il2cpp_utils::CreationType::Temporary>
+    template <typename U = T, il2cpp_utils::CreationType creationType = il2cpp_utils::CreationType::Temporary>
     requires(std::is_convertible_v<U, T>)
     static ListWrapper<T, Ptr> New(std::initializer_list<U> values) {
         il2cpp_functions::Init();
@@ -239,6 +239,19 @@ struct ListWrapper {
         ListWrapper<T, Ptr> lsWrap = { *ls };
 
         lsWrap.insert_range(values);
+
+        return lsWrap;
+    }
+    template <typename U = T, il2cpp_utils::CreationType creationType = il2cpp_utils::CreationType::Temporary>
+    requires(std::is_convertible_v<U, T>)
+    static ListWrapper<T, Ptr> New(std::span<U const> const values) {
+        il2cpp_functions::Init();
+        auto ls = il2cpp_utils::New<Ptr, creationType>();
+        if (!ls) throw ListException(nullptr, "Could not create list!");
+
+        ListWrapper<T, Ptr> lsWrap = { *ls };
+
+        lsWrap.insert_span(values);
 
         return lsWrap;
     }
@@ -518,7 +531,7 @@ struct ListWrapper {
      */
     template <typename It>
     void insert_range(It begin, It end) {
-        insert_span(std::span<T>(begin, end));
+        insert_span(std::span<T const>(begin, end));
     }
 
     /**
@@ -533,7 +546,7 @@ struct ListWrapper {
      */
     template <typename It>
     void insert_range(It begin, int count) {
-        insert_span(std::span<T>(begin, count));
+        insert_span(std::span<T const>(begin, count));
     }
 
     /**
@@ -547,7 +560,7 @@ struct ListWrapper {
      */
     template <typename C>
     void insert_range(C container) {
-        insert_span(std::span<T>(container.begin(), container.end()));
+        insert_span(std::span<T const>(container.begin(), container.end()));
     }
 
     /**
@@ -558,7 +571,7 @@ struct ListWrapper {
      *
      * @param span
      */
-    void insert_span(std::span<T> span) {
+    void insert_span(std::span<T const> span) {
         if (span.empty()) return;
 
         this->EnsureCapacity(span.size() + this->size());
