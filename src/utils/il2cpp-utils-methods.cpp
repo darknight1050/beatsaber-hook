@@ -408,14 +408,14 @@ namespace il2cpp_utils {
             auto const methodsSpan = std::span(targetKlass->methods, targetKlass->method_count);
             for (auto const& current : methodsSpan) {
                 if (info.name != current->name) {
-                    logger.debug("Method name does not match for method %s", current->name);
+                    // logger.debug("Method name does not match for method %s", current->name);
                     continue;
                 }
 
                 // strict equal
                 bool isPerfect;
                 if (!ParameterMatch(current, std::span(info.genTypes), std::span(info.argTypes), &isPerfect)) {
-                    logger.debug("Parameters do not match for method %s", current->name);
+                    // logger.debug("Parameters do not match for method %s", current->name);
                     continue;
                 }
 
