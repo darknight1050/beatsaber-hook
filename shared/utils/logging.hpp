@@ -30,7 +30,7 @@ enum Level { CRITICAL = ANDROID_LOG_FATAL, ERROR = ANDROID_LOG_ERROR, WARNING = 
 
 // Note that the LOG_PATH directory is still the files directory, so that stale logs will be cleaned up automatically.
 #ifndef LOG_PATH
-#define LOG_PATH "/sdcard/ModData/%s/logs"
+#define LOG_PATH "/sdcard/ModData/%s/logs/"
 #endif
 
 class Logger;
