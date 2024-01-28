@@ -716,19 +716,27 @@ namespace il2cpp_utils {
                     e.log_backtrace();
                     if (e.ex) e.rethrow();
                     il2cpp_functions::thread_detach(thread);
+                    modloader_jvm->DetachCurrentThread();
+                    env = nullptr;
                     SAFE_ABORT();
                 } catch(exceptions::StackTraceException const& e) {
                     logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught StackTraceException! what(): %s", e.what());
                     e.log_backtrace();
                     il2cpp_functions::thread_detach(thread);
+                    modloader_jvm->DetachCurrentThread();
+                    env = nullptr;
                     SAFE_ABORT();
                 } catch(std::exception& e) {
                     logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught C++ exception! type name: %s, what(): %s", typeid(e).name(), e.what());
                     il2cpp_functions::thread_detach(thread);
+                    modloader_jvm->DetachCurrentThread();
+                    env = nullptr;
                     SAFE_ABORT();
                 } catch(...) {
                     logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught, unknown C++ exception (not std::exception) with no known what() method!");
                     il2cpp_functions::thread_detach(thread);
+                    modloader_jvm->DetachCurrentThread();
+                    env = nullptr;
                     SAFE_ABORT();
                 }
 
