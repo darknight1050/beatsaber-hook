@@ -1,12 +1,16 @@
 #ifndef IL2CPP_UTILS_H
 #define IL2CPP_UTILS_H
 
+#include <sys/types.h>
+#include <forward_list>
+#include <utility>
 #pragma pack(push)
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <optional>
+#include <future>
 #include <vector>
 #include <unordered_map>
 #include <jni.h>
@@ -772,6 +776,103 @@ namespace il2cpp_utils {
                 if (joinable()) join();
             }
     };
+
+    template<typename Fp, typename... TArgs>
+    inline std::invoke_result_t<Fp, TArgs...> il2cpp_async_internal_attach(Fp&& f, TArgs&&... args) {
+        auto logger = getLogger().WithContext("internal_async_" + il2cpp_aware_thread::current_thread_id());
+
+        JNIEnv* env = nullptr;
+        // attach thread to jvm
+        modloader_jvm->AttachCurrentThread(&env, nullptr);
+
+        il2cpp_functions::Init();
+
+        logger.info("Attaching thread from async");
+        auto domain = il2cpp_functions::domain_get();
+        auto thread = il2cpp_functions::thread_attach(domain);
+
+        logger.info("Invoking function");
+        try {
+            if constexpr (!std::is_same_v<std::invoke_result_t<Fp, TArgs...>, void>) {
+                auto result = std::invoke(std::forward<Fp>(f), std::forward<TArgs>(args)...);
+                logger.info("Detaching thread from async");
+
+                // detach il2cpp thread
+                il2cpp_functions::thread_detach(thread);
+
+                // detach thread from jvm
+                modloader_jvm->DetachCurrentThread();
+                return result;
+            } else {
+                std::invoke(std::forward<Fp>(f), std::forward<TArgs>(args)...);
+
+                // detach il2cpp thread
+                il2cpp_functions::thread_detach(thread);
+
+                // detach thread from jvm
+                modloader_jvm->DetachCurrentThread();
+                return;
+            }
+        } catch(RunMethodException const& e) {
+            logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught RunMethodException! what(): %s", e.what());
+            e.log_backtrace();
+            if (e.ex) e.rethrow();
+            il2cpp_functions::thread_detach(thread);
+            modloader_jvm->DetachCurrentThread();
+            SAFE_ABORT();
+        } catch(exceptions::StackTraceException const& e) {
+            logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught StackTraceException! what(): %s", e.what());
+            e.log_backtrace();
+            il2cpp_functions::thread_detach(thread);
+            modloader_jvm->DetachCurrentThread();
+            SAFE_ABORT();
+        } catch(std::exception& e) {
+            logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught C++ exception! type name: %s, what(): %s", typeid(e).name(), e.what());
+            il2cpp_functions::thread_detach(thread);
+            modloader_jvm->DetachCurrentThread();
+            SAFE_ABORT();
+        } catch(...) {
+            logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught, unknown C++ exception (not std::exception) with no known what() method!");
+            il2cpp_functions::thread_detach(thread);
+            modloader_jvm->DetachCurrentThread();
+            SAFE_ABORT();
+        }
+    }
+
+    template<typename Fp, typename... TArgs>
+    requires(std::is_invocable_v<Fp, TArgs...>)
+    inline std::invoke_result_t<Fp, TArgs...> il2cpp_async_internal(Fp&& f, TArgs&&... args) {
+        // check whether the current thread is already attached
+        size_t threadCount = 0;
+        auto threads_begin = il2cpp_functions::thread_get_all_attached_threads(&threadCount);
+        auto threads_end = threads_begin + threadCount;
+        auto current_thread = il2cpp_functions::thread_current();
+        bool is_attached = false;
+        for (auto t = threads_begin; t != threads_end; t++) {
+            if (current_thread == *t) {
+                is_attached = true;
+                break;
+            }
+        }
+
+        if (is_attached) { // we're already attached, nothing to attach or detach
+            return std::invoke(std::forward<Fp>(f), std::forward<TArgs>(args)...);
+        } else { // we are not attached, this means this is a new thread and we should attach ourselves
+            return il2cpp_async_internal_attach<Fp, TArgs...>(std::forward<Fp>(f), std::forward<TArgs>(args)...);
+        }
+    }
+
+    template<typename Fp, typename... TArgs>
+    requires(std::is_invocable_v<Fp, TArgs...>)
+    inline std::future<std::invoke_result_t<Fp, TArgs...>> il2cpp_async(std::launch policy, Fp&& f, TArgs&&... args) {
+        return std::async<decltype(&il2cpp_async_internal<Fp, TArgs...>), Fp, TArgs...>(policy, &il2cpp_async_internal<Fp, TArgs...>, std::forward<Fp>(f), std::forward<TArgs>(args)...);
+    }
+
+    template<typename Fp, typename... TArgs>
+    requires(std::is_invocable_v<Fp, TArgs...>)
+    inline std::future<std::invoke_result_t<Fp, TArgs...>> il2cpp_async(Fp&& f, TArgs&&... args) {
+        return std::async<decltype(&il2cpp_async_internal<Fp, TArgs...>), Fp, TArgs...>(std::launch::any, &il2cpp_async_internal<Fp, TArgs...>, std::forward<Fp>(f), std::forward<TArgs>(args)...);
+    }
 }
 
 #pragma pack(pop)
