@@ -25,8 +25,8 @@ struct ThreadTest {
 
 // test both il2cpp aware thread and std::thread for equivalence
 #define IL2CPP_THREAD_TEST(...) \
-    il2cpp_utils::il2cpp_aware_thread(__VA_ARGS__).join(); \
-    std::thread(__VA_ARGS__).join()
+    std::thread(__VA_ARGS__).join(); \
+    il2cpp_utils::il2cpp_aware_thread(__VA_ARGS__).join()
 
 void test_thread() {
     // can we make a 0 arg lambda thread?
@@ -76,10 +76,10 @@ void test_thread() {
 
     il2cpp_utils::il2cpp_aware_thread([]{
         // getting current jni env since we are attached
-        auto env = il2cpp_utils::il2cpp_aware_thread::get_current_env();
+        auto env = il2cpp_utils::threading::get_current_env();
 
         // getting current thread id as a test
-        auto id = il2cpp_utils::il2cpp_aware_thread::current_thread_id();
+        auto id = il2cpp_utils::threading::current_thread_id();
     }).join();
 }
 
