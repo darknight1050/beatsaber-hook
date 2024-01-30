@@ -1,12 +1,17 @@
 #ifndef IL2CPP_UTILS_H
 #define IL2CPP_UTILS_H
 
+#include <sys/types.h>
+#include <exception>
+#include <forward_list>
+#include <utility>
 #pragma pack(push)
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <optional>
+#include <future>
 #include <vector>
 #include <unordered_map>
 #include <jni.h>
@@ -680,86 +685,127 @@ namespace il2cpp_utils {
         return out;
     }
 
+    namespace threading {
+        static inline thread_local JNIEnv* env;
+        static inline JNIEnv* get_current_env() {
+            return env;
+        }
+
+        static inline std::string current_thread_id() {
+            std::stringstream id; id << std::this_thread::get_id();
+            return id.str();
+        }
+
+        /// @brief gets whether the current thread is attached to il2cpp
+        /// @return true for attached, false for not attached
+        static inline bool is_thread_attached() {
+            il2cpp_functions::Init();
+            auto currentThread = il2cpp_functions::thread_current();
+            // if there is no current thread might as well just return false since we didn't get a thread
+            if (!currentThread) return false;
+
+            size_t threadCount = 0;
+            auto threads_begin = il2cpp_functions::thread_get_all_attached_threads(&threadCount);
+            auto threads_end = threads_begin + threadCount;
+
+            return std::find(threads_begin, threads_end, currentThread) != threads_end;
+        }
+
+        static inline Il2CppThread* attach_thread() {
+            static auto logger = il2cpp_utils::getLogger().WithContext("attach_thread");
+            logger.info("Attaching thread %s", current_thread_id().c_str());
+            il2cpp_functions::Init();
+            // il2cpp attach
+            auto domain = il2cpp_functions::domain_get();
+            auto thread = il2cpp_functions::thread_attach(domain);
+
+            // jvm attach
+            modloader_jvm->AttachCurrentThread(&env, nullptr);
+            return thread;
+        }
+
+        static inline void detach_thread(Il2CppThread* thread) {
+            static auto logger = il2cpp_utils::getLogger().WithContext("detach_thread");
+            logger.info("Detaching thread %s", current_thread_id().c_str());
+
+            // il2cpp detach
+            il2cpp_functions::Init();
+            il2cpp_functions::thread_detach(thread);
+            // jvm detach
+            modloader_jvm->DetachCurrentThread();
+            env = nullptr;
+        }
+
+        template<typename Func, typename... TArgs>
+        requires(std::is_invocable_v<Func, TArgs...>)
+        static inline std::invoke_result_t<Func, TArgs...> il2cpp_catch_invoke(Func&& func, TArgs&&... args) {
+            static auto logger = getLogger().WithContext("il2cpp_catch_invoke");
+            auto thread_id = current_thread_id();
+            try {
+                logger.error("Invoking function in thread id %s", thread_id.c_str());
+                return std::invoke(std::forward<Func>(func), std::forward<TArgs>(args)...);
+            } catch (RunMethodException const& e) {
+                logger.error("Exception in thread with thread id %s", thread_id.c_str());
+                logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught RunMethodException! what(): %s", e.what());
+                e.log_backtrace();
+                SAFE_ABORT();
+            } catch (exceptions::StackTraceException const& e) {
+                logger.error("Exception in thread with thread id %s", thread_id.c_str());
+                logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught StackTraceException! what(): %s", e.what());
+                SAFE_ABORT();
+            } catch (std::exception const& e) {
+                logger.error("Exception in thread with thread id %s", thread_id.c_str());
+                logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught C++ exception! type name: %s, what(): %s", typeid(e).name(), e.what());
+                SAFE_ABORT();
+            } catch(...) {
+                logger.error("Exception in thread with thread id %s", thread_id.c_str());
+                logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught, unknown exception (not std::exception) with no known what() method!");
+                SAFE_ABORT();
+            }
+        }
+
+        /// @brief helper type to run operator () on something once this variable goes out of scope
+        template<typename F>
+        requires(std::is_invocable_v<F>)
+        struct OnScopeExit {
+            inline OnScopeExit(F f) : f(f) {}
+            inline ~OnScopeExit() {
+                f();
+            }
+            F f;
+        };
+
+        template<typename Func, typename... TArgs>
+        requires(std::is_invocable_v<Func, TArgs...>)
+        static inline std::invoke_result_t<Func, TArgs...> il2cpp_attached_thread(Func&& func, TArgs&&... args) {
+            auto thread = attach_thread();
+            // helper to detach thread on out of scope
+            OnScopeExit onScopeExit(std::bind(&detach_thread, thread));
+
+            return il2cpp_catch_invoke(std::forward<Func>(func), std::forward<TArgs>(args)...);
+        }
+
+        template<typename Func, typename... TArgs>
+        requires(std::is_invocable_v<Func, TArgs...>)
+        static inline std::invoke_result_t<Func, TArgs...> il2cpp_async_internal(Func&& func, TArgs&&... args) {
+            if (is_thread_attached()) {
+                return il2cpp_catch_invoke(std::forward<Func>(func), std::forward<TArgs>(args)...);
+            } else {
+                return il2cpp_attached_thread(std::forward<Func>(func), std::forward<TArgs>(args)...);
+            }
+        }
+    }
     struct il2cpp_aware_thread : public std::thread {
-        private:
-            static inline thread_local JNIEnv* env;
-        public:
-            static std::string current_thread_id() {
-                std::stringstream id; id << std::this_thread::get_id();
-                return id.str();
-            }
-
-            static inline JNIEnv* get_current_env() noexcept { return env; }
-
-            /// @brief method executed by the thread created in il2cpp_aware_thread
-            /// @param pred the predicate to use in the thread
-            /// @param args the args used
-            template<typename Predicate, typename... TArgs>
-            requires(std::is_invocable_v<Predicate, std::decay_t<TArgs>...>)
-            static void internal_thread(Predicate&& pred, TArgs&&... args) {
-                auto logger = getLogger().WithContext("internal_thread_" + current_thread_id());
-
-                // attach thread to jvm
-                modloader_jvm->AttachCurrentThread(&env, nullptr);
-
-                il2cpp_functions::Init();
-
-                logger.info("Attaching thread");
-                auto domain = il2cpp_functions::domain_get();
-                auto thread = il2cpp_functions::thread_attach(domain);
-
-                logger.info("Invoking predicate");
-                try {
-                    std::invoke(std::forward<Predicate>(pred), std::forward<std::decay_t<TArgs>>(args)...);
-                } catch(RunMethodException const& e) {
-                    logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught RunMethodException! what(): %s", e.what());
-                    e.log_backtrace();
-                    if (e.ex) e.rethrow();
-                    il2cpp_functions::thread_detach(thread);
-                    modloader_jvm->DetachCurrentThread();
-                    env = nullptr;
-                    SAFE_ABORT();
-                } catch(exceptions::StackTraceException const& e) {
-                    logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught StackTraceException! what(): %s", e.what());
-                    e.log_backtrace();
-                    il2cpp_functions::thread_detach(thread);
-                    modloader_jvm->DetachCurrentThread();
-                    env = nullptr;
-                    SAFE_ABORT();
-                } catch(std::exception& e) {
-                    logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught C++ exception! type name: %s, what(): %s", typeid(e).name(), e.what());
-                    il2cpp_functions::thread_detach(thread);
-                    modloader_jvm->DetachCurrentThread();
-                    env = nullptr;
-                    SAFE_ABORT();
-                } catch(...) {
-                    logger.error("Caught in mod id: " _CATCH_HANDLER_ID ": Uncaught, unknown C++ exception (not std::exception) with no known what() method!");
-                    il2cpp_functions::thread_detach(thread);
-                    modloader_jvm->DetachCurrentThread();
-                    env = nullptr;
-                    SAFE_ABORT();
-                }
-
-                logger.info("Detaching thread");
-
-                // detach il2cpp thread
-                il2cpp_functions::thread_detach(thread);
-
-                // detach thread from jvm
-                modloader_jvm->DetachCurrentThread();
-                env = nullptr;
-            }
-
             /// @brief creates a thread that automatically will register with il2cpp and deregister once it exits, ensure your args live longer than the thread if they're by reference!
             /// @param pred the predicate to use for the thread
             /// @param args the arguments to pass to the thread (& predicate)
             /// @return created thread, which is the same as you creating a default one
-            template<typename Predicate, typename... TArgs>
-            requires(std::is_invocable_v<Predicate, std::decay_t<TArgs>...>)
-            explicit il2cpp_aware_thread(Predicate&& pred, TArgs&&... args) :
+            template<typename Func, typename... TArgs>
+            requires(std::is_invocable_v<Func, std::decay_t<TArgs>...>)
+            explicit il2cpp_aware_thread(Func&& pred, TArgs&&... args) :
                 std::thread(
-                    &internal_thread<Predicate, std::decay_t<TArgs>...>,
-                    std::forward<Predicate>(pred),
+                    &il2cpp_utils::threading::il2cpp_attached_thread<Func, std::decay_t<TArgs>...>,
+                    std::forward<Func>(pred),
                     std::forward<TArgs>(args)...
                 )
             {}
@@ -772,6 +818,20 @@ namespace il2cpp_utils {
                 if (joinable()) join();
             }
     };
+
+    template<typename Func, typename... TArgs>
+    requires(std::is_invocable_v<Func, TArgs...>)
+    inline std::future<std::invoke_result_t<Func, TArgs...>> il2cpp_async(std::launch policy, Func&& f, TArgs&&... args) {
+        auto func = &il2cpp_utils::threading::il2cpp_async_internal<Func, TArgs...>;
+        return std::async<decltype(func), Func, TArgs...>(policy, std::move(func), std::forward<Func>(f), std::forward<TArgs>(args)...);
+    }
+
+    template<typename Func, typename... TArgs>
+    requires(std::is_invocable_v<Func, TArgs...>)
+    inline std::future<std::invoke_result_t<Func, TArgs...>> il2cpp_async(Func&& f, TArgs&&... args) {
+        auto func = &il2cpp_utils::threading::il2cpp_async_internal<Func, TArgs...>;
+        return std::async<decltype(func), Func, TArgs...>(std::launch::any, std::move(func), std::forward<Func>(f), std::forward<TArgs>(args)...);
+    }
 }
 
 #pragma pack(pop)
