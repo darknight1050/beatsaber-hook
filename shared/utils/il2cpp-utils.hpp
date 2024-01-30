@@ -701,6 +701,9 @@ namespace il2cpp_utils {
         static inline bool is_thread_attached() {
             il2cpp_functions::Init();
             auto currentThread = il2cpp_functions::thread_current();
+            // if there is no current thread might as well just return false since we didn't get a thread
+            if (!currentThread) return false;
+
             size_t threadCount = 0;
             auto threads_begin = il2cpp_functions::thread_get_all_attached_threads(&threadCount);
             auto threads_end = threads_begin + threadCount;
