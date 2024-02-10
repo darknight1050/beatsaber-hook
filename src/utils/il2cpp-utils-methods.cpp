@@ -399,7 +399,7 @@ namespace il2cpp_utils {
 
         const MethodInfo* target = nullptr;
 
-        auto addMethodsToMatches = [&](Il2CppClass const* targetKlass) {
+        auto addMethodsToMatches = [&](Il2CppClass* targetKlass) {
             // initialize klass if needed
             if (!targetKlass->initialized_and_no_error) {
                 il2cpp_functions::Class_Init(targetKlass);
