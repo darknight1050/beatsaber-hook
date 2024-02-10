@@ -368,7 +368,6 @@ namespace il2cpp_utils {
         auto* klass = info.klass;
         RET_DEFAULT_UNLESS(logger, klass);
 
-        // TODO: make cache work for generics (stratify by generics count?) and differing return types?
         // Check Cache
         {
             std::shared_lock lock(classTypesMethodsLock);
@@ -378,10 +377,7 @@ namespace il2cpp_utils {
             }
         }
 
-        // initialize klass if needed
-        if (!klass->initialized_and_no_error) {
-            il2cpp_functions::Class_Init(klass);
-        }
+
 
         // Ok we look through all the methods that have the following:
         // - matches name
@@ -404,6 +400,10 @@ namespace il2cpp_utils {
         const MethodInfo* target = nullptr;
 
         auto addMethodsToMatches = [&](Il2CppClass const* targetKlass) {
+            // initialize klass if needed
+            if (!targetKlass->initialized_and_no_error) {
+                il2cpp_functions::Class_Init(targetKlass);
+            }
             // Does NOT automatically recurse through klass's parents
             auto const methodsSpan = std::span(targetKlass->methods, targetKlass->method_count);
             for (auto const& current : methodsSpan) {
