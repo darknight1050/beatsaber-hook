@@ -414,7 +414,7 @@ namespace il2cpp_utils {
 
                 // strict equal
                 bool isPerfect;
-                if (!ParameterMatch(current, std::span(info.genTypes), std::span(info.argTypes), &isPerfect)) {
+                if (!ParameterMatch(current, info.genTypes, info.argTypes, &isPerfect)) {
                     // logger.debug("Parameters do not match for method %s", current->name);
                     continue;
                 }
