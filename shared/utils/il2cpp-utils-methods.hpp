@@ -792,7 +792,7 @@ template <class TOut = Il2CppObject*, bool checkTypes = true, class T, class... 
 MethodResult<TOut> RunMethod(T&& classOrInstance, ::std::string_view methodName, TArgs&&... params) {
     static auto& logger = getLogger();
 
-    std::array<const Il2CppType*, sizeof...(TArgs)> const types{ ::il2cpp_utils::ExtractType<TArgs>(params)... };
+    std::array<const Il2CppType*, sizeof...(TArgs)> const types{ ::il2cpp_utils::ExtractType(params)... };
     auto* method = RET_NULLOPT_UNLESS(logger, FindMethod(classOrInstance, methodName, types));
 
     // TODO: Pass checkTypes as false here since it is no longer necessary
