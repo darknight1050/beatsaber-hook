@@ -286,7 +286,7 @@ struct ListWrapper {
     }
 
     constexpr bool empty() const {
-        return this->size() > 0;
+        return this->size() == 0;
     }
 
     std::optional<std::reference_wrapper<T>> front() {
