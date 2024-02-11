@@ -88,10 +88,10 @@ struct FindMethodInfo {
         if (this->klass != o.klass) return false;
         if (this->name != o.name) return false;
 
-        auto argTypesContentEquality = std::equal(this->argTypes.begin(), this->argTypes.end(), o.argTypes.begin(), o.argTypes.end());
+        auto argTypesContentEquality = this->argTypes.size() == o.argTypes.size() && std::equal(this->argTypes.begin(), this->argTypes.end(), o.argTypes.begin(), o.argTypes.end());
         if (!argTypesContentEquality) return false;
 
-        auto genTypesContentEquality = std::equal(this->genTypes.begin(), this->genTypes.end(), o.genTypes.begin(), o.genTypes.end());
+        auto genTypesContentEquality = this->genTypes.size() == o.genTypes.size() && std::equal(this->genTypes.begin(), this->genTypes.end(), o.genTypes.begin(), o.genTypes.end());
         if (!genTypesContentEquality) return false;
 
         return true;
