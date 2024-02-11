@@ -3,6 +3,7 @@
 
 #include <initializer_list>
 #include <type_traits>
+#include <utility>
 #include <variant>
 #pragma pack(push)
 
@@ -912,6 +913,25 @@ template <typename TOut = Il2CppObject*, CreationType creationType = CreationTyp
     return FromIl2CppObject<TOut>(obj);
 }
 
+template <class T, class... TArgs>
+concept CtorArgs = requires(T t, TArgs&&... args) {
+    { T::New_ctor(std::forward<TArgs>(args)...) };
+};
+
+/// @brief Allocates a new instance of a particular Il2CppClass*, either allowing it to be GC'd normally or manually controlled.
+/// The Il2CppClass* is derived from the TOut template parameter.
+/// The found constructor method will be cached.
+/// Will throw either an il2cpp_utils::exceptions::StackTraceException or il2cpp_utils::RunMethodException if errors occur.
+/// @tparam TOut The type to create.
+/// @tparam creationType The way to create the instance.
+/// @tparam TArgs The arguments to call the constructor with.
+/// @param args The arguments to call the constructor with.
+template <class TOut, CreationType creationType = CreationType::Temporary, typename... TArgs>
+requires(CtorArgs<std::remove_pointer_t<TOut>, TArgs...>)
+inline TOut NewSpecific(TArgs&&... args) {
+    return NewSpecificUnsafe<TOut, creationType, TArgs...>(std::forward<TArgs>(args)...);
+}
+
 // TODO: Rename to New, rename existing New to NewObject or equivalent
 /// @brief Allocates a new instance of a particular Il2CppClass*, either allowing it to be GC'd normally or manually controlled.
 /// The Il2CppClass* is derived from the TOut template parameter.
@@ -922,7 +942,7 @@ template <typename TOut = Il2CppObject*, CreationType creationType = CreationTyp
 /// @tparam TArgs The arguments to call the constructor with.
 /// @param args The arguments to call the constructor with.
 template <class TOut, CreationType creationType = CreationType::Temporary, typename... TArgs>
-TOut NewSpecific(TArgs&&... args) {
+TOut NewSpecificUnsafe(TArgs&&... args) {
     static auto* klass = classof(TOut);
     Il2CppObject* obj;
     if constexpr (creationType == CreationType::Temporary) {
