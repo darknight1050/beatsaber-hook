@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sstream>
 #include <unordered_set>
+#include <link.h>
 #include "il2cpp-object-internals.h"
 #include "shared/utils/gc-alloc.hpp"
 
@@ -174,47 +175,24 @@ void analyzeBytes(const void* ptr) {
     analyzeBytes(ss, ptr, 0);
 }
 
-uintptr_t baseAddr(const char* soname)  // credits to https://github.com/ikoz/AndroidSubstrate_hookingC_examples/blob/master/nativeHook3/jni/nativeHook3.cy.cpp
-{
-    void* imagehandle = dlopen(soname, RTLD_LOCAL | RTLD_LAZY);
+uintptr_t baseAddr(const char* soname) {
     if (soname == NULL) return (uintptr_t)NULL;
-    if (imagehandle == NULL) return (uintptr_t)NULL;
-
-    FILE* f = NULL;
-    char line[200] = { 0 };
-    char* state = NULL;
-    char* tok = NULL;
-    char* baseAddr = NULL;
-    if ((f = fopen("/proc/self/maps", "r")) == NULL) return (uintptr_t)NULL;
-    while (fgets(line, 199, f) != NULL) {
-        tok = strtok_r(line, "-", &state);
-        baseAddr = tok;
-        strtok_r(NULL, "\t ", &state);
-        strtok_r(NULL, "\t ", &state);        // "r-xp" field
-        strtok_r(NULL, "\t ", &state);        // "0000000" field
-        strtok_r(NULL, "\t ", &state);        // "01:02" field
-        strtok_r(NULL, "\t ", &state);        // "133224" field
-        tok = strtok_r(NULL, "\t ", &state);  // path field
-
-        if (tok != NULL) {
-            int i;
-            for (i = (int)strlen(tok) - 1; i >= 0; --i) {
-                if (!(tok[i] == ' ' || tok[i] == '\r' || tok[i] == '\n' || tok[i] == '\t')) break;
-                tok[i] = 0;
-            }
-            {
-                size_t toklen = strlen(tok);
-                size_t solen = strlen(soname);
-                if (toklen > 0) {
-                    if (toklen >= solen && strcmp(tok + (toklen - solen), soname) == 0) {
-                        fclose(f);
-                        return (uintptr_t)strtoll(baseAddr, NULL, 16);
-                    }
-                }
-            }
+    struct bdata {
+      uintptr_t base;
+      const char* soname;
+    };
+    bdata dat;
+    dat.soname = soname;
+    int status = dl_iterate_phdr([] (dl_phdr_info* info, size_t, void* data) {
+        bdata* dat = reinterpret_cast<bdata*>(data);
+        if (std::string(info->dlpi_name).find(dat->soname) != std::string::npos) {
+          dat->base = (uintptr_t)info->dlpi_addr;
+          return 1;
         }
-    }
-    fclose(f);
+        return 0;
+    }, &dat);
+    if(status)
+      return dat.base;
     return (uintptr_t)NULL;
 }
 
