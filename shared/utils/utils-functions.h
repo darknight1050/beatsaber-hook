@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <optional>
 #include <unwind.h>
 
 // logs the function, file and line, sleeps to allow logs to flush, then terminates program
@@ -57,6 +58,9 @@ bool direxists(std::string_view dirname);
 // Yoinked from: https://stackoverflow.com/questions/2342162/stdstring-formatting-like-sprintf
 // TODO: This should be removed once std::format exists
 __attribute__((format(printf, 1, 2))) std::string string_format(const char* format, ...);
+
+// Returns a map with the buildIds from all loaded shared objects
+std::optional<std::string> getBuildId(std::string_view filename);
 
 /// @brief Get the size of the libil2cpp.so file
 /// @returns The size of the .so

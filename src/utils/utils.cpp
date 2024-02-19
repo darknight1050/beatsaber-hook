@@ -193,6 +193,7 @@ uintptr_t baseAddr(const char* soname) {
     }, &dat);
     if(status)
       return dat.base;
+    Logger::get().error("baseAddr: Error on dl_iterate_phdr!");
     return (uintptr_t)NULL;
 }
 
@@ -403,4 +404,43 @@ bool writefile(std::string_view filename, std::string_view text) {
 bool deletefile(std::string_view filename) {
     if (fileexists(filename)) return remove(filename.data()) == 0;
     return false;
+}
+
+std::optional<std::string> getBuildId(std::string_view filename) {
+    std::ifstream infile(filename.data(), std::ios_base::binary);
+    if (!infile.is_open()) {
+        return std::nullopt;
+    }
+    infile.seekg(0);
+    ElfW(Ehdr) elf;
+    infile.read(reinterpret_cast<char*>(&elf), sizeof(ElfW(Ehdr)));
+    for(int i = 0; i < elf.e_shnum; i++) {
+        infile.seekg(elf.e_shoff + i * elf.e_shentsize);
+        ElfW(Shdr) section;
+        infile.read(reinterpret_cast<char*>(&section), sizeof(ElfW(Shdr)));
+        if(section.sh_type == SHT_NOTE && section.sh_size == 0x24) {
+            char data[0x24];
+            infile.seekg(section.sh_offset);
+            infile.read(data, 0x24);
+            ElfW(Nhdr)* note = reinterpret_cast<ElfW(Nhdr)*>(data);
+            if(note->n_namesz == 4 && note->n_descsz == 20) {
+                if(memcmp(reinterpret_cast<void*>(data + 12), "GNU", 4) == 0) {
+                    std::stringstream stream;
+                    stream << std::hex << std::setw(sizeof(uint8_t)*2);
+                    auto buildIdAddr = reinterpret_cast<uint8_t*>(data + 16);
+                    for(int i = 0; i < 5; i++) {
+                        uint32_t value;
+                        auto ptr = (reinterpret_cast<uint8_t*>(&value));
+                        ptr[0] = *(buildIdAddr + i * sizeof(uint32_t) + 3);
+                        ptr[1] = *(buildIdAddr + i * sizeof(uint32_t) + 2);
+                        ptr[2] = *(buildIdAddr + i * sizeof(uint32_t) + 1);
+                        ptr[3] = *(buildIdAddr + i * sizeof(uint32_t));
+                        stream << value;
+                    }
+                    return stream.str();
+                }
+            }
+        }
+    }
+    return std::nullopt;
 }
