@@ -641,7 +641,7 @@ namespace il2cpp_utils {
             requires(is_valid_il2cpp_method<val>)
         struct BS_HOOKS_HIDDEN FPtrWrapper {
             static auto get() {
-                return reinterpret_cast<typename MethodDecomposer<decltype(val)>::mPtr>(il2cpp_utils::il2cpp_type_check::MetadataGetter<val>::get()->methodPointer);
+                return reinterpret_cast<typename MethodDecomposer<decltype(val)>::mPtr>(il2cpp_utils::il2cpp_type_check::MetadataGetter<val>::methodInfo()->methodPointer);
             }
         };
     }
