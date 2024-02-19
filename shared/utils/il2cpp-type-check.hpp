@@ -634,14 +634,14 @@ namespace il2cpp_utils {
         template<auto val>
         concept is_valid_il2cpp_method = requires (decltype(val) v) {
             typename MethodDecomposer<decltype(val)>::mPtr;
-            { il2cpp_utils::il2cpp_type_check::MetadataGetter<val>::get() } -> std::same_as<const MethodInfo *>;
+            { il2cpp_utils::il2cpp_type_check::MetadataGetter<val>::methodInfo() } -> std::same_as<const MethodInfo *>;
         };
 
         template <auto val>
             requires(is_valid_il2cpp_method<val>)
         struct BS_HOOKS_HIDDEN FPtrWrapper {
             static auto get() {
-                return reinterpret_cast<typename MethodDecomposer<decltype(val)>::mPtr>(il2cpp_utils::il2cpp_type_check::MetadataGetter<val>::get()->methodPointer);
+                return reinterpret_cast<typename MethodDecomposer<decltype(val)>::mPtr>(il2cpp_utils::il2cpp_type_check::MetadataGetter<val>::methodInfo()->methodPointer);
             }
         };
     }
