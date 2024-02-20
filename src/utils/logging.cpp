@@ -11,6 +11,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <map>
 #include "../../shared/utils/utils-functions.h"
 #include "../../shared/utils/utils.h"
 
@@ -206,29 +207,53 @@ void Logger::startConsumer() {
 
 void Logger::Backtrace(uint16_t frameCount) {
     if (options.silent) return;
+    if(frameCount <= 0) return;
     void* buffer[frameCount];
     // Skip the captureBacktrace method AND this method
     backtrace_helpers::captureBacktrace(buffer, frameCount, 2);
+    std::map<const char*, std::optional<std::string>> buildIds;
     debug("Printing backtrace with: %u max lines:", frameCount);
     log(Logging::DEBUG, "*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***");
     debug("pid: %i, tid: %i", getpid(), gettid());
     for (uint16_t i = 0; i < frameCount; ++i) {
         Dl_info info;
         if (dladdr(buffer[i], &info)) {
+            if(!buildIds.contains(info.dli_fname)) {
+                buildIds[info.dli_fname] = getBuildId(info.dli_fname);
+            }
+            auto buildId = buildIds[info.dli_fname];
+            bool hasBuildId = buildId.has_value();
             // Buffer points to 1 instruction ahead
-            long addr = reinterpret_cast<char*>(buffer[i]) - reinterpret_cast<char*>(info.dli_fbase) - 4;
+            uintptr_t addr = reinterpret_cast<char*>(buffer[i]) - reinterpret_cast<char*>(info.dli_fbase) - 4;
+            uintptr_t offset = reinterpret_cast<char*>(buffer[i]) - reinterpret_cast<char*>(info.dli_saddr) - 4;
             if (info.dli_sname) {
                 int status;
                 const char* demangled = abi::__cxa_demangle(info.dli_sname, nullptr, nullptr, &status);
                 if (status) {
                     demangled = info.dli_sname;
                 }
-                debug("        #%02i  pc %016lx  %s (%s)", i, addr, info.dli_fname, demangled);
+                if(offset < 10000) {
+                    if(hasBuildId) {
+                        debug("        #%02i pc %016lx  %s (%s+%lu) (BuildId: %s)", i, addr, info.dli_fname, demangled, offset, buildId->c_str());
+                    } else {
+                        debug("        #%02i pc %016lx  %s (%s+%lu)", i, addr, info.dli_fname, demangled, offset);
+                    }
+                } else {
+                    if(hasBuildId) {
+                        debug("        #%02i pc %016lx  %s (%s) (BuildId: %s)", i, addr, info.dli_fname, demangled, buildId->c_str());
+                    } else {
+                        debug("        #%02i pc %016lx  %s (%s)", i, addr, info.dli_fname, demangled);
+                    }
+                }
                 if (!status) {
                     free(const_cast<char*>(demangled));
                 }
             } else {
-                debug("        #%02i  pc %016lx  %s", i, addr, info.dli_fname);
+                if(hasBuildId) {
+                    debug("        #%02i pc %016lx  %s (BuildId: %s)", i, addr, info.dli_fname, buildId->c_str());
+                } else {
+                    debug("        #%02i pc %016lx  %s", i, addr, info.dli_fname);
+                }
             }
         }
     }
@@ -236,29 +261,53 @@ void Logger::Backtrace(uint16_t frameCount) {
 
 void LoggerContextObject::Backtrace(uint16_t frameCount) {
     if (!enabled) return;
+    if(frameCount <= 0) return;
     void* buffer[frameCount];
     // Skip the captureBacktrace method AND this method
     backtrace_helpers::captureBacktrace(buffer, frameCount, 2);
+    std::map<const char*, std::optional<std::string>> buildIds;
     debug("Printing backtrace with: %u max lines:", frameCount);
     log(Logging::DEBUG, "*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***");
     debug("pid: %i, tid: %i", getpid(), gettid());
     for (uint16_t i = 0; i < frameCount; ++i) {
         Dl_info info;
         if (dladdr(buffer[i], &info)) {
+            if(!buildIds.contains(info.dli_fname)) {
+                buildIds[info.dli_fname] = getBuildId(info.dli_fname);
+            }
+            auto buildId = buildIds[info.dli_fname];
+            bool hasBuildId = buildId.has_value();
             // Buffer points to 1 instruction ahead
-            long addr = reinterpret_cast<char*>(buffer[i]) - reinterpret_cast<char*>(info.dli_fbase) - 4;
+            uintptr_t addr = reinterpret_cast<char*>(buffer[i]) - reinterpret_cast<char*>(info.dli_fbase) - 4;
+            uintptr_t offset = reinterpret_cast<char*>(buffer[i]) - reinterpret_cast<char*>(info.dli_saddr) - 4;
             if (info.dli_sname) {
                 int status;
                 const char* demangled = abi::__cxa_demangle(info.dli_sname, nullptr, nullptr, &status);
                 if (status) {
                     demangled = info.dli_sname;
                 }
-                debug("        #%02i  pc %016lx  %s (%s)", i, addr, info.dli_fname, demangled);
+                if(offset < 10000) {
+                    if(hasBuildId) {
+                        debug("        #%02i pc %016lx  %s (%s+%lu) (BuildId: %s)", i, addr, info.dli_fname, demangled, offset, buildId->c_str());
+                    } else {
+                        debug("        #%02i pc %016lx  %s (%s+%lu)", i, addr, info.dli_fname, demangled, offset);
+                    }
+                } else {
+                    if(hasBuildId) {
+                        debug("        #%02i pc %016lx  %s (%s) (BuildId: %s)", i, addr, info.dli_fname, demangled, buildId->c_str());
+                    } else {
+                        debug("        #%02i pc %016lx  %s (%s)", i, addr, info.dli_fname, demangled);
+                    }
+                }
                 if (!status) {
                     free(const_cast<char*>(demangled));
                 }
             } else {
-                debug("        #%02i  pc %016lx  %s", i, addr, info.dli_fname);
+                if(hasBuildId) {
+                    debug("        #%02i pc %016lx  %s (BuildId: %s)", i, addr, info.dli_fname, buildId->c_str());
+                } else {
+                    debug("        #%02i pc %016lx  %s", i, addr, info.dli_fname);
+                }
             }
         }
     }
