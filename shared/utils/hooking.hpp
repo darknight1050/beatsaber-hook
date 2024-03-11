@@ -37,7 +37,7 @@ concept is_logger = requires (L& l) {
     l.info("");
     l.debug("");
     l.error("");
-    l.warning("");
+    l.warn("");
     l.critical("");
 };
 
