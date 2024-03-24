@@ -446,12 +446,19 @@ struct Hook_##name_ { \
 }; \
 retval Hook_##name_::hook_##name_(__VA_ARGS__)
 
+#ifndef BS_HOOK_MATCH_UNSAFE
+#define MATCH_HOOKABLE_ASSERT ::il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::size >= 0x5 * sizeof(uint32_t) && ::il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::addrs != 0x0
+#else
+#define MATCH_HOOKABLE_ASSERT true
+#endif
+
 // Make a hook that uses the provided method pointer in a match an ensures the signature matches.
 // This should be your go-to hook macro when hooking anything that has a codegen equivalent.
 // Also includes a catch handler.
 #define MAKE_HOOK_MATCH(name_, mPtr, retval, ...) \
 struct Hook_##name_ { \
     using funcType = retval (*)(__VA_ARGS__); \
+    static_assert(MATCH_HOOKABLE_ASSERT); \
     static_assert(std::is_same_v<funcType, ::Hooking::InternalMethodCheck<decltype(mPtr)>::funcType>, "Hook method signature does not match!"); \
     constexpr static const char* name() { return #name_; } \
     static const MethodInfo* getInfo() { return ::il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::methodInfo(); } \
@@ -467,6 +474,7 @@ retval Hook_##name_::hook_##name_(__VA_ARGS__)
 #define MAKE_HOOK_MATCH_NO_CATCH(name_, mPtr, retval, ...) \
 struct Hook_##name_ { \
     using funcType = retval (*)(__VA_ARGS__); \
+    static_assert(MATCH_HOOKABLE_ASSERT); \
     static_assert(std::is_same_v<funcType, ::Hooking::InternalMethodCheck<decltype(mPtr)>::funcType>, "Hook method signature does not match!"); \
     constexpr static const char* name() { return #name_; } \
     static const MethodInfo* getInfo() { return ::il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::methodInfo(); } \
