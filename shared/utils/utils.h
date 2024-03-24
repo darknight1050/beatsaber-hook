@@ -201,6 +201,7 @@ template <class...> constexpr std::false_type false_t{};
 
 #include "utils-functions.h"
 #include "logging.hpp"
+#include "il2cpp-utils-exceptions.hpp"
 
 #ifdef __cplusplus
 
@@ -251,7 +252,7 @@ using function_ptr_t = TRet(*)(TArgs...);
 #if __has_feature(cxx_exceptions)
 template<class T>
 auto throwUnless(T&& arg, const char* func, const char* file, int line) {
-    if (!arg) throw std::runtime_error(fmt::format("Throwing in {} at {}:{}", func, file, line));
+    if (!arg) throw il2cpp_utils::exceptions::StackTraceException(fmt::format("Throwing in {} at {}:{}", func, file, line));
     return unwrap_optionals(arg);
 }
 #ifndef SUPPRESS_MACRO_LOGS
