@@ -3,7 +3,7 @@
 #include "paper/shared/logger.hpp"
 
 namespace il2cpp_utils {
-static constexpr const auto Logger = ::Paper::ConstLoggerContext("beatsaber-hook_" VERSION);
+static constexpr const auto Logger = ::Paper::ConstLoggerContext("beatsaber-hook");
 }
 
 //nullable string
