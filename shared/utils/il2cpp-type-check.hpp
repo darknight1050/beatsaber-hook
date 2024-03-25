@@ -328,6 +328,10 @@ namespace il2cpp_utils {
         // TODO: is_il2cpp_object type trait?
 
         template <typename T>
+        requires(has_get<il2cpp_no_arg_class<T>> || 
+                has_get<il2cpp_no_arg_class<T*>> || 
+                std::is_base_of_v<Il2CppObject, T> || ::il2cpp_utils::il2cpp_reference_type<T*>
+        )
         struct BS_HOOKS_HIDDEN il2cpp_arg_class<T*> {
             static inline Il2CppClass* get(T* arg) {
                 using element_arg_class = il2cpp_no_arg_class<T>;
@@ -336,10 +340,12 @@ namespace il2cpp_utils {
                     il2cpp_functions::Init();
                     return il2cpp_functions::Class_GetPtrClass(elementClass);
                 }
-                if (arg) {
-                    il2cpp_functions::Init();
-                    auto* klass = il2cpp_functions::object_get_class(reinterpret_cast<Il2CppObject*>(arg));
-                    if (klass && klass->klass == klass) return klass;
+                if constexpr (std::is_base_of_v<Il2CppObject, T> || ::il2cpp_utils::il2cpp_reference_type<T*>) {
+                    if (arg) {
+                        il2cpp_functions::Init();
+                        auto* klass = il2cpp_functions::object_get_class(reinterpret_cast<Il2CppObject*>(arg));
+                        if (klass && klass->klass == klass) return klass;
+                    }
                 }
                 using ptr_arg_class = il2cpp_no_arg_class<T*>;
                 if constexpr (has_get<ptr_arg_class>) {
