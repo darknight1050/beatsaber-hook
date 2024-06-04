@@ -663,9 +663,9 @@ void il2cpp_functions::Init() {
     API_SYM(unity_liveness_calculation_end);
 #endif
 #ifdef UNITY_2021
-    API_SYM(il2cpp_unity_liveness_allocate_struct);
-    API_SYM(il2cpp_unity_liveness_finalize);
-    API_SYM(il2cpp_unity_liveness_free_struct);
+    API_SYM(unity_liveness_allocate_struct);
+    API_SYM(unity_liveness_finalize);
+    API_SYM(unity_liveness_free_struct);
 #endif
     API_SYM(unity_liveness_calculation_from_root);
     API_SYM(unity_liveness_calculation_from_statics);
