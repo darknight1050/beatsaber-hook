@@ -5,7 +5,7 @@
   "info": {
     "name": "beatsaber-hook",
     "id": "beatsaber-hook",
-    "version": "5.0.3",
+    "version": "5.0.8",
     "url": "https://github.com/QuestPackageManager/beatsaber-hook",
     "additionalData": {
       "cmake": true,
