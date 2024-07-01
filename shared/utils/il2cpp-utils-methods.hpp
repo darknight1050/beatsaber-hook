@@ -77,18 +77,18 @@ Il2CppObject* createManualThrow(Il2CppClass* const klass);
 
 struct FindMethodInfo {
     Il2CppClass* klass = nullptr;
-    ::std::string_view const name;
-    ::std::span<const Il2CppClass* const> const genTypes;
-    ::std::span<const Il2CppType* const> const argTypes;
+    ::std::string name;
+    ::std::vector<const Il2CppClass* const> genTypes;
+    ::std::vector<const Il2CppType* const> argTypes;
 
     constexpr FindMethodInfo() = delete;
     constexpr FindMethodInfo(FindMethodInfo&&) = default;
     constexpr FindMethodInfo(FindMethodInfo const&) = default;
-    constexpr FindMethodInfo(Il2CppClass* klass, ::std::string_view const name, ::std::span<const Il2CppClass* const> const genTypes, ::std::span<const Il2CppType* const> argTypes)
+    constexpr FindMethodInfo(Il2CppClass* klass, ::std::string_view const name, ::std::span<const Il2CppClass* const> genTypes, ::std::span<const Il2CppType* const> argTypes)
         : klass(klass),
           name(name),
-          genTypes(genTypes),
-          argTypes(argTypes){
+          genTypes(genTypes.begin(), genTypes.end()),
+          argTypes(argTypes.begin(), argTypes.end()){
 
           };
 
