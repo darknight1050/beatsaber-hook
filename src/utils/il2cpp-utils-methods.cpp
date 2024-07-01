@@ -7,6 +7,7 @@
 #include "utils/logging.hpp"
 #include "utils/utils.h"
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <shared_mutex>
 #include <sstream>
@@ -46,14 +47,12 @@ namespace std {
     struct hash<il2cpp_utils::FindMethodInfo> {
         std::size_t operator()(il2cpp_utils::FindMethodInfo const& info) const noexcept {
             auto hashPtr = std::hash<void*>{};
-
-            auto hashSeqClass = std::hash<span<const Il2CppClass* const>>{};
-            auto hashSeqType = std::hash<span<const Il2CppType* const>>{};
+            auto hashSize = std::hash<std::size_t>{};
 
             auto hashStr = std::hash<std::string_view>{};
 
-            return hashPtr(info.klass) ^ //hashPtr(info.returnType) ^
-                   hashStr(info.name) ^ hashSeqType(info.argTypes) ^ hashSeqClass(info.genTypes);
+            return hashPtr(info.klass) ^  // hashPtr(info.returnType) ^
+                   hashStr(info.name) ^ hashSize(info.argTypes.size()) ^ hashSize(info.genTypes.size());
         }
     };
 }
