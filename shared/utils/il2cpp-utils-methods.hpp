@@ -83,7 +83,7 @@ struct FindMethodInfo {
 
     constexpr FindMethodInfo() = delete;
     constexpr FindMethodInfo(FindMethodInfo&&) = default;
-    constexpr FindMethodInfo(FindMethodInfo const&) = default;
+    constexpr FindMethodInfo(FindMethodInfo const&) = delete;
     constexpr FindMethodInfo(Il2CppClass* klass, ::std::string_view const name, ::std::span<const Il2CppClass* const> genTypes, ::std::span<const Il2CppType* const> argTypes)
         : klass(klass),
           name(name),
@@ -227,7 +227,7 @@ const MethodInfo* FindMethodUnsafe(::std::string_view nameSpace, ::std::string_v
 /// Attempts to look for a method that best matches given the FindMethodInfo data
 /// if no method is found, returns null
 /// Look at il2cpp-utils-methods.cpp for more details on how this resolution takes place
-const MethodInfo* FindMethod(FindMethodInfo const& info);
+const MethodInfo* FindMethod(FindMethodInfo&& info);
 
 #pragma region FindMethod class
 /// helper constructor
@@ -237,8 +237,7 @@ inline const MethodInfo* FindMethod(T&& instanceOrKlass, ::std::string_view cons
     auto klass = ::il2cpp_utils::ExtractClass(std::forward<T>(instanceOrKlass));
     auto genTypesSpan = std::span<const Il2CppClass* const>(std::forward<GT>(genTypes));
     auto argTypesSpan = std::span<const Il2CppType* const>(std::forward<AT>(argTypes));
-    auto info = FindMethodInfo(klass, methodName, genTypesSpan, argTypesSpan);
-    return ::il2cpp_utils::FindMethod(info);
+    return ::il2cpp_utils::FindMethod(FindMethodInfo(klass, methodName, genTypesSpan, argTypesSpan));
 }
 
 /// no gen args

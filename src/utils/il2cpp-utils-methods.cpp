@@ -357,9 +357,9 @@ namespace il2cpp_utils {
     }
 
 #if __has_feature(cxx_exceptions)
-    const MethodInfo* FindMethod(FindMethodInfo const& info)
+    const MethodInfo* FindMethod(FindMethodInfo&& info)
 #else
-    const MethodInfo* FindMethod(FindMethodInfo const& info) noexcept
+    const MethodInfo* FindMethod(FindMethodInfo&& info) noexcept
 #endif
     {
         auto logger = il2cpp_utils::Logger;
@@ -488,12 +488,6 @@ namespace il2cpp_utils {
             }
         }
 
-        // add to cache
-        {
-            std::unique_lock lock(classTypesMethodsLock);
-            classesNamesTypesToMethodsCache.emplace(info, target);
-        }
-
         if (!target) {
             std::stringstream ss;
             ss << ((matches.size() > 1) ? "found multiple matches for" : "could not find");
@@ -521,6 +515,12 @@ namespace il2cpp_utils {
             ss << ") in class '" << ClassStandardName(klass) << "'!";
             logger.error("{}", ss.str().c_str());
             LogMethods(logger, klass);
+        }
+
+        // add to cache
+        {
+            std::unique_lock lock(classTypesMethodsLock);
+            classesNamesTypesToMethodsCache.emplace(std::move(info), target);
         }
 
         return target;
