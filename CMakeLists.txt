@@ -12,6 +12,7 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 # define that stores the actual source directory
+set(SHARED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shared)
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
@@ -61,6 +62,12 @@ add_library(
     RECURSE_FILES(c_file_list_utils ${SOURCE_DIR}/utils/*.c)
     target_sources(${target} PRIVATE ${cpp_file_list_utils})
     target_sources(${target} PRIVATE ${c_file_list_utils})
+
+    # recursively get all src files
+    RECURSE_FILES(cpp_file_list_hook ${SHARED_DIR}/inline-hook/*.cpp)
+    RECURSE_FILES(c_file_list_hook ${SHARED_DIR}/inline-hook/*.c)
+    target_sources(${target} PRIVATE ${cpp_file_list_hook})
+    target_sources(${target} PRIVATE ${c_file_list_hook})
 
     RECURSE_FILES(cpp_file_list_config ${SOURCE_DIR}/config/*.cpp)
     RECURSE_FILES(c_file_list_config ${SOURCE_DIR}/config/*.c)
