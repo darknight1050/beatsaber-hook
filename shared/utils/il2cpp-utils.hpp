@@ -248,6 +248,7 @@ namespace il2cpp_utils {
     /// @param vec Vector to create the Array from
     /// @return The created Array<T>*
     template<typename T>
+    [[deprecated("Use ArrayW(vec)")]]
     Array<T>* vectorToArray(::std::vector<T>& vec) {
         il2cpp_functions::Init();
         auto const& logger = il2cpp_utils::Logger;

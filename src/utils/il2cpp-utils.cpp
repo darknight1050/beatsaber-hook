@@ -153,7 +153,7 @@ namespace il2cpp_utils {
                 newPtrs.push_back(v);
             }
         }
-        reinterpret_cast<MulticastDelegate*>(delegateInstance)->delegates = il2cpp_utils::vectorToArray(newPtrs);
+        reinterpret_cast<MulticastDelegate*>(delegateInstance)->delegates = ArrayW(newPtrs);
     }
 
     std::string ClassStandardName(const Il2CppClass* klass, bool generics) {

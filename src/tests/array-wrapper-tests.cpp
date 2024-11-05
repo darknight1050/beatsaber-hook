@@ -1,3 +1,4 @@
+#include <il2cpp-api-types.h>
 #ifdef TEST_ARRAY
 
 #include "../../shared/utils/typedefs.h"
@@ -92,5 +93,27 @@ static void doThing2() {
     il2cpp_utils::RunMethod(arr, "test", arr);
     il2cpp_utils::RunMethodRethrow<ArrayW<Il2CppObject*>>((Il2CppClass*)nullptr, &info);
 }
+struct Foo {};
+struct Bar : public Foo {
+
+};
+
+static void doThing3() {
+    std::vector<int> vec;
+    std::span<int> spanOfVec = std::span(vec);
+
+    ArrayW<int> arr1(vec);
+    ArrayW<int> arr2(spanOfVec);
+
+
+    std::vector<Foo*> vecObj;
+    std::span<Foo*> spanOfVecObj = std::span(vecObj);
+
+    ArrayW<Foo*> arrObj1(vecObj);
+    ArrayW<Foo*> arrObj2(spanOfVecObj);
+}
+
+DEFINE_IL2CPP_DEFAULT_TYPE(Foo, array);
+DEFINE_IL2CPP_DEFAULT_TYPE(Bar, array);
 
 #endif

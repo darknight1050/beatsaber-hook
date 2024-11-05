@@ -145,7 +145,17 @@ struct Array : public Il2CppArray
         if (!arr) {
             throw ArrayException(nullptr, "Could not create Array!");
         }
-        memcpy(arr->_values, vals.begin(), sizeof(T)*vals.size());
+        memcpy(arr->_values, vals.begin(), sizeof(T) * vals.size());
+        return arr;
+    }
+    static Array<T>* From(std::span<T const> vals) {
+        il2cpp_functions::Init();
+        auto* arr = reinterpret_cast<Array<T>*>(il2cpp_functions::array_new(
+            il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<T>::get(), vals.size()));
+        if (!arr) {
+            throw ArrayException(nullptr, "Could not create Array!");
+        }
+        std::memcpy(arr->_values, vals.data(), vals.size_bytes());
         return arr;
     }
 
@@ -309,10 +319,19 @@ struct ArrayW {
     constexpr ArrayW(std::nullptr_t nptr) noexcept : val(nptr) {}
     /// @brief Default constructor wraps a nullptr array
     constexpr ArrayW() noexcept : val(nullptr) {}
-    template<class U>
-    requires (!std::is_same_v<std::nullptr_t, U> && std::is_convertible_v<U, T>)
+
+    // initializer list
+    template <class U>
+        requires(!std::is_same_v<std::nullptr_t, U> && std::is_convertible_v<U, T>)
     ArrayW(std::initializer_list<U> vals) : val(Array<T>::New(vals)) {}
+
     ArrayW(il2cpp_array_size_t size) : val(Array<T>::NewLength(size)) {}
+
+    // from container
+    explicit ArrayW(std::span<T const> vals) : val(Array<T>::From(vals)) {}
+
+    // since vector isn't implicit convertible to span, we just add an overload here
+    explicit ArrayW(std::vector<T> const& vals) : ArrayW<T>(std::span<T const>(vals)) {}
 
     inline il2cpp_array_size_t size() const noexcept {
         return val->get_Length();
@@ -515,6 +534,13 @@ struct ArrayW {
     }
 
     operator bool() const noexcept { return val != nullptr; }
+
+    operator const std::span<T const>() const {
+        return this->ref_to();
+    }
+    operator std::span<T>() {
+        return this->ref_to();
+    }
 
     explicit operator const Ptr() const { return val; }
     explicit operator Ptr() { return val; }
