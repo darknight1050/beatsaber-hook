@@ -24,6 +24,7 @@
         "qpm qmod zip"
       ]
     },
+    "ndk": "^27.1.12297006",
     "qmodIncludeDirs": [
       "./build",
       "./extern/libs"
