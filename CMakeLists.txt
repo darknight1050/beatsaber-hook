@@ -46,6 +46,7 @@ add_library(
             PRIVATE
 
             TEST_CALLBACKS
+            TEST_BETTER_SPAN
             TEST_SAFEPTR
             TEST_BYREF
             TEST_ARRAY
