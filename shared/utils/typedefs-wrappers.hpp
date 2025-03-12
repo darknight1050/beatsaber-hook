@@ -406,7 +406,7 @@ struct SafePtr {
         __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
     }
 
-    T const* ptr() const {
+    T* const ptr() const {
         __SAFE_PTR_NULL_HANDLE_CHECK(internalHandle, internalHandle->instancePointer);
     }
 
@@ -422,19 +422,19 @@ struct SafePtr {
         return *ptr();
     }
 
-    [[nodiscard]] const T& operator*() const {
+    [[nodiscard]] T& operator*() const {
         return *ptr();
     }
 
     [[nodiscard]] T* const operator->() const {
-        return const_cast<T*>(ptr());
+        return ptr();
     }
 
     /// @brief Explicitly cast this instance to a T*.
     /// Note, however, that the lifetime of this returned T* is not longer than the lifetime of this instance.
     /// Consider passing a SafePtr reference or copy instead.
     [[nodiscard]] explicit operator T* const() const {
-        return const_cast<T*>(ptr());
+        return ptr();
     }
 
    private:
@@ -505,7 +505,7 @@ struct SafePtrUnity : public SafePtr<T, true> {
         __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(Parent::internalHandle->instancePointer);
     }
 
-    T const* ptr() const {
+    T* const ptr() const {
         __SAFE_PTR_UNITY_NULL_HANDLE_CHECK(Parent::internalHandle->instancePointer);
     }
 
@@ -523,11 +523,11 @@ struct SafePtrUnity : public SafePtr<T, true> {
     /// Note, however, that the lifetime of this returned T* is not longer than the lifetime of this instance.
     /// Consider passing a SafePtrUnity reference or copy instead.
     explicit operator T* const() const {
-        return const_cast<T*>(ptr());
+        return ptr();
     }
 
     T* const operator->() {
-        return const_cast<T*>(ptr());
+        return ptr();
     }
 
     T* const operator->() const {
@@ -538,7 +538,7 @@ struct SafePtrUnity : public SafePtr<T, true> {
         return *ptr();
     }
 
-    T const& operator*() const {
+    T& operator*() const {
         return *ptr();
     }
 
