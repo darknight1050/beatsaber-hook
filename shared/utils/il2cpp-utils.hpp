@@ -2,6 +2,7 @@
 #define IL2CPP_UTILS_H
 
 #include <sys/types.h>
+#include <unistd.h>
 #include <exception>
 #include <forward_list>
 #include <utility>
@@ -428,9 +429,8 @@ namespace il2cpp_utils {
             return env;
         }
 
-        static inline std::string current_thread_id() {
-            std::stringstream id; id << std::this_thread::get_id();
-            return id.str();
+        static inline int current_thread_id() {
+            return gettid();
         }
 
         // TODO: Custom reimplementation (Removed in Unity 2023)
@@ -542,9 +542,8 @@ namespace il2cpp_utils {
         private:
             static inline thread_local JNIEnv* env;
         public:
-            static std::string current_thread_id() {
-                std::stringstream id; id << std::this_thread::get_id();
-                return id.str();
+            static int current_thread_id() {
+                return gettid();
             }
 
             static inline JNIEnv* get_current_env() noexcept { return env; }
