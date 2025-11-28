@@ -9,7 +9,7 @@
 #include "logging.hpp"
 #include "il2cpp-utils.hpp"
 // FIX: change in qpm setup might be why capstone-utils is not propery working here?
-#include "beatsaber-hook/shared/utils/capstone-utils.hpp"
+#include "./capstone-utils.hpp"
 
 namespace Hooking {
 // For use in MAKE_HOOK_AUTO bodies.
