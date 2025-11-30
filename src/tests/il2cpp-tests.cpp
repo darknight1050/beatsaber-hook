@@ -3,6 +3,8 @@
 #include "../../shared/utils/typedefs.h"
 #include "scotland2/shared/loader.hpp"
 #include "utils/il2cpp-functions.hpp"
+#include "utils/il2cpp-utils-classes.hpp"
+#include "utils/il2cpp-type-check.hpp"
 #include "utils/logging.hpp"
 
 #include <span>
@@ -246,7 +248,7 @@ static void test_runmethodrethrow_on_throwing_method() {
     try {
         // System.Int32.Parse will throw FormatException for non-numeric input
         auto method = FindMethod(GetClassFromName("System", "Int32"), "Parse", std::array<const Il2CppType*, 1>{ ExtractIndependentType<Il2CppString*>() });
-        auto val = RunMethodRethrow<int>(nullptr, method, "notanint");
+        auto val = RunMethodRethrow<int>(nullptr, method, newcsstr("notanint"));
         logger.warn("[il2cpp-tests] Unexpected success from Int32.Parse, value: {}", val);
     } catch (const il2cpp_utils::RunMethodException& e) {
         logger.info("[il2cpp-tests] Caught RunMethodException from Int32.Parse: {}", e.what());
