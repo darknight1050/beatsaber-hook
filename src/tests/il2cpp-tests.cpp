@@ -3,8 +3,8 @@
 #include "../../shared/utils/typedefs.h"
 #include "scotland2/shared/loader.hpp"
 #include "utils/il2cpp-functions.hpp"
-#include "utils/il2cpp-utils-classes.hpp"
 #include "utils/il2cpp-type-check.hpp"
+#include "utils/il2cpp-utils-classes.hpp"
 #include "utils/logging.hpp"
 
 #include <span>
@@ -524,6 +524,83 @@ static void test_get_set_field_on_non_generic() {
     logger.warn("[il2cpp-tests] No suitable int field found on StringBuilder from candidates");
 }
 
+// Property getter/setter tests
+static void test_property_get_set() {
+    using namespace il2cpp_utils;
+    auto const& logger = il2cpp_utils::Logger;
+    logger.info("[il2cpp-tests] Starting property get/set tests");
+
+    // Test System.Text.StringBuilder.Length getter/setter
+    auto* sbClass = GetClassFromName("System.Text", "StringBuilder");
+    if (!sbClass) {
+        logger.warn("[il2cpp-tests] System.Text.StringBuilder not found, skipping property tests");
+    } else {
+        if (auto sbOpt = New<Il2CppObject*>(sbClass)) {
+            Il2CppObject* sb = sbOpt.value();
+            // Use GetPropertyValue / SetPropertyValue helpers
+            {
+                auto lenRes = GetPropertyValue<int>(sb, "Length");
+                if (lenRes.has_result()) {
+                    logger.info("[il2cpp-tests] StringBuilder.Length initial -> {}", lenRes.get_result());
+                } else {
+                    logger.warn("[il2cpp-tests] Failed to get StringBuilder.Length");
+                }
+            }
+
+            {
+                auto setRes = SetPropertyValue(sb, "Length", 5);
+                if (setRes.has_result()) {
+                    logger.info("[il2cpp-tests] Called set_Length(5) on StringBuilder");
+                    auto newLen = GetPropertyValue<int>(sb, "Length");
+                    if (newLen.has_result()) {
+                        logger.info("[il2cpp-tests] StringBuilder.Length after set -> {}", newLen.get_result());
+                    }
+                } else {
+                    logger.warn("[il2cpp-tests] Failed to set StringBuilder.Length (setter missing or failed)");
+                }
+            }
+        } else {
+            logger.warn("[il2cpp-tests] Could not create StringBuilder instance for property tests");
+        }
+    }
+
+    // Test List<int>.Count getter after Add
+    if (auto listKlass = GetClassFromName("System.Collections.Generic", "List`1")) {
+        auto* intKlass = GetClassFromName("System", "Int32");
+        if (!intKlass) {
+            logger.warn("[il2cpp-tests] System.Int32 not found, skipping List<int>.Count test");
+        } else {
+            const Il2CppClass* const typeArgs[] = { intKlass };
+            auto* genericListKlass = il2cpp_utils::MakeGeneric(listKlass, typeArgs);
+            if (!genericListKlass) {
+                logger.warn("[il2cpp-tests] Could not make List<int> generic class for property test");
+            } else if (auto listInstance = New<Il2CppObject*>(genericListKlass)) {
+                // Find Add and get_Count
+                auto addMethod = FindMethod(genericListKlass, "Add", std::array<const Il2CppType*, 1>{ ExtractIndependentType<int>() });
+                if (!addMethod) {
+                    logger.warn("[il2cpp-tests] List<int>.Add not found for property test");
+                } else {
+                    if (auto r = RunMethodOpt<void, true>(listInstance.value(), addMethod, 10)) {
+                        logger.info("[il2cpp-tests] Called List<int>.Add(10)");
+                        auto cnt = GetPropertyValue<int>(listInstance.value(), "Count");
+                        if (cnt.has_result()) {
+                            logger.info("[il2cpp-tests] List<int>.Count -> {}", cnt.get_result());
+                        } else {
+                            logger.warn("[il2cpp-tests] Failed to get List<int>.Count");
+                        }
+                    } else {
+                        logger.warn("[il2cpp-tests] Failed to call List<int>.Add for property test");
+                    }
+                }
+            } else {
+                logger.warn("[il2cpp-tests] Could not create List<int> instance for property test");
+            }
+        }
+    } else {
+        logger.warn("[il2cpp-tests] List`1 not found, skipping List<int>.Count test");
+    }
+}
+
 extern "C" void load() {
     il2cpp_utils::Logger.info("Loaded mod: {} v{}", modInfo.id, modInfo.version);
     il2cpp_utils::Logger.info("Running il2cpp_init", modInfo.id, modInfo.version);
@@ -541,6 +618,7 @@ extern "C" void load() {
     test_listw();
     test_arrayw();
     test_byref_helpers();
+    test_property_get_set();
     test_runmethodrethrow_on_throwing_method();
     test_delegates();
 }
