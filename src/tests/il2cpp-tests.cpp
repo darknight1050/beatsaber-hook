@@ -9,42 +9,47 @@
 
 #include <span>
 #include <string>
+#include <string_view>
 #include <vector>
 
 static modloader::ModInfo modInfo = { MOD_ID, VERSION, 0 };  // Stores the ID and version of our mod, and is sent to the modloader upon startup
+
+// Logging helpers: prefix good logs with OK and bad logs with FAIL
+// Use variadic macros so calls stay concise and avoid template instantiation here.
+#define LOG_OK(fmt, ...) il2cpp_utils::Logger.info("OK: " fmt, ##__VA_ARGS__)
+#define LOG_FAIL(fmt, ...) il2cpp_utils::Logger.warn("FAIL: " fmt, ##__VA_ARGS__)
 
 void setup(CModInfo* info) {
     info->id = MOD_ID;
     info->version = VERSION;
 
-    il2cpp_utils::Logger.info("Completed setup!");
+    LOG_OK("Completed setup!");
 }
 
 static void test_basic_creation_and_methods() {
     using namespace il2cpp_utils;
-    auto const& logger = il2cpp_utils::Logger;
-    logger.info("[il2cpp-tests] Starting basic creation & method tests");
+    LOG_OK("[il2cpp-tests] Starting basic creation & method tests");
 
     // Create a System.Object instance and call ToString()
     if (auto obj = New<Il2CppObject*>("System", "Object"); obj) {
-        logger.info("[il2cpp-tests] Created System.Object: {}", fmt::ptr(*obj));
+        LOG_OK("[il2cpp-tests] Created System.Object: {}", fmt::ptr(*obj));
         auto* objKlass = GetClassFromName("System", "Object");
         if (!objKlass) {
-            logger.warn("[il2cpp-tests] Could not find System.Object class for ToString test");
+            LOG_FAIL("[il2cpp-tests] Could not find System.Object class for ToString test");
         } else {
             auto toStringMethod = FindMethod(objKlass, "ToString", std::array<const Il2CppType*, 0>{});
             if (toStringMethod) {
                 if (auto str = RunMethodOpt<Il2CppString*>((Il2CppObject*)*obj, toStringMethod)) {
-                    logger.info("[il2cpp-tests] Object.ToString() returned object ptr: {}", fmt::ptr(*str));
+                    LOG_OK("[il2cpp-tests] Object.ToString() returned object ptr: {}", fmt::ptr(*str));
                 } else {
-                    logger.warn("[il2cpp-tests] Object.ToString() call failed or returned null");
+                    LOG_FAIL("[il2cpp-tests] Object.ToString() call failed or returned null");
                 }
             } else {
-                logger.warn("[il2cpp-tests] Could not find ToString method on System.Object");
+                LOG_FAIL("[il2cpp-tests] Could not find ToString method on System.Object");
             }
         }
     } else {
-        logger.warn("[il2cpp-tests] Could not construct System.Object (class missing?)");
+        LOG_FAIL("[il2cpp-tests] Could not construct System.Object (class missing?)");
     }
 
     // String.Concat test
@@ -53,7 +58,7 @@ static void test_basic_creation_and_methods() {
 
     auto* klass = GetClassFromName("System", "String");
     if (!klass) {
-        logger.warn("[il2cpp-tests] Could not find System.String class for String.Concat test");
+        LOG_FAIL("[il2cpp-tests] Could not find System.String class for String.Concat test");
         return;
     }
 
@@ -61,65 +66,64 @@ static void test_basic_creation_and_methods() {
 
     auto method = FindMethod(klass, "Concat", std::array<const Il2CppType*, 2>{ ExtractIndependentType<Il2CppString*>(), ExtractIndependentType<Il2CppString*>() });
     if (auto concat = RunMethodOpt<Il2CppString*, true>(nullptr, method, s1, s2)) {
-        logger.info("[il2cpp-tests] String.Concat succeeded, result ptr: {}", fmt::ptr(*concat));
+        LOG_OK("[il2cpp-tests] String.Concat succeeded, result ptr: {}", fmt::ptr(*concat));
     } else {
-        logger.warn("[il2cpp-tests] String.Concat failed");
+        LOG_FAIL("[il2cpp-tests] String.Concat failed");
     }
 }
 
 static void test_safeptr_and_countpointer() {
     using namespace il2cpp_utils;
-    auto const& logger = il2cpp_utils::Logger;
-    logger.info("[il2cpp-tests] Starting SafePtr / CountPointer tests (reference types only)");
+    LOG_OK("[il2cpp-tests] Starting SafePtr / CountPointer tests (reference types only)");
 
     // Use a reference-type instance (Il2CppObject) instead of primitives
     Il2CppObject inst{};
-    logger.info("[il2cpp-tests] Created stack Il2CppObject inst at {}", fmt::ptr(&inst));
+    LOG_OK("[il2cpp-tests] Created stack Il2CppObject inst at {}", fmt::ptr(&inst));
 
     // Default constructed SafePtr
     SafePtr<Il2CppObject> a;
-    logger.info("[il2cpp-tests] Created default SafePtr<Il2CppObject> a (isHandleValid: {})", a.isHandleValid());
+    LOG_OK("[il2cpp-tests] Created default SafePtr<Il2CppObject> a (isHandleValid: {})", a.isHandleValid());
 
     {
         SafePtr<Il2CppObject> b(&inst);
-        logger.info("[il2cpp-tests] Created SafePtr<Il2CppObject> b(&inst). Counter for &inst -> {}", Counter::get(&inst));
+        LOG_OK("[il2cpp-tests] Created SafePtr<Il2CppObject> b(&inst). Counter for &inst -> {}", Counter::get(&inst));
 
         {
             CountPointer<Il2CppObject> cptr(&inst);
-            logger.info("[il2cpp-tests] Created CountPointer<Il2CppObject> cptr(&inst). cptr.count() -> {} | Counter.get -> {}", cptr.count(), Counter::get(&inst));
+            LOG_OK("[il2cpp-tests] Created CountPointer<Il2CppObject> cptr(&inst). cptr.count() -> {} | Counter.get -> {}", cptr.count(), Counter::get(&inst));
         }
-        logger.info("[il2cpp-tests] After destroying CountPointer, Counter.get(&inst) -> {}", Counter::get(&inst));
+        LOG_OK("[il2cpp-tests] After destroying CountPointer, Counter.get(&inst) -> {}", Counter::get(&inst));
 
         // Log pointer addresses rather than treating object as a value
-        logger.info("[il2cpp-tests] b.ptr() -> {}", fmt::ptr(b.ptr()));
+        LOG_OK("[il2cpp-tests] b.ptr() -> {}", fmt::ptr(b.ptr()));
 
         // Create a temporary copy
         {
             SafePtr<Il2CppObject> c(b);
-            logger.info("[il2cpp-tests] Copied SafePtr c(b). Counter.get(&inst) -> {} | c.ptr() -> {}", Counter::get(&inst), fmt::ptr(c.ptr()));
+            LOG_OK("[il2cpp-tests] Copied SafePtr c(b). Counter.get(&inst) -> {} | c.ptr() -> {}", Counter::get(&inst), fmt::ptr(c.ptr()));
         }
-        logger.info("[il2cpp-tests] After destroying copy, Counter.get(&inst) -> {}", Counter::get(&inst));
+        LOG_OK("[il2cpp-tests] After destroying copy, Counter.get(&inst) -> {}", Counter::get(&inst));
 
         // Pass by reference-like usage
-        auto testRef = [&](SafePtr<Il2CppObject>& ref) { logger.info("[il2cpp-tests] In testRef, received ref.ptr() -> {}", fmt::ptr(ref.ptr())); };
+        auto testRef = [&](SafePtr<Il2CppObject>& ref) { LOG_OK("[il2cpp-tests] In testRef, received ref.ptr() -> {}", fmt::ptr(ref.ptr())); };
         testRef(b);
-        logger.info("[il2cpp-tests] After testRef, Counter.get(&inst) -> {}", Counter::get(&inst));
+        LOG_OK("[il2cpp-tests] After testRef, Counter.get(&inst) -> {}", Counter::get(&inst));
 
         // Pass by value (copy)
-        auto testCopy = [&](SafePtr<Il2CppObject> copy) { logger.info("[il2cpp-tests] In testCopy, received copy.ptr() -> {}", fmt::ptr(copy.ptr())); };
+        auto testCopy = [&](SafePtr<Il2CppObject> copy) { LOG_OK("[il2cpp-tests] In testCopy, received copy.ptr() -> {}", fmt::ptr(copy.ptr())); };
         testCopy(b);
-        logger.info("[il2cpp-tests] After testCopy, Counter.get(&inst) -> {}", Counter::get(&inst));
+        LOG_OK("[il2cpp-tests] After testCopy, Counter.get(&inst) -> {}", Counter::get(&inst));
 
         // Literal pointer cast (discouraged) — pass raw pointer
-        auto testLiteral = [&](Il2CppObject* p) { logger.info("[il2cpp-tests] In testLiteral, received raw ptr -> {}", fmt::ptr(p)); };
+        auto testLiteral = [&](Il2CppObject* p) { LOG_OK("[il2cpp-tests] In testLiteral, received raw ptr -> {}", fmt::ptr(p)); };
         testLiteral((Il2CppObject*)b.ptr());
-        logger.info("[il2cpp-tests] After testLiteral, Counter.get(&inst) -> {}", Counter::get(&inst));
+        LOG_OK("[il2cpp-tests] After testLiteral, Counter.get(&inst) -> {}", Counter::get(&inst));
 
         // Final pointer log
-        logger.info("[il2cpp-tests] Final b.ptr() -> {} | Counter.get(&inst) -> {}", fmt::ptr(b.ptr()), Counter::get(&inst));
+        LOG_OK("[il2cpp-tests] Final b.ptr() -> {} | Counter.get(&inst) -> {}", fmt::ptr(b.ptr()), Counter::get(&inst));
     }
 
-    logger.info("[il2cpp-tests] After leaving scope, Counter.get(&inst) -> {}", Counter::get(&inst));
+    LOG_OK("[il2cpp-tests] After leaving scope, Counter.get(&inst) -> {}", Counter::get(&inst));
 }
 
 static void test_safeptr_casts() {
@@ -184,27 +188,25 @@ static void test_listw() {
 
 static void test_arrayw() {
     using namespace il2cpp_utils;
-    auto const& logger = il2cpp_utils::Logger;
-    logger.info("[il2cpp-tests] Starting ArrayW tests");
+    LOG_OK("[il2cpp-tests] Starting ArrayW tests");
 
     ArrayW<int> a = ArrayW<int>({ 1, 2, 3 });
-    logger.info("[il2cpp-tests] Created ArrayW<int> a size -> {} | first -> {} | last -> {}", a->get_Length(), a->First(), a->Last());
+    LOG_OK("[il2cpp-tests] Created ArrayW<int> a size -> {} | first -> {} | last -> {}", a->get_Length(), a->First(), a->Last());
 
     bool contains2 = a->Contains(2);
-    logger.info("[il2cpp-tests] a.Contains(2) -> {}", contains2);
+    LOG_OK("[il2cpp-tests] a.Contains(2) -> {}", contains2);
 
     auto vec = std::vector<int>(a.begin(), a.end());
-    logger.info("[il2cpp-tests] iterated values -> {}", fmt::join(vec, ","));
+    LOG_OK("[il2cpp-tests] iterated values -> {}", fmt::join(vec, ","));
 
     ArrayW<int> b(5);
-    logger.info("[il2cpp-tests] Allocated ArrayW<int> b length -> {}", b->get_Length());
+    LOG_OK("[il2cpp-tests] Allocated ArrayW<int> b length -> {}", b->get_Length());
 }
 
 // ByRef helper tests: exercise ExtractIndependentType and ByRef construction
 static void test_byref_helpers() {
     using namespace il2cpp_utils;
-    auto const& logger = il2cpp_utils::Logger;
-    logger.info("[il2cpp-tests] Starting ByRef helper tests");
+    LOG_OK("[il2cpp-tests] Starting ByRef helper tests");
 
     try {
         // Ensure ExtractIndependentType for ByRef<int> equals that for int&
@@ -212,9 +214,9 @@ static void test_byref_helpers() {
         auto t_ref = ExtractIndependentType<int&>();
         if (t_byref && t_ref) {
             bool equal = (t_byref == t_ref);
-            logger.info("[il2cpp-tests] ExtractIndependentType<ByRef<int>> == ExtractIndependentType<int&> -> {}", equal);
+            LOG_OK("[il2cpp-tests] ExtractIndependentType<ByRef<int>> == ExtractIndependentType<int&> -> {}", equal);
         } else {
-            logger.warn("[il2cpp-tests] ExtractIndependentType returned null for ByRef or int&");
+            LOG_FAIL("[il2cpp-tests] ExtractIndependentType returned null for ByRef or int&");
         }
 
         // Construct a ByRef instance from a local int and validate that it can be created
@@ -224,18 +226,18 @@ static void test_byref_helpers() {
         auto br2 = byref(local);
         (void)br;
         (void)br2;
-        logger.info("[il2cpp-tests] Constructed ByRef<int> and byref(local) successfully");
+        LOG_OK("[il2cpp-tests] Constructed ByRef<int> and byref(local) successfully");
 
         // Confirm that ExtractIndependentType<int>() is non-null as a sanity check
         if (auto t_int = ExtractIndependentType<int>()) {
-            logger.info("[il2cpp-tests] ExtractIndependentType<int> present {}", fmt::ptr(t_int));
+            LOG_OK("[il2cpp-tests] ExtractIndependentType<int> present {}", fmt::ptr(t_int));
         } else {
-            logger.warn("[il2cpp-tests] ExtractIndependentType<int> returned null (unexpected)");
+            LOG_FAIL("[il2cpp-tests] ExtractIndependentType<int> returned null (unexpected)");
         }
     } catch (const std::exception& e) {
-        logger.warn("[il2cpp-tests] Exception during ByRef tests: {}", e.what());
+        LOG_FAIL("[il2cpp-tests] Exception during ByRef tests: {}", e.what());
     } catch (...) {
-        logger.warn("[il2cpp-tests] Unknown exception during ByRef tests");
+        LOG_FAIL("[il2cpp-tests] Unknown exception during ByRef tests");
     }
 }
 
@@ -602,10 +604,10 @@ static void test_property_get_set() {
 }
 
 extern "C" void load() {
-    il2cpp_utils::Logger.info("Loaded mod: {} v{}", modInfo.id, modInfo.version);
-    il2cpp_utils::Logger.info("Running il2cpp_init", modInfo.id, modInfo.version);
+    LOG_OK("Loaded mod: {} v{}", modInfo.id, modInfo.version);
+    LOG_OK("Running il2cpp_init", modInfo.id, modInfo.version);
     il2cpp_functions::Init();
-    il2cpp_utils::Logger.info("il2cpp_init complete!");
+    LOG_OK("il2cpp_init complete!");
     // Run builtin il2cpp tests that exercise common utilities.
     // Execute tests (they are defensive and will log failures rather than crash)
     test_basic_creation_and_methods();
