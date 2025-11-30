@@ -60,11 +60,10 @@ There are a bunch of defines that can control the built code a bit, TODO add the
 
 The repository contains a test shared library built during the normal build process: `build/libtest-beatsaber-hook.so`.
 
-Copy the built `.so` into the scotland2 late mods folder inside the repo for development testing (create the folder if it doesn't exist) e.g - `adb push build/libtest-beatsaber-hook.so <DEVICE_MODS_PATH>/libtest-beatsaber-hook.so`
+Copy the built `.so` into the scotland2 early mods folder inside the repo for development testing (create the folder if it doesn't exist) e.g - `adb push build/libtest-beatsaber-hook.so <DEVICE_MODS_PATH>/libtest-beatsaber-hook.so`
 
 Example device paths you might need to adapt:
-
-- `/sdcard/ModData/<game.package.name>/Mods/libtest-beatsaber-hook.so`
+- `/sdcard/ModData/<game.package.name>/Modloader/early_mods/libtest-beatsaber-hook.so`
 
 Verifying the test library loads
 
