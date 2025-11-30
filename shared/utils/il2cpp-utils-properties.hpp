@@ -67,7 +67,7 @@ namespace il2cpp_utils {
         RET_0_UNLESS(logger, prop);
 
         auto* setter = RET_0_UNLESS(logger, il2cpp_functions::property_get_set_method(prop));
-        return RunMethod<void, checkTypes, T>(classOrInstance, setter, value);
+        return RunMethod<void, checkTypes>(classOrInstance, setter, value);
     }
 
     // Sets the value of a given property, given an object instance or class and property name
