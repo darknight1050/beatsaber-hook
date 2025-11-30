@@ -56,6 +56,26 @@ This library now also statically links against [capstone](https://github.com/aqu
 
 There are a bunch of defines that can control the built code a bit, TODO add them all here as a list. (for now just read the locations of `#ifdef` or `#ifndef`)
 
+## Running tests
+
+The repository contains a test shared library built during the normal build process: `build/libtest-beatsaber-hook.so`.
+
+Copy the built `.so` into the scotland2 late mods folder inside the repo for development testing (create the folder if it doesn't exist) e.g - `adb push build/libtest-beatsaber-hook.so <DEVICE_MODS_PATH>/libtest-beatsaber-hook.so`
+
+Example device paths you might need to adapt:
+
+- `/sdcard/ModData/<game.package.name>/Mods/libtest-beatsaber-hook.so`
+
+Verifying the test library loads
+
+- Start the game / modloader on the device after the `.so` is in the mods folder.
+- Use `adb logcat` to watch logs and confirm the test library or the beatsaber-hook initialization messages appear. A useful pattern is:
+
+  - `adb logcat -c`
+  - `adb logcat -v time | grep -i "libtest-beatsaber-hook\|beatsaber-hook\|scotland2"`
+
+Look for log lines emitted by the test library (it will usually print a startup message) or for messages from the modloader indicating the `.so` was loaded.
+
 ## Acknowledgements
 
 This wouldn't have been possible without a few people who have helped immensely.

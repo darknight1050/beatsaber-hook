@@ -1,0 +1,546 @@
+#include "../../shared/utils/byref.hpp"
+#include "../../shared/utils/il2cpp-utils.hpp"
+#include "../../shared/utils/typedefs.h"
+#include "scotland2/shared/loader.hpp"
+#include "utils/il2cpp-functions.hpp"
+#include "utils/logging.hpp"
+
+#include <span>
+#include <string>
+#include <vector>
+
+static modloader::ModInfo modInfo = { MOD_ID, VERSION, 0 };  // Stores the ID and version of our mod, and is sent to the modloader upon startup
+
+void setup(CModInfo* info) {
+    info->id = MOD_ID;
+    info->version = VERSION;
+
+    il2cpp_utils::Logger.info("Completed setup!");
+}
+
+static void test_basic_creation_and_methods() {
+    using namespace il2cpp_utils;
+    auto const& logger = il2cpp_utils::Logger;
+    logger.info("[il2cpp-tests] Starting basic creation & method tests");
+
+    // Create a System.Object instance and call ToString()
+    if (auto obj = New<Il2CppObject*>("System", "Object"); obj) {
+        logger.info("[il2cpp-tests] Created System.Object: {}", fmt::ptr(*obj));
+        auto* objKlass = GetClassFromName("System", "Object");
+        if (!objKlass) {
+            logger.warn("[il2cpp-tests] Could not find System.Object class for ToString test");
+        } else {
+            auto toStringMethod = FindMethod(objKlass, "ToString", std::array<const Il2CppType*, 0>{});
+            if (toStringMethod) {
+                if (auto str = RunMethodOpt<Il2CppString*>((Il2CppObject*)*obj, toStringMethod)) {
+                    logger.info("[il2cpp-tests] Object.ToString() returned object ptr: {}", fmt::ptr(*str));
+                } else {
+                    logger.warn("[il2cpp-tests] Object.ToString() call failed or returned null");
+                }
+            } else {
+                logger.warn("[il2cpp-tests] Could not find ToString method on System.Object");
+            }
+        }
+    } else {
+        logger.warn("[il2cpp-tests] Could not construct System.Object (class missing?)");
+    }
+
+    // String.Concat test
+    auto s1 = newcsstr("Hello ");
+    auto s2 = newcsstr("World");
+
+    auto* klass = GetClassFromName("System", "String");
+    if (!klass) {
+        logger.warn("[il2cpp-tests] Could not find System.String class for String.Concat test");
+        return;
+    }
+
+    // Find MethodInfo for String.Concat(string, string)
+
+    auto method = FindMethod(klass, "Concat", std::array<const Il2CppType*, 2>{ ExtractIndependentType<Il2CppString*>(), ExtractIndependentType<Il2CppString*>() });
+    if (auto concat = RunMethodOpt<Il2CppString*, true>(nullptr, method, s1, s2)) {
+        logger.info("[il2cpp-tests] String.Concat succeeded, result ptr: {}", fmt::ptr(*concat));
+    } else {
+        logger.warn("[il2cpp-tests] String.Concat failed");
+    }
+}
+
+static void test_safeptr_and_countpointer() {
+    using namespace il2cpp_utils;
+    auto const& logger = il2cpp_utils::Logger;
+    logger.info("[il2cpp-tests] Starting SafePtr / CountPointer tests (reference types only)");
+
+    // Use a reference-type instance (Il2CppObject) instead of primitives
+    Il2CppObject inst{};
+    logger.info("[il2cpp-tests] Created stack Il2CppObject inst at {}", fmt::ptr(&inst));
+
+    // Default constructed SafePtr
+    SafePtr<Il2CppObject> a;
+    logger.info("[il2cpp-tests] Created default SafePtr<Il2CppObject> a (isHandleValid: {})", a.isHandleValid());
+
+    {
+        SafePtr<Il2CppObject> b(&inst);
+        logger.info("[il2cpp-tests] Created SafePtr<Il2CppObject> b(&inst). Counter for &inst -> {}", Counter::get(&inst));
+
+        {
+            CountPointer<Il2CppObject> cptr(&inst);
+            logger.info("[il2cpp-tests] Created CountPointer<Il2CppObject> cptr(&inst). cptr.count() -> {} | Counter.get -> {}", cptr.count(), Counter::get(&inst));
+        }
+        logger.info("[il2cpp-tests] After destroying CountPointer, Counter.get(&inst) -> {}", Counter::get(&inst));
+
+        // Log pointer addresses rather than treating object as a value
+        logger.info("[il2cpp-tests] b.ptr() -> {}", fmt::ptr(b.ptr()));
+
+        // Create a temporary copy
+        {
+            SafePtr<Il2CppObject> c(b);
+            logger.info("[il2cpp-tests] Copied SafePtr c(b). Counter.get(&inst) -> {} | c.ptr() -> {}", Counter::get(&inst), fmt::ptr(c.ptr()));
+        }
+        logger.info("[il2cpp-tests] After destroying copy, Counter.get(&inst) -> {}", Counter::get(&inst));
+
+        // Pass by reference-like usage
+        auto testRef = [&](SafePtr<Il2CppObject>& ref) { logger.info("[il2cpp-tests] In testRef, received ref.ptr() -> {}", fmt::ptr(ref.ptr())); };
+        testRef(b);
+        logger.info("[il2cpp-tests] After testRef, Counter.get(&inst) -> {}", Counter::get(&inst));
+
+        // Pass by value (copy)
+        auto testCopy = [&](SafePtr<Il2CppObject> copy) { logger.info("[il2cpp-tests] In testCopy, received copy.ptr() -> {}", fmt::ptr(copy.ptr())); };
+        testCopy(b);
+        logger.info("[il2cpp-tests] After testCopy, Counter.get(&inst) -> {}", Counter::get(&inst));
+
+        // Literal pointer cast (discouraged) — pass raw pointer
+        auto testLiteral = [&](Il2CppObject* p) { logger.info("[il2cpp-tests] In testLiteral, received raw ptr -> {}", fmt::ptr(p)); };
+        testLiteral((Il2CppObject*)b.ptr());
+        logger.info("[il2cpp-tests] After testLiteral, Counter.get(&inst) -> {}", Counter::get(&inst));
+
+        // Final pointer log
+        logger.info("[il2cpp-tests] Final b.ptr() -> {} | Counter.get(&inst) -> {}", fmt::ptr(b.ptr()), Counter::get(&inst));
+    }
+
+    logger.info("[il2cpp-tests] After leaving scope, Counter.get(&inst) -> {}", Counter::get(&inst));
+}
+
+static void test_safeptr_casts() {
+    using namespace il2cpp_utils;
+    auto const& logger = il2cpp_utils::Logger;
+    logger.info("[il2cpp-tests] Starting SafePtr cast tests (reference types only)");
+
+    // Reference-type cast example
+    {
+        Il2CppObject inst{};
+        SafePtr<Il2CppObject> a(&inst);
+        auto maybeRef = a.try_cast<Il2CppReflectionType>();
+        logger.info("[il2cpp-tests] SafePtr<Il2CppObject>.try_cast<Il2CppReflectionType> -> {}", maybeRef.has_value());
+        if (maybeRef) {
+            logger.info("[il2cpp-tests] Cast succeeded (unexpected)");
+        }
+    }
+}
+
+static void test_stringw() {
+    using namespace il2cpp_utils;
+    auto const& logger = il2cpp_utils::Logger;
+    logger.info("[il2cpp-tests] Starting StringW tests");
+
+    StringW s1("hello");
+    StringW s2(" world");
+    auto s3 = s1 + s2;
+    logger.info("[il2cpp-tests] s1 -> {} | s2 -> {} | s3 -> {}", static_cast<std::string>(s1), static_cast<std::string>(s2), static_cast<std::string>(s3));
+
+    logger.info("[il2cpp-tests] s3.starts_with('he') -> {} | s3.ends_with('ld') -> {}", s3.starts_with("he"), s3.ends_with("ld"));
+
+    // concatenation with std::string
+    StringW s4 = s3 + std::string("!");
+    logger.info("[il2cpp-tests] s4 -> {}", static_cast<std::string>(s4));
+}
+
+static void test_listw() {
+    using namespace il2cpp_utils;
+    auto const& logger = il2cpp_utils::Logger;
+    logger.info("[il2cpp-tests] Starting ListW tests");
+
+    // Create a managed List<int> and wrap it
+    ListW<int> arr(*il2cpp_utils::New<List<int>*>(classof(List<int>*)));
+    logger.info("[il2cpp-tests] Created ListW<int> arr (ptr {})", fmt::ptr(arr.getPtr()));
+
+    arr.push_back(7);
+    arr.push_back(13);
+    logger.info("[il2cpp-tests] After push_back: size -> {} | [0] -> {} | [1] -> {}", arr.size(), arr[0], arr[1]);
+
+    arr.insert_at(1, 99);
+    logger.info("[il2cpp-tests] After insert_at(1,99): size -> {} | [1] -> {}", arr.size(), arr[1]);
+
+    auto found = arr.find([](int const& v) { return v == 99; });
+    logger.info("[il2cpp-tests] find(99) -> {}", found.has_value());
+
+    auto asArray = arr.to_array();
+    logger.info("[il2cpp-tests] to_array size -> {} | contents -> {}", asArray->get_Length(), fmt::join(asArray.begin(), asArray.end(), ","));
+
+    arr.clear();
+    logger.info("[il2cpp-tests] After clear: size -> {}", arr.size());
+}
+
+static void test_arrayw() {
+    using namespace il2cpp_utils;
+    auto const& logger = il2cpp_utils::Logger;
+    logger.info("[il2cpp-tests] Starting ArrayW tests");
+
+    ArrayW<int> a = ArrayW<int>({ 1, 2, 3 });
+    logger.info("[il2cpp-tests] Created ArrayW<int> a size -> {} | first -> {} | last -> {}", a->get_Length(), a->First(), a->Last());
+
+    bool contains2 = a->Contains(2);
+    logger.info("[il2cpp-tests] a.Contains(2) -> {}", contains2);
+
+    auto vec = std::vector<int>(a.begin(), a.end());
+    logger.info("[il2cpp-tests] iterated values -> {}", fmt::join(vec, ","));
+
+    ArrayW<int> b(5);
+    logger.info("[il2cpp-tests] Allocated ArrayW<int> b length -> {}", b->get_Length());
+}
+
+// ByRef helper tests: exercise ExtractIndependentType and ByRef construction
+static void test_byref_helpers() {
+    using namespace il2cpp_utils;
+    auto const& logger = il2cpp_utils::Logger;
+    logger.info("[il2cpp-tests] Starting ByRef helper tests");
+
+    try {
+        // Ensure ExtractIndependentType for ByRef<int> equals that for int&
+        auto t_byref = ExtractIndependentType<ByRef<int>>();
+        auto t_ref = ExtractIndependentType<int&>();
+        if (t_byref && t_ref) {
+            bool equal = (t_byref == t_ref);
+            logger.info("[il2cpp-tests] ExtractIndependentType<ByRef<int>> == ExtractIndependentType<int&> -> {}", equal);
+        } else {
+            logger.warn("[il2cpp-tests] ExtractIndependentType returned null for ByRef or int&");
+        }
+
+        // Construct a ByRef instance from a local int and validate that it can be created
+        int local = 123;
+        const ByRef<int> br(local);
+        // Also test the byref(x) helper if available
+        auto br2 = byref(local);
+        (void)br;
+        (void)br2;
+        logger.info("[il2cpp-tests] Constructed ByRef<int> and byref(local) successfully");
+
+        // Confirm that ExtractIndependentType<int>() is non-null as a sanity check
+        if (auto t_int = ExtractIndependentType<int>()) {
+            logger.info("[il2cpp-tests] ExtractIndependentType<int> present {}", fmt::ptr(t_int));
+        } else {
+            logger.warn("[il2cpp-tests] ExtractIndependentType<int> returned null (unexpected)");
+        }
+    } catch (const std::exception& e) {
+        logger.warn("[il2cpp-tests] Exception during ByRef tests: {}", e.what());
+    } catch (...) {
+        logger.warn("[il2cpp-tests] Unknown exception during ByRef tests");
+    }
+}
+
+// Test invoking a C# method that will throw and using RunMethodRethrow to observe it
+static void test_runmethodrethrow_on_throwing_method() {
+    using namespace il2cpp_utils;
+    auto const& logger = il2cpp_utils::Logger;
+    logger.info("[il2cpp-tests] Starting RunMethodRethrow tests (invoke C# method that throws)");
+
+    try {
+        // System.Int32.Parse will throw FormatException for non-numeric input
+        auto method = FindMethod(GetClassFromName("System", "Int32"), "Parse", std::array<const Il2CppType*, 1>{ ExtractIndependentType<Il2CppString*>() });
+        auto val = RunMethodRethrow<int>(nullptr, method, "notanint");
+        logger.warn("[il2cpp-tests] Unexpected success from Int32.Parse, value: {}", val);
+    } catch (const il2cpp_utils::RunMethodException& e) {
+        logger.info("[il2cpp-tests] Caught RunMethodException from Int32.Parse: {}", e.what());
+    } catch (const std::exception& e) {
+        logger.warn("[il2cpp-tests] Unexpected std::exception from Int32.Parse test: {}", e.what());
+    } catch (...) {
+        logger.warn("[il2cpp-tests] Unknown exception from Int32.Parse test");
+    }
+}
+
+static void test_delegates() {
+    using namespace il2cpp_utils;
+    auto const& logger = il2cpp_utils::Logger;
+    logger.info("[il2cpp-tests] Starting delegate/action tests");
+
+    // Get System.Action type as a reflection Type
+    auto* actionClass = GetClassFromName("System", "Action");
+    if (!actionClass) {
+        logger.warn("[il2cpp-tests] System.Action class not found, skipping delegate tests");
+        return;
+    }
+    auto* actionType = GetSystemType(actionClass);
+    if (!actionType) {
+        logger.warn("[il2cpp-tests] Could not get reflection type for System.Action");
+        return;
+    }
+
+    // Attempt to create a delegate that wraps System.GC.Collect (static void Collect())
+    auto* gcClass = GetClassFromName("System", "GC");
+    if (!gcClass) {
+        logger.warn("[il2cpp-tests] System.GC class not found, skipping delegate CreateDelegate test");
+    } else {
+        auto* gcType = GetSystemType(gcClass);
+        if (!gcType) {
+            logger.warn("[il2cpp-tests] Could not get reflection type for System.GC");
+        } else {
+            // Try CreateDelegate(Type, Type, String) -> delegate for static method
+            auto* delegateKlass = GetClassFromName("System", "Delegate");
+            if (!delegateKlass) {
+                logger.warn("[il2cpp-tests] System.Delegate class not found, cannot Find CreateDelegate");
+            } else {
+                auto createStatic = FindMethod(
+                    delegateKlass, "CreateDelegate",
+                    std::array<const Il2CppType*, 3>{ ExtractIndependentType<Il2CppReflectionType*>(), ExtractIndependentType<Il2CppReflectionType*>(), ExtractIndependentType<Il2CppString*>() });
+                if (!createStatic) {
+                    logger.warn("[il2cpp-tests] Could not find Delegate.CreateDelegate(Type,Type,String) overload");
+                } else {
+                    if (auto del = RunMethodOpt<Il2CppObject*, true>(nullptr, createStatic, actionType, gcType, std::string("Collect"))) {
+                        logger.info("[il2cpp-tests] Successfully created delegate for GC.Collect -> {}", fmt::ptr(*del));
+                        // Invoke the delegate's Invoke() method (Action.Invoke)
+                        try {
+                            RunMethodRethrow<void>(*del, "Invoke");
+                            logger.info("[il2cpp-tests] Invoked delegate Invoke() successfully (should have called GC.Collect)");
+                        } catch (const il2cpp_utils::RunMethodException& e) {
+                            logger.warn("[il2cpp-tests] Running delegate Invoke threw RunMethodException: {}", e.what());
+                        }
+                    } else {
+                        logger.warn("[il2cpp-tests] Delegate.CreateDelegate returned nullopt or failed");
+                    }
+                }
+            }
+        }
+    }
+
+    // Test creating a delegate instance from a managed method on an object (instance delegate)
+    // We'll create a System.Object and use its ToString method as a Func<string>
+    if (auto obj = New<Il2CppObject*>("System", "Object")) {
+        // auto* objClass = GetClassFromName("System", "Object");
+        auto* funcClass = GetClassFromName("System", "Func`1");
+        if (!funcClass) {
+            logger.warn("[il2cpp-tests] System.Func`1 not found, skipping instance delegate test");
+            return;
+        }
+        // Make Func<String> generic
+        auto* stringClass = GetClassFromName("System", "String");
+        if (!stringClass) {
+            logger.warn("[il2cpp-tests] System.String not found, skipping instance delegate test");
+            return;
+        }
+        const Il2CppClass* const genArgs[] = { stringClass };
+        auto* funcGeneric = il2cpp_utils::MakeGeneric(funcClass, genArgs);
+        if (!funcGeneric) {
+            logger.warn("[il2cpp-tests] Could not make generic List for Func<String>");
+            return;
+        }
+
+        // Get reflection type for the delegate type
+        auto* funcType = GetSystemType(funcGeneric);
+        if (!funcType) {
+            logger.warn("[il2cpp-tests] Could not get reflection type for Func<String>");
+            return;
+        }
+
+        // Create delegate bound to the object's ToString method: Delegate.CreateDelegate(Type, Object, String)
+        {
+            auto* delegateKlass = GetClassFromName("System", "Delegate");
+            if (!delegateKlass) {
+                logger.warn("[il2cpp-tests] System.Delegate class not found, cannot Find CreateDelegate for instance overload");
+            } else {
+                auto createInstance =
+                    FindMethod(delegateKlass, "CreateDelegate",
+                               std::array<const Il2CppType*, 3>{ ExtractIndependentType<Il2CppReflectionType*>(), ExtractIndependentType<Il2CppObject*>(), ExtractIndependentType<Il2CppString*>() });
+                if (!createInstance) {
+                    logger.warn("[il2cpp-tests] Could not find Delegate.CreateDelegate(Type,Object,String) overload");
+                } else {
+                    if (auto delObj = RunMethodOpt<Il2CppObject*, true>(nullptr, createInstance, funcType, (Il2CppObject*)*obj, std::string("ToString"))) {
+                        logger.info("[il2cpp-tests] Created instance delegate for Object.ToString -> {}", fmt::ptr(*delObj));
+                        // Invoke the delegate's Invoke() method and get string result
+                        try {
+                            auto res = RunMethodRethrow<Il2CppObject*>(*delObj, "Invoke");
+                            if (res) {
+                                logger.info("[il2cpp-tests] Delegate.Invoke() returned -> {}", fmt::ptr(res));
+                            }
+                        } catch (const il2cpp_utils::RunMethodException& e) {
+                            logger.warn("[il2cpp-tests] Running instance delegate Invoke threw: {}", e.what());
+                        }
+                    } else {
+                        logger.warn("[il2cpp-tests] Could not create instance delegate for Object.ToString");
+                    }
+                }
+            }
+        }
+    } else {
+        logger.warn("[il2cpp-tests] Could not create System.Object instance for delegate test");
+    }
+}
+
+static void test_arrays_and_generics() {
+    using namespace il2cpp_utils;
+    auto const& logger = il2cpp_utils::Logger;
+    logger.info("[il2cpp-tests] Starting array & generics checks");
+
+    // Try creating an array of System.Object
+    if (auto objKlass = GetClassFromName("System", "Object")) {
+        auto* arr = il2cpp_functions::array_new(objKlass, 3);
+        logger.info("[il2cpp-tests] Created System.Object[]: {}", fmt::ptr(arr));
+    } else {
+        logger.warn("[il2cpp-tests] System.Object klass not found, skipping array creation");
+    }
+
+    // Check for generic List<T> class presence (without instantiation)
+    if (auto listKlass = GetClassFromName("System.Collections.Generic", "List`1")) {
+        logger.info("[il2cpp-tests] Found generic type List`1: {}", fmt::ptr(listKlass));
+    } else {
+        logger.warn("[il2cpp-tests] Generic List`1 not found in assemblies");
+    }
+
+    // call a generic method - List<int>.Add
+    if (auto listKlass = GetClassFromName("System.Collections.Generic", "List`1")) {
+        // Make List<int>
+        auto* intKlass = GetClassFromName("System", "Int32");
+        if (!intKlass) {
+            logger.warn("[il2cpp-tests] System.Int32 klass not found, skipping List<int> test");
+            return;
+        }
+        const Il2CppClass* const typeArgs[] = { intKlass };
+        auto* genericListKlass = il2cpp_utils::MakeGeneric(listKlass, typeArgs);
+        if (!genericListKlass) {
+            logger.warn("[il2cpp-tests] Could not make List<int> generic class");
+            return;
+        }
+
+        // Create instance of List<int>
+        auto listInstance = New<Il2CppObject*>(genericListKlass);
+        if (!listInstance) {
+            logger.warn("[il2cpp-tests] Could not create List<int> instance");
+            return;
+        }
+        // Find Add method
+        auto addMethod = FindMethod(genericListKlass, "Add", std::array<const Il2CppType*, 1>{ ExtractIndependentType<int>() });
+        if (!addMethod) {
+            logger.warn("[il2cpp-tests] Could not find List<int>.Add method");
+            return;
+        }
+        // Call Add(42)
+        if (auto result = RunMethodOpt<void, true>(listInstance.value(), addMethod, 42)) {
+            logger.info("[il2cpp-tests] Successfully called List<int>.Add(42)");
+        } else {
+            logger.warn("[il2cpp-tests] Failed to call List<int>.Add(42)");
+        }
+        // Read backing field (int) usually named "_size" on many List<T> implementations
+        if (auto sizeOpt = GetFieldValue<int>(listInstance.value(), "_size")) {
+            logger.info("[il2cpp-tests] List<int> _size before set -> {}", *sizeOpt);
+        } else {
+            logger.warn("[il2cpp-tests] Could not read List<int>._size (field may be named differently)");
+        }
+
+        // Try setting the _size field to 1 and read back
+        if (SetFieldValue(listInstance.value(), "_size", 1)) {
+            logger.info("[il2cpp-tests] Set List<int>._size = 1 (success)");
+            if (auto newSize = GetFieldValue<int>(listInstance.value(), "_size")) {
+                logger.info("[il2cpp-tests] List<int> _size after set -> {}", *newSize);
+            }
+        } else {
+            logger.warn("[il2cpp-tests] Failed to set List<int>._size (field may be readonly or not present)");
+        }
+    } else {
+        logger.warn("[il2cpp-tests] Generic List`1 not found, skipping List<int>.Add test");
+    }
+}
+
+static void test_interfaces_and_fields() {
+    using namespace il2cpp_utils;
+    auto const& logger = il2cpp_utils::Logger;
+    logger.info("[il2cpp-tests] Starting interface & field tests");
+
+    // Interface check: IComparable
+    if (auto ic = GetClassFromName("System", "IComparable")) {
+        logger.info("[il2cpp-tests] System.IComparable present, IsInterface: {}", IsInterface(ic));
+    } else {
+        logger.warn("[il2cpp-tests] System.IComparable not found");
+    }
+
+    // Try a basic property: get_Length on a string instance
+    auto str = newcsstr("test-length");
+    {
+        auto* stringKlass = GetClassFromName("System", "String");
+        if (!stringKlass) {
+            logger.warn("[il2cpp-tests] Could not find System.String class for get_Length test");
+        } else {
+            auto getLenMethod = FindMethod(stringKlass, "get_Length", std::array<const Il2CppType*, 0>{});
+            if (getLenMethod) {
+                if (auto len = RunMethodOpt<int>(str, getLenMethod)) {
+                    logger.info("[il2cpp-tests] Il2CppString.get_Length -> {}", *len);
+                } else {
+                    logger.warn("[il2cpp-tests] Could not call get_Length on string (method failed)");
+                }
+            } else {
+                logger.warn("[il2cpp-tests] Could not find get_Length on System.String");
+            }
+        }
+    }
+}
+
+static void test_get_set_field_on_non_generic() {
+    using namespace il2cpp_utils;
+    auto const& logger = il2cpp_utils::Logger;
+    logger.info("[il2cpp-tests] Starting non-generic get/set field test");
+
+    // We'll try System.Text.StringBuilder as a common non-generic runtime type with int fields
+    auto* klass = GetClassFromName("System.Text", "StringBuilder");
+    if (!klass) {
+        logger.warn("[il2cpp-tests] System.Text.StringBuilder not found, skipping non-generic field test");
+        return;
+    }
+
+    auto instanceOpt = New<Il2CppObject*>(klass);
+    if (!instanceOpt) {
+        logger.warn("[il2cpp-tests] Could not construct StringBuilder instance");
+        return;
+    }
+    Il2CppObject* instance = instanceOpt.value();
+
+    // Candidate field names (common variants across runtimes)
+    const char* fieldCandidates[] = { "m_MaxCapacity", "m_ChunkLength", "m_capacity", "m_ChunkOffset" };
+
+    for (auto const& fname : fieldCandidates) {
+        if (auto val = GetFieldValue<int>(instance, fname)) {
+            logger.info("[il2cpp-tests] Read field '{}' -> {}", fname, *val);
+            // Try setting it to val+1 (defensive)
+            if (SetFieldValue(instance, fname, *val + 1)) {
+                logger.info("[il2cpp-tests] Successfully set field '{}' -> {}", fname, *val + 1);
+                if (auto newVal = GetFieldValue<int>(instance, fname)) {
+                    logger.info("[il2cpp-tests] Read back field '{}' -> {}", fname, *newVal);
+                }
+            } else {
+                logger.warn("[il2cpp-tests] Failed to set field '{}' (may be readonly)", fname);
+            }
+            return;  // done with first successful candidate
+        }
+    }
+
+    logger.warn("[il2cpp-tests] No suitable int field found on StringBuilder from candidates");
+}
+
+extern "C" void load() {
+    il2cpp_utils::Logger.info("Loaded mod: {} v{}", modInfo.id, modInfo.version);
+    il2cpp_utils::Logger.info("Running il2cpp_init", modInfo.id, modInfo.version);
+    il2cpp_functions::Init();
+    il2cpp_utils::Logger.info("il2cpp_init complete!");
+    // Run builtin il2cpp tests that exercise common utilities.
+    // Execute tests (they are defensive and will log failures rather than crash)
+    test_basic_creation_and_methods();
+    test_arrays_and_generics();
+    test_interfaces_and_fields();
+    test_get_set_field_on_non_generic();
+    test_safeptr_and_countpointer();
+    test_safeptr_casts();
+    test_stringw();
+    test_listw();
+    test_arrayw();
+    test_byref_helpers();
+    test_runmethodrethrow_on_throwing_method();
+    test_delegates();
+}
+
+extern "C" void late_load() {}
