@@ -5,6 +5,7 @@
 #include "utils/il2cpp-functions.hpp"
 #include "utils/il2cpp-type-check.hpp"
 #include "utils/il2cpp-utils-classes.hpp"
+#include "utils/il2cpp-utils-methods.hpp"
 #include "utils/logging.hpp"
 
 #include <span>
@@ -603,6 +604,53 @@ static void test_property_get_set() {
     }
 }
 
+static void type_check_tests() {
+    using namespace il2cpp_utils;
+    auto const& logger = il2cpp_utils::Logger;
+    logger.info("[il2cpp-tests] Starting type check tests");
+
+    auto str = StringW("foo");
+    auto strType = il2cpp_utils::ExtractType<StringW const&>(str);
+    il2cpp_type_check::il2cpp_arg_type<StringW&>::get(str);
+
+    // now use literal StringW
+    il2cpp_utils::il2cpp_type_check::il2cpp_arg_class<StringW>::get(str);
+    il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<StringW>::get();
+
+    logger.info("[il2cpp-tests] Extracted type for StringW 'foo' -> {}", fmt::ptr(strType));
+    logger.info("[il2cpp-tests] Type name: {:x}", (int)strType->type);
+    if (strType->type == IL2CPP_TYPE_STRING) {
+        LOG_OK("[il2cpp-tests] Extracted type is IL2CPP_TYPE_STRING as expected");
+    } else {
+        LOG_FAIL("[il2cpp-tests] Extracted type is not IL2CPP_TYPE_STRING (unexpected)");
+    }
+
+    auto ptrType = (Il2CppString*)str;
+    auto ptrTypeExtracted = il2cpp_utils::ExtractType<Il2CppString*&>(ptrType);
+
+    il2cpp_type_check::il2cpp_arg_type<Il2CppString*>::get(ptrType);
+    il2cpp_utils::il2cpp_type_check::il2cpp_arg_class<Il2CppString*>::get(str);
+    il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<Il2CppString*>::get();
+
+    logger.info("[il2cpp-tests] Extracted type for Il2CppString* ptr -> {}", fmt::ptr(ptrTypeExtracted));
+    logger.info("[il2cpp-tests] Type name: {:x}", (int)ptrTypeExtracted->type);
+    if (ptrTypeExtracted->type == IL2CPP_TYPE_STRING) {
+        LOG_OK("[il2cpp-tests] Extracted type is IL2CPP_TYPE_STRING as expected for Il2CppString*");
+    } else {
+        LOG_FAIL("[il2cpp-tests] Extracted type is not IL2CPP_TYPE_STRING (unexpected) for Il2CppString*");
+    }
+
+    // Example: check that System.String is assignable from System.Object
+    auto* stringKlass = GetClassFromName("System", "String");
+    auto* objectKlass = GetClassFromName("System", "Object");
+    if (stringKlass && objectKlass) {
+        bool assignable = il2cpp_utils::IsConvertibleFrom(&objectKlass->byval_arg, &stringKlass->byval_arg);
+        LOG_OK("[il2cpp-tests] System.String is assignable from System.Object -> {}", assignable);
+    } else {
+        LOG_FAIL("[il2cpp-tests] Could not find System.String or System.Object for type check test");
+    }
+}
+
 extern "C" void load() {
     LOG_OK("Loaded mod: {} v{}", modInfo.id, modInfo.version);
     LOG_OK("Running il2cpp_init", modInfo.id, modInfo.version);
@@ -610,6 +658,8 @@ extern "C" void load() {
     LOG_OK("il2cpp_init complete!");
     // Run builtin il2cpp tests that exercise common utilities.
     // Execute tests (they are defensive and will log failures rather than crash)
+
+    type_check_tests();
     test_basic_creation_and_methods();
     test_arrays_and_generics();
     test_interfaces_and_fields();
