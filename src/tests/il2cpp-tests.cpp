@@ -264,7 +264,6 @@ static void test_runmethodrethrow_on_throwing_method() {
 
 static void test_delegates() {
     using namespace il2cpp_utils;
-
 }
 
 static void test_arrays_and_generics() {
@@ -539,6 +538,122 @@ static void type_check_tests() {
     }
 }
 
+// ClassOf checks: ensure classof returns expected non-null classes and types match
+static void test_classof_checks() {
+    using namespace il2cpp_utils;
+    LOG_OK("[il2cpp-tests] Starting classof checks");
+
+    // Il2CppObject*
+    if (auto* k_obj = classof(Il2CppObject*)) {
+        auto* expected_obj = GetClassFromName("System", "Object");
+        if (expected_obj && k_obj == expected_obj) {
+            LOG_OK("[il2cpp-tests] classof(Il2CppObject*) matches System.Object -> {}", fmt::ptr(k_obj));
+        } else if (!expected_obj) {
+            LOG_FAIL("[il2cpp-tests] Could not find System.Object to compare against classof(Il2CppObject*)");
+        } else {
+            LOG_FAIL("[il2cpp-tests] classof(Il2CppObject*) != GetClassFromName('System','Object')");
+            LOG_FAIL("[il2cpp-tests] classof -> {} | GetClassFromName -> {}", fmt::ptr(k_obj), fmt::ptr(expected_obj));
+        }
+    } else {
+        LOG_FAIL("[il2cpp-tests] classof(Il2CppObject*) returned null");
+    }
+
+    // Array
+    if (auto* k_arr = classof(Il2CppArray*)) {
+        auto* expected_arr = GetClassFromName("System", "Array");
+        if (expected_arr && k_arr == expected_arr) {
+            LOG_OK("[il2cpp-tests] classof(Il2CppArray*) matches System.Array -> {}", fmt::ptr(k_arr));
+        } else if (!expected_arr) {
+            LOG_FAIL("[il2cpp-tests] Could not find System.Array to compare against classof(Il2CppArray*)");
+        } else {
+            LOG_FAIL("[il2cpp-tests] classof(Il2CppArray*) != GetClassFromName('System','Array')");
+            LOG_FAIL("[il2cpp-tests] classof -> {} | GetClassFromName -> {}", fmt::ptr(k_arr), fmt::ptr(expected_arr));
+        }
+    } else {
+        LOG_FAIL("[il2cpp-tests] classof(Il2CppArray*) returned null");
+    }
+
+    // int (value type)
+    if (auto* k_int = classof(int)) {
+        auto* expected_int = GetClassFromName("System", "Int32");
+        if (expected_int && k_int == expected_int) {
+            LOG_OK("[il2cpp-tests] classof(int) matches System.Int32 -> {}", fmt::ptr(k_int));
+        } else if (!expected_int) {
+            LOG_FAIL("[il2cpp-tests] Could not find System.Int32 to compare against classof(int)");
+        } else {
+            LOG_FAIL("[il2cpp-tests] classof(int) != GetClassFromName('System','Int32')");
+            LOG_FAIL("[il2cpp-tests] classof -> {} | GetClassFromName -> {}", fmt::ptr(k_int), fmt::ptr(expected_int));
+        }
+    } else {
+        LOG_FAIL("[il2cpp-tests] classof(int) returned null");
+    }
+
+    // void* (pointer type) — log the resolved class name for diagnostics
+    if (auto* k_voidp = classof(void*)) {
+        const char* ns = il2cpp_functions::class_get_namespace(k_voidp);
+        const char* name = il2cpp_functions::class_get_name(k_voidp);
+        LOG_OK("[il2cpp-tests] classof(void*) -> {}::{} ({})", ns ? ns : "(null)", name ? name : "(null)", fmt::ptr(k_voidp));
+        // should be equal to void
+        auto* expected_void = GetClassFromName("System", "Void");
+        if (expected_void && k_voidp == expected_void) {
+            LOG_OK("[il2cpp-tests] classof(void*) matches System.Void -> {}", fmt::ptr(k_voidp));
+        } else if (!expected_void) {
+            LOG_FAIL("[il2cpp-tests] Could not find System.Void to compare against classof  (void*)");
+        } else {
+            LOG_FAIL("[il2cpp-tests] classof(void*) != GetClassFromName('System','Void')");
+            LOG_FAIL("[il2cpp-tests] classof -> {} | GetClassFromName -> {}", fmt::ptr(k_voidp), fmt::ptr(expected_void));
+        }
+
+    } else {
+        LOG_FAIL("[il2cpp-tests] classof(void*) returned null");
+    }
+
+    // Il2CppString* and StringW equality
+    auto* k_str_raw = classof(Il2CppString*);
+    auto* k_str_w = classof(StringW);
+    if (!k_str_raw) {
+        LOG_FAIL("[il2cpp-tests] classof(Il2CppString*) returned null");
+    } else if (!k_str_w) {
+        LOG_FAIL("[il2cpp-tests] classof(StringW) returned null");
+    } else {
+        auto* expected_str = GetClassFromName("System", "String");
+        if (!expected_str) {
+            LOG_FAIL("[il2cpp-tests] Could not find System.String to compare against classof(String)");
+        } else if (k_str_raw == expected_str && k_str_w == expected_str) {
+            LOG_OK("[il2cpp-tests] classof(Il2CppString*) and classof(StringW) both match System.String -> {}", fmt::ptr(expected_str));
+        } else {
+            LOG_FAIL("[il2cpp-tests] classof(String) variants do not match System.String");
+            LOG_FAIL("[il2cpp-tests] Il2CppString* -> {} | StringW -> {} | expected -> {}", fmt::ptr(k_str_raw), fmt::ptr(k_str_w), fmt::ptr(expected_str));
+        }
+    }
+
+    // ArrayW<T> vs Array<T>* classof equality check for reference-type elements
+    // Ensure that the array wrapper maps to the underlying Il2Cpp array class
+    auto* k_arrw_obj = classof(ArrayW<Il2CppObject*>);
+    auto* k_arr_raw_obj = classof(Array<Il2CppObject*>*);
+    if (!k_arrw_obj) {
+        LOG_FAIL("[il2cpp-tests] classof(ArrayW<Il2CppObject*>) returned null");
+    } else if (!k_arr_raw_obj) {
+        LOG_FAIL("[il2cpp-tests] classof(Array<Il2CppObject*>*) returned null");
+    } else {
+        if (k_arrw_obj == k_arr_raw_obj) {
+            LOG_OK("[il2cpp-tests] classof(ArrayW<Il2CppObject*>) == classof(Array<Il2CppObject*>*)");
+        } else {
+            LOG_FAIL("[il2cpp-tests] classof(ArrayW<Il2CppObject*>) != classof(Array<Il2CppObject*>*)");
+            LOG_FAIL("[il2cpp-tests] ArrayW -> {} | raw Array -> {}", fmt::ptr(k_arrw_obj), fmt::ptr(k_arr_raw_obj));
+        }
+
+        // Also validate element class is Il2CppObject*
+        auto* elemK = il2cpp_functions::class_get_element_class(k_arr_raw_obj);
+        if (elemK == classof(Il2CppObject*)) {
+            LOG_OK("[il2cpp-tests] class_get_element_class(Array<Il2CppObject*>*) == classof(Il2CppObject*)");
+        } else {
+            LOG_FAIL("[il2cpp-tests] Element class for Array<Il2CppObject*>* is not Il2CppObject* as expected");
+            LOG_FAIL("[il2cpp-tests] element class -> {} | Il2CppObject* -> {}", fmt::ptr(elemK), fmt::ptr(classof(Il2CppObject*)));
+        }
+    }
+}
+
 extern "C" void load() {
     LOG_OK("Loaded mod: {} v{}", modInfo.id, modInfo.version);
     LOG_OK("Running il2cpp_init", modInfo.id, modInfo.version);
@@ -547,6 +662,7 @@ extern "C" void load() {
     // Run builtin il2cpp tests that exercise common utilities.
     // Execute tests (they are defensive and will log failures rather than crash)
 
+    test_classof_checks();
     type_check_tests();
     test_basic_creation_and_methods();
     test_arrays_and_generics();
