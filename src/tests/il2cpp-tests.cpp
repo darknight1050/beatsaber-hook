@@ -266,6 +266,60 @@ static void test_delegates() {
     using namespace il2cpp_utils;
 }
 
+// Assembly enumeration and presence checks
+static void test_assembly_enumeration() {
+    using namespace il2cpp_utils;
+    LOG_OK("[il2cpp-tests] Starting assembly enumeration test");
+
+    il2cpp_functions::Init();
+    auto* domain = il2cpp_functions::domain_get();
+    if (!domain) {
+        LOG_FAIL("[il2cpp-tests] il2cpp domain_get returned null");
+        return;
+    }
+
+    size_t asmCount = 0;
+    auto** assemblies = il2cpp_functions::domain_get_assemblies(domain, &asmCount);
+    if (!assemblies) {
+        LOG_FAIL("[il2cpp-tests] domain_get_assemblies returned null");
+        return;
+    }
+
+    LOG_OK("[il2cpp-tests] Found {} assemblies", asmCount);
+    std::vector<std::string> names;
+    names.reserve(asmCount);
+    for (size_t i = 0; i < asmCount; ++i) {
+        auto* asmPtr = assemblies[i];
+        if (!asmPtr) continue;
+        auto* img = il2cpp_functions::assembly_get_image(asmPtr);
+        const char* aname = img ? img->name : nullptr;
+        if (aname) {
+            names.emplace_back(aname);
+            LOG_OK("[il2cpp-tests] Assembly[{}] -> {}", i, aname);
+        } else {
+            LOG_FAIL("[il2cpp-tests] Assembly[{}] had null image/name", i);
+        }
+    }
+
+    // Common assemblies to look for (these are best-effort; some runtimes differ)
+    const char* common[] = { "Assembly-CSharp", "mscorlib", "System", "UnityEngine.CoreModule", "Assembly-CSharp-firstpass" };
+    for (auto const& want : common) {
+        bool found = false;
+        for (auto const& n : names) if (n == want) { found = true; break; }
+        if (found) {
+            LOG_OK("[il2cpp-tests] Found expected assembly: {}", want);
+        } else {
+            LOG_FAIL("[il2cpp-tests] Expected assembly not found (may be okay): {}", want);
+        }
+    }
+
+    // Ensure we found at least one assembly (sanity)
+    if (names.empty()) {
+        LOG_FAIL("[il2cpp-tests] No assembly names were discovered (unexpected)");
+    } else {
+        LOG_OK("[il2cpp-tests] Assembly enumeration completed successfully ({} entries)", names.size());
+    }
+}
 static void test_arrays_and_generics() {
     using namespace il2cpp_utils;
     auto const& logger = il2cpp_utils::Logger;
@@ -659,6 +713,8 @@ extern "C" void load() {
     LOG_OK("Running il2cpp_init", modInfo.id, modInfo.version);
     il2cpp_functions::Init();
     LOG_OK("il2cpp_init complete!");
+    // Run assembly enumeration test early
+    test_assembly_enumeration();
     // Run builtin il2cpp tests that exercise common utilities.
     // Execute tests (they are defensive and will log failures rather than crash)
 
