@@ -232,13 +232,13 @@ uintptr_t findUniquePattern(bool& multiple, uintptr_t dwAddress, const char* pat
     return firstMatchAddr;
 }
 
-uintptr_t findUniquePatternInLibil2cpp(bool& multiple, const char* pattern, const char* label) {
-    // Essentially call findUniquePattern for each segment listed in /proc/self/maps
+uintptr_t findUniquePatternInMappedFile(bool& multiple, const char* pattern, const char* file, const char* label) {
+     // Essentially call findUniquePattern for each segment listed in /proc/self/maps
     std::ifstream procMap("/proc/self/maps");
     std::string line;
     uintptr_t match = 0;
     while (std::getline(procMap, line)) {
-        if (line.find("libil2cpp.so") == std::string::npos) {
+        if (line.find(file) == std::string::npos) {
             continue;
         }
         auto idx = line.find_first_of('-');
@@ -260,6 +260,14 @@ uintptr_t findUniquePatternInLibil2cpp(bool& multiple, const char* pattern, cons
     }
     procMap.close();
     return match;
+}
+
+uintptr_t findUniquePatternInLibil2cpp(bool& multiple, const char* pattern, const char* label) {
+   return findUniquePatternInMappedFile(multiple, pattern, "libil2cpp.so", label);
+}
+
+uintptr_t findUniquePatternInLibunity(bool& multiple, const char* pattern, const char* label) {
+    return findUniquePatternInMappedFile(multiple, pattern, "libunity.so", label);
 }
 
 // C# SPECIFIC
