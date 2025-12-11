@@ -233,10 +233,10 @@ uintptr_t findUniquePattern(bool& multiple, uintptr_t dwAddress, const char* pat
 }
 
 uintptr_t findUniquePatternInMappedFile(bool& multiple, const char* pattern, const char* file, const char* label) {
-     // Essentially call findUniquePattern for each segment listed in /proc/self/maps
+    // Essentially call findUniquePattern for each segment listed in /proc/self/maps
     std::ifstream procMap("/proc/self/maps");
     std::string line;
-    uintptr_t match = 0;
+    uintptr_t firstMatchAddr = 0;
     while (std::getline(procMap, line)) {
         if (line.find(file) == std::string::npos) {
             continue;
@@ -255,11 +255,13 @@ uintptr_t findUniquePatternInMappedFile(bool& multiple, const char* pattern, con
         auto perms = line.substr(spaceIdx + 1, 4);
         if (perms.find('r') != std::string::npos) {
             // Search between start and end
-            match = findUniquePattern(multiple, startAddr, pattern, label, endAddr - startAddr);
+            uintptr_t match = findUniquePattern(multiple, startAddr, pattern, label, endAddr - startAddr);
+            if(!firstMatchAddr)
+                firstMatchAddr = match;
         }
     }
     procMap.close();
-    return match;
+    return firstMatchAddr;
 }
 
 uintptr_t findUniquePatternInLibil2cpp(bool& multiple, const char* pattern, const char* label) {
